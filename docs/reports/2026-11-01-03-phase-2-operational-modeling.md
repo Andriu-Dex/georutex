@@ -194,3 +194,4 @@ El sistema cuenta con la base de datos de producción `georutex` actualizada, lo
 - Asociación automática de telemetrías a recorridos en su ventana temporal sin contaminación entre viajes.
 - Visualización de mapa integrado de posiciones y polilínea en Odoo.
 - Monitoreo de frescura de señal y alarmas de desconexión.
+
