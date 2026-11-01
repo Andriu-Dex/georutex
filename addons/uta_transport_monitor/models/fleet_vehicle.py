@@ -25,6 +25,11 @@ class FleetVehicle(models.Model):
         default=True,
         help="Habilita sincronización programada de telemetría para el bus.",
     )
+    is_simulated = fields.Boolean(
+        string="Vehículo de Simulación",
+        default=False,
+        help="Si está activo, las telemetrías se marcan como simuladas.",
+    )
     gps_connection_status = fields.Selection(
         selection=[
             ("online", "En línea (< 5 min)"),
@@ -84,6 +89,13 @@ class FleetVehicle(models.Model):
                     vehicle.gps_connection_status = "recent"
                 else:
                     vehicle.gps_connection_status = "offline"
+
+    def action_generate_secure_unique_id(self):
+        """Generate a cryptographically random, non-predictable uniqueId."""
+        import secrets
+        for vehicle in self:
+            token = secrets.token_hex(4).upper()
+            vehicle.traccar_unique_id = f"UTA-BUS-{token}"
 
     def action_test_traccar_connection(self):
         """Test API connectivity and confirm bound device existence."""

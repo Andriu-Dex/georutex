@@ -107,23 +107,47 @@ class TransportGpsSyncService(models.AbstractModel):
                 else fix_time
             )
 
-            created = position_model.create(
-                {
-                    "vehicle_id": vehicle.id,
-                    "traccar_device_id": device_id,
-                    "traccar_position_id": pos_id,
-                    "fix_time": fix_time,
-                    "server_time": server_time,
-                    "latitude": pos.get("latitude", 0.0),
-                    "longitude": pos.get("longitude", 0.0),
-                    "speed": pos.get("speed", 0.0),
-                    "altitude": pos.get("altitude", 0.0),
-                    "is_valid": pos.get("valid", True),
-                    "source": "real",
-                    "protocol": pos.get("protocol", "osmand"),
-                }
+            raw_speed = pos.get("speed", 0.0)
+            # Traccar API delivers speed in knots (1 knot = 1.852 km/h)
+            speed_kmh = (
+                round(float(raw_speed) * 1.852, 2) if raw_speed else 0.0
             )
-            new_count += 1
+
+            # Preserve source classification: simulated vs real
+            is_sim = (
+                vehicle.is_simulated
+                or bool(pos.get("attributes", {}).get("simulated"))
+                or pos.get("protocol") == "simulated"
+            )
+            source_val = "simulated" if is_sim else "real"
+
+            try:
+                with self.env.cr.savepoint():
+                    created = position_model.create(
+                        {
+                            "vehicle_id": vehicle.id,
+                            "traccar_device_id": device_id,
+                            "traccar_position_id": pos_id,
+                            "fix_time": fix_time,
+                            "server_time": server_time,
+                            "latitude": pos.get("latitude", 0.0),
+                            "longitude": pos.get("longitude", 0.0),
+                            "speed": speed_kmh,
+                            "altitude": pos.get("altitude", 0.0),
+                            "is_valid": pos.get("valid", True),
+                            "source": source_val,
+                            "protocol": pos.get("protocol", "osmand"),
+                        }
+                    )
+                    new_count += 1
+            except Exception as savepoint_exc:
+                _logger.debug(
+                    "Position for device %s at %s already recorded: %s",
+                    device_id,
+                    fix_time,
+                    savepoint_exc,
+                )
+                continue
 
             if not latest_position or fix_time > latest_position["fix_time"]:
                 latest_position = {

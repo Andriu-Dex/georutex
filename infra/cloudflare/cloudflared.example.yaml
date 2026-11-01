@@ -1,0 +1,21 @@
+# ==============================================================================
+# GeoRutex — Cloudflare Tunnel Ingress Architecture Example
+#
+# IMPORTANT SECURITY POLICY:
+# - ONLY port 5055 (OsmAnd HTTP GPS protocol) is exposed to the public internet
+#   to allow physical mobile devices running Traccar Client to transmit telemetries.
+# - Port 8082 (Traccar Web UI & Admin REST API) and Port 5432/5433 (PostgreSQL)
+#   remain STRICTLY LOCAL / PRIVATE on the internal Docker network.
+# ==============================================================================
+
+tunnel: <YOUR-TUNNEL-UUID>
+credentials-file: /etc/cloudflared/<YOUR-TUNNEL-UUID>.json
+
+ingress:
+  # Route public GPS ingestion hostname directly to the container's OsmAnd port
+  - hostname: gps.example.org
+    service: http://georutex-traccar:5055
+
+  # Default catch-all rule (reject all other unmapped hostnames)
+  - service: http_status:404
+

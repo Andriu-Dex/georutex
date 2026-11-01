@@ -21,6 +21,7 @@ Módulo Odoo 16 Community para:
     "data": [
         "security/groups.xml",
         "security/ir.model.access.csv",
+        "security/rules.xml",
         "views/transport_position_views.xml",
         "views/fleet_vehicle_views.xml",
         "views/menu_views.xml",
