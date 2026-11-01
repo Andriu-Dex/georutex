@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM 'http://java.sun.com/dtd/properties.dtd'>
+<properties>
+
+    <!-- Documentation: https://www.traccar.org/configuration-file/ -->
+
+    <!-- Internal H2 embedded database for Traccar's standalone storage -->
+    <entry key='database.driver'>org.h2.Driver</entry>
+    <entry key='database.url'>jdbc:h2:./data/database</entry>
+    <entry key='database.user'>sa</entry>
+    <entry key='database.password'></entry>
+
+    <!-- Web administration and private API port -->
+    <entry key='web.port'>8082</entry>
+
+    <!-- OsmAnd HTTP protocol port for Traccar Client mobile tracking -->
+    <entry key='osmand.port'>5055</entry>
+
+    <!-- Geocoder disabled to avoid external dependencies -->
+    <entry key='geocoder.enable'>false</entry>
+
+</properties>

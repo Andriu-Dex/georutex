@@ -1,0 +1,68 @@
+# Python bytecode and environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Testing and coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# SonarQube
+.scannerwork/
+.sonar/
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Docker and local storage
+odoo_db_data/
+odoo_web_data/
+traccar_data/
+traccar_logs/
+*.log
+
+# Sensitive environment configuration
+.env
+*.key
+*.pem
+*.pfx
+*.cert
+*.crt
+
+# Evidence privacy (RF/RNF contractual rule: only sanitized INDEX.md is tracked)
+/evidence/*
+!/evidence/INDEX.md
+
