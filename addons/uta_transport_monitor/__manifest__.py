@@ -12,7 +12,7 @@ Módulo Odoo 16 Community para:
 - Sincronización idempotente manual y programada de posiciones.
 - Historial de telemetrías y estado de conexión en tiempo real.
     """,
-    "version": "16.0.3.0.0",
+    "version": "16.0.4.0.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",
@@ -28,6 +28,8 @@ Módulo Odoo 16 Community para:
         "views/transport_position_views.xml",
         "views/transport_route_views.xml",
         "views/transport_route_version_views.xml",
+        "views/transport_incident_views.xml",
+        "views/transport_evaluation_views.xml",
         "views/transport_trip_views.xml",
         "views/fleet_vehicle_views.xml",
         "views/menu_views.xml",

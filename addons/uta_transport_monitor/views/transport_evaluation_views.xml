@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List / Tree View -->
+    <record id="view_transport_trip_evaluation_tree" model="ir.ui.view">
+        <field name="name">transport.trip.evaluation.tree</field>
+        <field name="model">transport.trip.evaluation</field>
+        <field name="arch" type="xml">
+            <tree string="Evaluaciones de Recorridos"
+                  decoration-success="is_compliant_adjusted"
+                  decoration-danger="not is_compliant_adjusted and integrity_status != 'insufficient_data'"
+                  decoration-warning="integrity_status == 'insufficient_data'">
+                <field name="name"/>
+                <field name="trip_id"/>
+                <field name="vehicle_id"/>
+                <field name="route_id"/>
+                <field name="driver_id"/>
+                <field name="evaluation_date"/>
+                <field name="integrity_status" widget="badge"/>
+                <field name="is_compliant_gross" widget="boolean_toggle"/>
+                <field name="is_compliant_adjusted" widget="boolean_toggle"/>
+                <field name="stops_on_time"/>
+                <field name="stops_total"/>
+                <field name="deviation_count"/>
+                <field name="gps_gap_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_transport_trip_evaluation_form" model="ir.ui.view">
+        <field name="name">transport.trip.evaluation.form</field>
+        <field name="model">transport.trip.evaluation</field>
+        <field name="arch" type="xml">
+            <form string="Evaluación de Cumplimiento de Recorrido">
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Código de Evaluación"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Datos del Recorrido">
+                            <field name="trip_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
+                            <field name="route_id"/>
+                            <field name="route_version_id"/>
+                            <field name="driver_id"/>
+                        </group>
+                        <group string="Metadatos de Evaluación">
+                            <field name="evaluation_date"/>
+                            <field name="evaluator_user_id"/>
+                            <field name="rules_version"/>
+                            <field name="integrity_status" widget="badge"/>
+                            <field name="is_compliant_gross"/>
+                            <field name="is_compliant_adjusted"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Puntualidad y Paradas">
+                            <group>
+                                <group string="Puntualidad en Extremos">
+                                    <field name="start_punctuality" widget="badge"/>
+                                    <field name="start_delay_s"/>
+                                    <field name="arrival_punctuality" widget="badge"/>
+                                    <field name="arrival_delay_s"/>
+                                </group>
+                                <group string="Cumplimiento en Controles">
+                                    <field name="stops_total"/>
+                                    <field name="stops_on_time"/>
+                                    <field name="stops_late"/>
+                                    <field name="stops_missed"/>
+                                    <field name="stops_indeterminate"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Desvíos y Telemetría">
+                            <group>
+                                <group string="Desvíos de Ruta (RF-24)">
+                                    <field name="deviation_count"/>
+                                    <field name="deviation_duration_s"/>
+                                    <field name="max_deviation_distance_m"/>
+                                </group>
+                                <group string="Pérdidas de Señal GPS (RF-25)">
+                                    <field name="gps_gap_count"/>
+                                    <field name="gps_gap_duration_s"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Dictamen y Resumen">
+                            <group>
+                                <field name="evaluation_summary" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="Incidencias Asociadas">
+                            <field name="incident_ids" readonly="1">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="timestamp_utc"/>
+                                    <field name="incident_type"/>
+                                    <field name="source"/>
+                                    <field name="severity" widget="badge"/>
+                                    <field name="state" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Parámetros Congelados">
+                            <group>
+                                <field name="parameter_snapshot_json" readonly="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_transport_trip_evaluation_search" model="ir.ui.view">
+        <field name="name">transport.trip.evaluation.search</field>
+        <field name="model">transport.trip.evaluation</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Evaluaciones">
+                <field name="name"/>
+                <field name="trip_id"/>
+                <field name="vehicle_id"/>
+                <field name="route_id"/>
+                <filter string="Conformes (Ajustado)" name="compliant" domain="[('is_compliant_adjusted', '=', True)]"/>
+                <filter string="No Conformes" name="non_compliant" domain="[('is_compliant_adjusted', '=', False), ('integrity_status', '!=', 'insufficient_data')]"/>
+                <filter string="Datos Insuficientes" name="insufficient" domain="[('integrity_status', '=', 'insufficient_data')]"/>
+                <separator/>
+                <filter string="Conforme Bruto" name="gross_compliant" domain="[('is_compliant_gross', '=', True)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
+                    <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Integridad" name="group_integrity" context="{'group_by': 'integrity_status'}"/>
+                    <filter string="Fecha" name="group_date" context="{'group_by': 'evaluation_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_transport_trip_evaluation" model="ir.actions.act_window">
+        <field name="name">Evaluaciones de Recorridos</field>
+        <field name="res_model">transport.trip.evaluation</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_transport_trip_evaluation_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay evaluaciones registradas.
+            </p>
+        </field>
+    </record>
+</odoo>
+

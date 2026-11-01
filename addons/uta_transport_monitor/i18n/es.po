@@ -107,3 +107,26 @@ msgstr "Mis Recorridos"
 msgid "Mapa en Vivo"
 msgstr "Mapa en Vivo"
 
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_incident
+msgid "Incidencia Operacional de Transporte"
+msgstr "Incidencia Operacional de Transporte"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_trip_evaluation
+msgid "Evaluación de Cumplimiento de Recorrido"
+msgstr "Evaluación de Cumplimiento de Recorrido"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_incident
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_incidents
+msgid "Incidencias Operacionales"
+msgstr "Incidencias Operacionales"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_trip_evaluation
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_evaluations
+msgid "Evaluaciones de Recorridos"
+msgstr "Evaluaciones de Recorridos"
+
+

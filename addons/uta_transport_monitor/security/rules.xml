@@ -68,4 +68,50 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
+
+    <!-- ==================== INCIDENCIAS (transport.incident) ==================== -->
+    <record id="rule_transport_incident_driver" model="ir.rule">
+        <field name="name">Conductor: acceso a incidencias de sus propios recorridos</field>
+        <field name="model_id" ref="model_transport_incident"/>
+        <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
+        <field name="domain_force">['|', ('trip_id.driver_user_id', '=', user.id), ('trip_id.driver_id', '=', user.partner_id.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_transport_incident_global" model="ir.rule">
+        <field name="name">Administrador y Analista: acceso global a incidencias</field>
+        <field name="model_id" ref="model_transport_incident"/>
+        <field name="groups" eval="[(4, ref('group_transport_analyst')), (4, ref('group_transport_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==================== EVALUACIONES (transport.trip.evaluation) ==================== -->
+    <record id="rule_transport_trip_evaluation_driver" model="ir.rule">
+        <field name="name">Conductor: ver evaluaciones de sus propios recorridos</field>
+        <field name="model_id" ref="model_transport_trip_evaluation"/>
+        <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
+        <field name="domain_force">['|', ('trip_id.driver_user_id', '=', user.id), ('trip_id.driver_id', '=', user.partner_id.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_transport_trip_evaluation_global" model="ir.rule">
+        <field name="name">Administrador y Analista: acceso global a evaluaciones</field>
+        <field name="model_id" ref="model_transport_trip_evaluation"/>
+        <field name="groups" eval="[(4, ref('group_transport_analyst')), (4, ref('group_transport_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
 </odoo>

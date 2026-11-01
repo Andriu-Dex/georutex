@@ -14,6 +14,7 @@
                 <field name="route_id"/>
                 <field name="route_version_id"/>
                 <field name="source_type" widget="badge" decoration-warning="source_type == 'simulated'" decoration-info="source_type == 'real'"/>
+                <field name="evaluation_status" widget="badge" decoration-success="evaluation_status == 'compliant'" decoration-danger="evaluation_status == 'non_compliant'" decoration-warning="evaluation_status == 'indeterminate'" decoration-info="evaluation_status == 'unevaluated'"/>
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'"/>
             </tree>
         </field>
@@ -95,6 +96,7 @@
                     <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
                     <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                    <button name="action_evaluate_trip" string="Evaluar Recorrido" type="object" class="btn-primary" icon="fa-check-circle" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
                     <button name="action_sync_trip_gps" string="Sincronizar GPS" type="object" class="btn-info" icon="fa-refresh" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
                     <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}"/>
                     <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}"/>
@@ -114,6 +116,12 @@
                         <button class="oe_stat_button" icon="fa-location-arrow">
                             <field name="position_count" widget="statinfo" string="Posiciones GPS"/>
                         </button>
+                        <button class="oe_stat_button" icon="fa-exclamation-triangle">
+                            <field name="incident_count" widget="statinfo" string="Incidencias"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-check-square-o">
+                            <field name="evaluation_count" widget="statinfo" string="Evaluaciones"/>
+                        </button>
                     </div>
                     <div class="oe_title">
                         <label for="name" class="oe_edit_only" string="Código de Recorrido"/>
@@ -132,6 +140,7 @@
                             <field name="route_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="route_version_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="scheduled_distance_m"/>
+                            <field name="evaluation_status" widget="badge" decoration-success="evaluation_status == 'compliant'" decoration-danger="evaluation_status == 'non_compliant'" decoration-warning="evaluation_status == 'indeterminate'" decoration-info="evaluation_status == 'unevaluated'"/>
                         </group>
                     </group>
                     <group>
@@ -140,8 +149,13 @@
                             <field name="scheduled_end_utc" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
                         <group string="Ejecución Real Observada (RF-20)">
+                            <field name="manual_start_utc"/>
+                            <field name="first_gps_fix_utc"/>
                             <field name="actual_start_utc"/>
+                            <field name="actual_start_evidence"/>
+                            <field name="manual_end_utc"/>
                             <field name="actual_end_utc"/>
+                            <field name="actual_end_evidence"/>
                             <field name="actual_distance_m"/>
                         </group>
                     </group>
@@ -160,6 +174,35 @@
                                     <field name="first_arrival_utc"/>
                                     <field name="delay_s"/>
                                     <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Evaluación de Cumplimiento (RF-26)" name="evaluation_page">
+                            <field name="evaluation_ids" readonly="1">
+                                <tree string="Historial de Evaluaciones">
+                                    <field name="name"/>
+                                    <field name="evaluation_date"/>
+                                    <field name="integrity_status" widget="badge"/>
+                                    <field name="is_compliant_gross" widget="boolean_toggle"/>
+                                    <field name="is_compliant_adjusted" widget="boolean_toggle"/>
+                                    <field name="stops_on_time"/>
+                                    <field name="stops_total"/>
+                                    <field name="deviation_count"/>
+                                    <field name="gps_gap_count"/>
+                                    <field name="evaluation_summary"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Incidencias Operacionales" name="incidents_page">
+                            <field name="incident_ids">
+                                <tree string="Incidencias Registradas" decoration-danger="severity in ('critical', 'high')" decoration-warning="severity == 'medium'" decoration-success="state == 'justified'">
+                                    <field name="name"/>
+                                    <field name="timestamp_utc"/>
+                                    <field name="incident_type"/>
+                                    <field name="source"/>
+                                    <field name="severity" widget="badge"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="description"/>
                                 </tree>
                             </field>
                         </page>

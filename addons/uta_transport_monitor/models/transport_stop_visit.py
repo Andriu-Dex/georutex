@@ -72,6 +72,7 @@ class TransportStopVisit(models.Model):
             ("late", "Visitada con Retraso"),
             ("missed", "Omitida"),
             ("not_determinable", "No Determinable / Sin Evidencia"),
+            ("indeterminate", "Indeterminada / Evidencia Insuficiente"),
         ],
         string="Estado de Cumplimiento",
         default="pending",

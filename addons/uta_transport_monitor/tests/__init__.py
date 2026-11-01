@@ -10,3 +10,4 @@ from . import test_gps_history_sync  # noqa: F401
 from . import test_telemetry_freshness  # noqa: F401
 from . import test_security_positions  # noqa: F401
 from . import test_pre_phase4_consistency  # noqa: F401
+from . import test_evaluation_engine  # noqa: F401

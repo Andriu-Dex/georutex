@@ -2,3 +2,4 @@
 
 from . import gps_sync  # noqa: F401
 from . import trip_service  # noqa: F401
+from . import trip_evaluation_service  # noqa: F401

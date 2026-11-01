@@ -11,6 +11,28 @@
             <field name="number_increment">1</field>
             <field name="use_date_range" eval="True"/>
         </record>
+
+        <!-- Secuencia automática para incidencias -->
+        <record id="seq_transport_incident" model="ir.sequence">
+            <field name="name">Secuencia de Incidencias GeoRutex</field>
+            <field name="code">transport.incident</field>
+            <field name="prefix">INC-%(year)s-</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+
+        <!-- Secuencia automática para evaluaciones de recorrido -->
+        <record id="seq_transport_trip_evaluation" model="ir.sequence">
+            <field name="name">Secuencia de Evaluaciones GeoRutex</field>
+            <field name="code">transport.trip.evaluation</field>
+            <field name="prefix">EVAL-%(year)s-</field>
+            <field name="padding">5</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
     </data>
 </odoo>
 

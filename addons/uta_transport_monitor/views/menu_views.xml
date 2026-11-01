@@ -39,6 +39,19 @@
               groups="uta_transport_monitor.group_transport_driver"
               sequence="15"/>
 
+    <menuitem id="menu_georutex_incidents"
+              name="Incidencias Operacionales"
+              parent="menu_georutex_operations"
+              action="action_transport_incident"
+              sequence="20"/>
+
+    <menuitem id="menu_georutex_evaluations"
+              name="Evaluaciones de Recorridos"
+              parent="menu_georutex_operations"
+              action="action_transport_trip_evaluation"
+              groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
+              sequence="25"/>
+
     <!-- 2. Catálogos y Rutas -->
     <menuitem id="menu_georutex_routes_cat"
               name="Rutas y Flota"

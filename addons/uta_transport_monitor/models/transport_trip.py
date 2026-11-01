@@ -98,15 +98,40 @@ class TransportTrip(models.Model):
     )
 
     # Actual observed timestamps and distance
+    manual_start_utc = fields.Datetime(
+        string="Inicio Manual (UTC)",
+        readonly=True,
+        help="Instante de inicio manual por operador o conductor.",
+    )
+    manual_end_utc = fields.Datetime(
+        string="Fin Manual (UTC)",
+        readonly=True,
+        help="Instante de finalización manual por operador o conductor.",
+    )
+    first_gps_fix_utc = fields.Datetime(
+        string="Primer Fix GPS (UTC)",
+        readonly=True,
+        help="Primer registro de telemetría GPS asociado al recorrido.",
+    )
     actual_start_utc = fields.Datetime(
-        string="Inicio Real (UTC)",
+        string="Salida Real de Origen (UTC)",
         readonly=True,
         help="Primer instante verificado de salida de origen (RF-20).",
     )
     actual_end_utc = fields.Datetime(
-        string="Fin Real (UTC)",
+        string="Llegada Real a Destino (UTC)",
         readonly=True,
         help="Primer instante verificado de llegada a destino (RF-20).",
+    )
+    actual_start_evidence = fields.Char(
+        string="Evidencia Salida Real",
+        readonly=True,
+        help="Criterio técnico de inferencia de salida de origen.",
+    )
+    actual_end_evidence = fields.Char(
+        string="Evidencia Llegada Real",
+        readonly=True,
+        help="Criterio técnico de inferencia de llegada a destino.",
     )
     actual_distance_m = fields.Float(
         string="Distancia Real Recorrida (m)",
@@ -117,6 +142,46 @@ class TransportTrip(models.Model):
         string="Horario Programado Vencido",
         compute="_compute_schedule_overdue",
         help="Indica que la hora de fin expiró y el viaje sigue en curso.",
+    )
+
+    # Evaluation and incidents (Phase 4, RF-26 through RF-30)
+    evaluation_ids = fields.One2many(
+        comodel_name="transport.trip.evaluation",
+        inverse_name="trip_id",
+        string="Historial de Evaluaciones",
+    )
+    evaluation_count = fields.Integer(
+        string="Nº Evaluaciones",
+        compute="_compute_evaluation_metrics",
+        store=True,
+    )
+    last_evaluation_id = fields.Many2one(
+        comodel_name="transport.trip.evaluation",
+        string="Última Evaluación",
+        compute="_compute_evaluation_metrics",
+        store=True,
+    )
+    evaluation_status = fields.Selection(
+        selection=[
+            ("unevaluated", "Sin Evaluar"),
+            ("compliant", "Conforme"),
+            ("non_compliant", "No Conforme"),
+            ("indeterminate", "Indeterminado / Insuficiente"),
+        ],
+        string="Estado de Evaluación",
+        default="unevaluated",
+        compute="_compute_evaluation_metrics",
+        store=True,
+        index=True,
+    )
+    incident_ids = fields.One2many(
+        comodel_name="transport.incident",
+        inverse_name="trip_id",
+        string="Incidencias Registradas",
+    )
+    incident_count = fields.Integer(
+        string="Nº Incidencias",
+        compute="_compute_incident_count",
     )
 
     # Frozen parameter snapshot (RF-14 & Section 7.1)
@@ -203,6 +268,32 @@ class TransportTrip(models.Model):
     def _compute_stop_visit_count(self):
         for trip in self:
             trip.stop_visit_count = len(trip.stop_visit_ids)
+
+    @api.depends(
+        "evaluation_ids",
+        "evaluation_ids.is_compliant_adjusted",
+        "evaluation_ids.integrity_status",
+    )
+    def _compute_evaluation_metrics(self):
+        for trip in self:
+            evals = trip.evaluation_ids.sorted("id", reverse=True)
+            trip.evaluation_count = len(evals)
+            if evals:
+                latest = evals[0]
+                trip.last_evaluation_id = latest
+                if latest.integrity_status == "insufficient_data":
+                    trip.evaluation_status = "indeterminate"
+                elif latest.is_compliant_adjusted:
+                    trip.evaluation_status = "compliant"
+                else:
+                    trip.evaluation_status = "non_compliant"
+            else:
+                trip.last_evaluation_id = False
+                trip.evaluation_status = "unevaluated"
+
+    def _compute_incident_count(self):
+        for trip in self:
+            trip.incident_count = len(trip.incident_ids)
 
     @api.onchange("vehicle_id")
     def _onchange_vehicle_id(self):
@@ -406,25 +497,32 @@ class TransportTrip(models.Model):
             self.env["transport.stop.visit"].create(visits_to_create)
 
     def _reconcile_gps_times(self):
-        """Ensure actual start/end timestamps match verified fixes."""
+        """Ensure telemetry timestamps and first fix are tracked."""
         for trip in self:
             if trip.position_ids:
                 fixes = trip.position_ids.mapped("fix_time")
                 earliest = min(fixes)
                 latest = max(fixes)
                 vals = {}
+                if (
+                    not trip.first_gps_fix_utc
+                    or trip.first_gps_fix_utc > earliest
+                ):
+                    vals["first_gps_fix_utc"] = earliest
                 if trip.state in ("in_progress", "completed"):
                     if (
                         not trip.actual_start_utc
                         or trip.actual_start_utc > earliest
                     ):
                         vals["actual_start_utc"] = earliest
+                        vals["actual_start_evidence"] = "reconciled_earliest"
                 if trip.state == "completed":
                     if (
                         not trip.actual_end_utc
                         or trip.actual_end_utc < latest
                     ):
                         vals["actual_end_utc"] = latest
+                        vals["actual_end_evidence"] = "reconciled_latest"
                 if vals:
                     trip.write(vals)
 
@@ -461,14 +559,21 @@ class TransportTrip(models.Model):
                     f"Solo recorridos en Programado pueden iniciarse "
                     f"(actual: {trip.state})."
                 )
-            vals = {"state": "in_progress"}
+            now = fields.Datetime.now()
+            vals = {
+                "state": "in_progress",
+                "manual_start_utc": now,
+            }
             earliest_pos = self.env["transport.vehicle.position"].search([
                 ("trip_id", "=", trip.id),
             ], order="fix_time asc", limit=1)
             if earliest_pos:
+                vals["first_gps_fix_utc"] = earliest_pos.fix_time
                 vals["actual_start_utc"] = earliest_pos.fix_time
+                vals["actual_start_evidence"] = "first_valid_fix_fallback"
             elif not trip.actual_start_utc:
-                vals["actual_start_utc"] = fields.Datetime.now()
+                vals["actual_start_utc"] = now
+                vals["actual_start_evidence"] = "manual_start_fallback"
             trip.write(vals)
         return True
 
@@ -480,16 +585,50 @@ class TransportTrip(models.Model):
                     f"Solo recorridos En Curso pueden finalizarse "
                     f"(actual: {trip.state})."
                 )
-            vals = {"state": "completed"}
+            now = fields.Datetime.now()
+            vals = {
+                "state": "completed",
+                "manual_end_utc": now,
+            }
             latest_pos = self.env["transport.vehicle.position"].search([
                 ("trip_id", "=", trip.id),
             ], order="fix_time desc", limit=1)
             if latest_pos:
                 vals["actual_end_utc"] = latest_pos.fix_time
+                vals["actual_end_evidence"] = "last_valid_fix_fallback"
             elif not trip.actual_end_utc:
-                vals["actual_end_utc"] = fields.Datetime.now()
+                vals["actual_end_utc"] = now
+                vals["actual_end_evidence"] = "manual_end_fallback"
             trip.write(vals)
         return True
+
+    def action_evaluate_trip(self):
+        """Trigger automated evaluation engine for this trip (Phase 4)."""
+        self.ensure_one()
+        eval_service = self.env["transport.trip.evaluation.service"]
+        evaluation = eval_service.evaluate_trip(self)
+        status_label = (
+            "Conforme"
+            if evaluation.is_compliant_adjusted
+            else "No Conforme"
+        )
+        msg_type = "info" if evaluation.is_compliant_adjusted else "warning"
+        msg = (
+            f"Dictamen: {status_label}. "
+            f"Paradas: {evaluation.stops_on_time}/{evaluation.stops_total}. "
+            f"Desvíos: {evaluation.deviation_count}. "
+            f"Gaps GPS: {evaluation.gps_gap_count}."
+        )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": f"Evaluación Completada: {self.name}",
+                "message": msg,
+                "type": msg_type,
+                "sticky": False,
+            },
+        }
 
     def action_cancel(self):
         """Cancel a trip, permitted from draft or scheduled."""

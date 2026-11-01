@@ -157,3 +157,98 @@ def calculate_polyline_distance(
         total_distance += haversine_distance(lat1, lon1, lat2, lon2)
 
     return total_distance
+
+
+def point_to_segment_distance(
+    p_lat: float,
+    p_lon: float,
+    a_lat: float,
+    a_lon: float,
+    b_lat: float,
+    b_lon: float,
+) -> float:
+    """Calculate minimum orthogonal distance from point P to line segment AB.
+
+    Uses equirectangular metric projection centered on the segment, which is
+    accurate to millimeters over urban transit scales (< 50 km).
+
+    :param p_lat: Latitude of query point.
+    :param p_lon: Longitude of query point.
+    :param a_lat: Latitude of segment start point.
+    :param a_lon: Longitude of segment start point.
+    :param b_lat: Latitude of segment end point.
+    :param b_lon: Longitude of segment end point.
+    :return: Minimum distance in meters from point P to segment AB.
+    """
+    if not (
+        is_valid_coordinate(p_lat, p_lon)
+        and is_valid_coordinate(a_lat, a_lon)
+        and is_valid_coordinate(b_lat, b_lon)
+    ):
+        raise ValueError(
+            "Invalid coordinates provided to point_to_segment_distance."
+        )
+
+    # Identical endpoints fallback
+    if a_lat == b_lat and a_lon == b_lon:
+        return haversine_distance(p_lat, p_lon, a_lat, a_lon)
+
+    # Local equirectangular projection centered on segment midpoint
+    mid_lat_rad = math.radians((a_lat + b_lat) / 2.0)
+    cos_lat = math.cos(mid_lat_rad)
+    deg_to_m = (math.pi / 180.0) * EARTH_RADIUS_METERS
+
+    dx = (b_lon - a_lon) * cos_lat * deg_to_m
+    dy = (b_lat - a_lat) * deg_to_m
+    seg_len_sq = dx * dx + dy * dy
+
+    if seg_len_sq <= 1e-9:
+        return haversine_distance(p_lat, p_lon, a_lat, a_lon)
+
+    px = (p_lon - a_lon) * cos_lat * deg_to_m
+    py = (p_lat - a_lat) * deg_to_m
+
+    t = max(0.0, min(1.0, (px * dx + py * dy) / seg_len_sq))
+    nx = t * dx
+    ny = t * dy
+
+    return math.hypot(px - nx, py - ny)
+
+
+def distance_to_polyline(
+    point_lat: float,
+    point_lon: float,
+    coordinates: list,
+    is_geojson: bool = True,
+) -> float:
+    """Calculate minimum distance from a point to a polyline.
+
+    :param point_lat: Latitude of point.
+    :param point_lon: Longitude of point.
+    :param coordinates: List of coordinate pairs.
+    :param is_geojson: True if [lon, lat] (GeoJSON), False if (lat, lon).
+    :return: Minimum distance in meters to the polyline.
+    :raises ValueError: If coordinates list is invalid or contains < 2 points.
+    """
+    if not isinstance(coordinates, list) or len(coordinates) < 2:
+        raise ValueError("Polyline must contain at least 2 coordinate points.")
+
+    min_dist = float("inf")
+    for idx in range(len(coordinates) - 1):
+        pt1 = coordinates[idx]
+        pt2 = coordinates[idx + 1]
+
+        if is_geojson:
+            lon1, lat1 = pt1[0], pt1[1]
+            lon2, lat2 = pt2[0], pt2[1]
+        else:
+            lat1, lon1 = pt1[0], pt1[1]
+            lat2, lon2 = pt2[0], pt2[1]
+
+        d = point_to_segment_distance(
+            point_lat, point_lon, lat1, lon1, lat2, lon2
+        )
+        if d < min_dist:
+            min_dist = d
+
+    return min_dist

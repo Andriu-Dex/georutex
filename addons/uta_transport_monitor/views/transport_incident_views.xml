@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- List / Tree View -->
+    <record id="view_transport_incident_tree" model="ir.ui.view">
+        <field name="name">transport.incident.tree</field>
+        <field name="model">transport.incident</field>
+        <field name="arch" type="xml">
+            <tree string="Incidencias Operacionales"
+                  decoration-danger="severity in ('critical', 'high')"
+                  decoration-warning="severity == 'medium'"
+                  decoration-success="state == 'justified'"
+                  decoration-muted="state == 'rejected'">
+                <field name="name"/>
+                <field name="timestamp_utc"/>
+                <field name="trip_id"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="incident_type"/>
+                <field name="source"/>
+                <field name="severity" widget="badge"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'pending'"
+                       decoration-success="state == 'justified'"
+                       decoration-danger="state == 'rejected'"
+                       decoration-warning="state == 'confirmed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_transport_incident_form" model="ir.ui.view">
+        <field name="name">transport.incident.form</field>
+        <field name="model">transport.incident</field>
+        <field name="arch" type="xml">
+            <form string="Incidencia Operacional">
+                <header>
+                    <button name="action_submit_justification"
+                            string="Enviar Justificación"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    <button name="action_approve_justification"
+                            string="Aprobar Justificación"
+                            type="object"
+                            class="btn-success"
+                            groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    <button name="action_reject_justification"
+                            string="Rechazar Justificación"
+                            type="object"
+                            class="btn-danger"
+                            groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    <button name="action_confirm_incident"
+                            string="Confirmar Sin Justificación"
+                            type="object"
+                            class="btn-secondary"
+                            groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
+                            attrs="{'invisible': [('state', '!=', 'pending')]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,justified,rejected,confirmed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" string="Código de Incidencia"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Detalles Operacionales">
+                            <field name="trip_id" options="{'no_create': True}"/>
+                            <field name="vehicle_id"/>
+                            <field name="route_id"/>
+                            <field name="driver_id"/>
+                        </group>
+                        <group string="Clasificación de la Incidencia">
+                            <field name="incident_type"/>
+                            <field name="source"/>
+                            <field name="severity"/>
+                            <field name="timestamp_utc"/>
+                        </group>
+                    </group>
+                    <group string="Referencia Espacial y Normativa">
+                        <group>
+                            <field name="stop_id" options="{'no_create': True}"/>
+                            <field name="rule_applied"/>
+                        </group>
+                        <group>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripción y Evidencia">
+                            <group>
+                                <field name="description" placeholder="Describa lo ocurrido durante el recorrido..."/>
+                                <field name="evidence_data" readonly="1" placeholder="Datos técnicos de telemetría / regla violada..."/>
+                            </group>
+                        </page>
+                        <page string="Descargo / Justificación">
+                            <group string="Descargo del Conductor / Operador">
+                                <field name="justification_notes" placeholder="Ingrese el motivo de la justificación..."/>
+                                <field name="justification_submitted_by"/>
+                                <field name="justification_submitted_at"/>
+                            </group>
+                            <group string="Resolución de Revisión">
+                                <field name="review_notes" placeholder="Observaciones de la aprobación o rechazo..."
+                                       groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"/>
+                                <field name="reviewed_by"/>
+                                <field name="reviewed_at"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search / Filter View -->
+    <record id="view_transport_incident_search" model="ir.ui.view">
+        <field name="name">transport.incident.search</field>
+        <field name="model">transport.incident</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Incidencias">
+                <field name="name"/>
+                <field name="trip_id"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <filter string="Pendientes" name="pending" domain="[('state', '=', 'pending')]"/>
+                <filter string="Justificadas" name="justified" domain="[('state', '=', 'justified')]"/>
+                <filter string="Rechazadas" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <separator/>
+                <filter string="Automáticas" name="automatic" domain="[('source', '=', 'automatic')]"/>
+                <filter string="Manuales" name="manual" domain="[('source', '=', 'manual')]"/>
+                <separator/>
+                <filter string="Alta Severidad / Crítica" name="high_severity" domain="[('severity', 'in', ('high', 'critical'))]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Recorrido" name="group_trip" context="{'group_by': 'trip_id'}"/>
+                    <filter string="Tipo de Incidencia" name="group_type" context="{'group_by': 'incident_type'}"/>
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Severidad" name="group_severity" context="{'group_by': 'severity'}"/>
+                    <filter string="Origen" name="group_source" context="{'group_by': 'source'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_transport_incident" model="ir.actions.act_window">
+        <field name="name">Incidencias Operacionales</field>
+        <field name="res_model">transport.incident</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_transport_incident_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay incidencias operacionales registradas.
+            </p>
+        </field>
+    </record>
+</odoo>
+
