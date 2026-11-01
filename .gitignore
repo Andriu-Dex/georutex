@@ -65,4 +65,5 @@ traccar_logs/
 # Evidence privacy (RF/RNF contractual rule: only sanitized INDEX.md is tracked)
 /evidence/*
 !/evidence/INDEX.md
+instruction.md
 

@@ -8,8 +8,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-odoo}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo_dev_password}
     ports:
-      # Map host port to 5433 by default to avoid conflict with existing host PostgreSQL
-      - "${POSTGRES_HOST_PORT:-5433}:5432"
+      # Restrict to localhost to avoid exposure on public/LAN interfaces
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - odoo_db_data:/var/lib/postgresql/data
     healthcheck:
@@ -42,18 +42,37 @@ services:
       - georutex_net
 
   traccar:
-    image: traccar/traccar:latest
+    image: traccar/traccar:6.5
     container_name: georutex-traccar
     restart: unless-stopped
     ports:
-      # Administrative web console and private API
-      - "${TRACCAR_WEB_PORT:-8082}:8082"
+      # Restrict admin console and private REST API to localhost
+      - "127.0.0.1:${TRACCAR_WEB_PORT:-8082}:8082"
       # OsmAnd GPS HTTP ingestion port for mobile Traccar Client
       - "${TRACCAR_OSMAND_PORT:-5055}:5055"
     volumes:
       - ./infra/traccar/traccar.xml:/opt/traccar/conf/traccar.xml:ro
       - traccar_data:/opt/traccar/data
       - traccar_logs:/opt/traccar/logs
+    networks:
+      - georutex_net
+
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: georutex-postgres-test
+    profiles:
+      - test
+    environment:
+      POSTGRES_DB: georutex_test
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_test_password
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d georutex_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
     networks:
       - georutex_net
 
@@ -64,11 +83,14 @@ services:
     container_name: georutex-odoo-test
     profiles:
       - test
+    depends_on:
+      postgres-test:
+        condition: service_healthy
     environment:
-      HOST: postgres
+      HOST: postgres-test
       PORT: 5432
-      USER: ${POSTGRES_USER:-odoo}
-      PASSWORD: ${POSTGRES_PASSWORD:-odoo_dev_password}
+      USER: odoo
+      PASSWORD: odoo_test_password
       COVERAGE_FILE: /tmp/.coverage
     volumes:
       - ./addons:/mnt/extra-addons
@@ -76,7 +98,7 @@ services:
       - ./pytest.ini:/workspace/pytest.ini
       - ./infra/odoo/odoo.conf:/etc/odoo/odoo.conf
     working_dir: /tmp
-    command: python3 -m pytest -c /workspace/pytest.ini /workspace/tests/unit --cov=odoo.addons.uta_transport_monitor.domain --cov-report=term-missing
+    command: python3 -m pytest -c /workspace/pytest.ini /workspace/tests/unit --cov=odoo.addons.uta_transport_monitor.domain --cov=odoo.addons.uta_transport_monitor.integrations --cov-report=term-missing
     networks:
       - georutex_net
 

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_georutex_root"
+              name="GeoRutex"
+              web_icon="fleet,static/description/icon.png"
+              sequence="10"/>
+
+    <!-- Operations Menu Category -->
+    <menuitem id="menu_georutex_operations"
+              name="Operaciones"
+              parent="menu_georutex_root"
+              sequence="10"/>
+
+    <menuitem id="menu_georutex_positions"
+              name="Posiciones GPS"
+              parent="menu_georutex_operations"
+              action="action_transport_vehicle_position"
+              sequence="20"/>
+
+    <!-- Fleet Menu Shortcut -->
+    <menuitem id="menu_georutex_fleet"
+              name="Vehículos"
+              parent="menu_georutex_operations"
+              action="fleet.fleet_vehicle_action"
+              sequence="10"/>
+</odoo>
+

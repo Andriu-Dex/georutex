@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View -->
+    <record id="view_transport_vehicle_position_tree" model="ir.ui.view">
+        <field name="name">transport.vehicle.position.tree</field>
+        <field name="model">transport.vehicle.position</field>
+        <field name="arch" type="xml">
+            <tree string="Posiciones GPS" create="false" edit="false">
+                <field name="fix_time"/>
+                <field name="vehicle_id"/>
+                <field name="traccar_device_id"/>
+                <field name="latitude"/>
+                <field name="longitude"/>
+                <field name="speed"/>
+                <field name="source"
+                       widget="badge"
+                       decoration-success="source == 'real'"
+                       decoration-info="source == 'simulated'"/>
+                <field name="is_valid" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_transport_vehicle_position_form" model="ir.ui.view">
+        <field name="name">transport.vehicle.position.form</field>
+        <field name="model">transport.vehicle.position</field>
+        <field name="arch" type="xml">
+            <form string="Posición GPS" create="false" edit="false">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Datos del Vehículo">
+                            <field name="vehicle_id"/>
+                            <field name="traccar_device_id"/>
+                            <field name="traccar_position_id"/>
+                            <field name="source" widget="badge"/>
+                        </group>
+                        <group string="Coordenadas y Tiempo">
+                            <field name="fix_time"/>
+                            <field name="server_time"/>
+                            <field name="latitude"/>
+                            <field name="longitude"/>
+                            <field name="speed"/>
+                            <field name="altitude"/>
+                            <field name="is_valid"/>
+                            <field name="protocol"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_transport_vehicle_position_search" model="ir.ui.view">
+        <field name="name">transport.vehicle.position.search</field>
+        <field name="model">transport.vehicle.position</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Posiciones GPS">
+                <field name="vehicle_id"/>
+                <field name="traccar_device_id"/>
+                <filter string="Datos Reales" name="filter_real" domain="[('source', '=', 'real')]"/>
+                <filter string="Simulados" name="filter_simulated" domain="[('source', '=', 'simulated')]"/>
+                <separator/>
+                <filter string="Válidos" name="filter_valid" domain="[('is_valid', '=', True)]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Vehículo" name="group_by_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Origen" name="group_by_source" context="{'group_by': 'source'}"/>
+                    <filter string="Fecha" name="group_by_date" context="{'group_by': 'fix_time:day'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Window Action -->
+    <record id="action_transport_vehicle_position" model="ir.actions.act_window">
+        <field name="name">Historial de Posiciones GPS</field>
+        <field name="res_model">transport.vehicle.position</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_transport_vehicle_position_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay posiciones registradas todavía.
+            </p>
+            <p>
+                Las posiciones se sincronizan automáticamente desde Traccar Server o mediante datos móviles.
+            </p>
+        </field>
+    </record>
+</odoo>
+

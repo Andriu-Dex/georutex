@@ -1,1 +1,3 @@
-"""External adapters and API clients (e.g., Traccar client)."""
+"""External adapters and API clients."""
+
+from . import traccar_client  # noqa: F401

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_transport_vehicle_position_manager,transport.vehicle.position.manager,model_transport_vehicle_position,group_transport_manager,1,1,1,1
+access_transport_vehicle_position_driver,transport.vehicle.position.driver,model_transport_vehicle_position,group_transport_driver,1,0,0,0
+access_transport_vehicle_position_analyst,transport.vehicle.position.analyst,model_transport_vehicle_position,group_transport_analyst,1,0,0,0
+

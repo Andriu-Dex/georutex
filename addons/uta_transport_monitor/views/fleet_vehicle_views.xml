@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_fleet_vehicle_form_inherit_georutex" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.georutex</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_form"/>
+        <field name="arch" type="xml">
+            <!-- Header buttons -->
+            <xpath expr="//header" position="inside">
+                <button name="action_test_traccar_connection"
+                        type="object"
+                        string="Probar Conexión Traccar"
+                        class="btn-secondary"
+                        groups="uta_transport_monitor.group_transport_manager"/>
+                <button name="action_sync_gps_positions"
+                        type="object"
+                        string="Sincronizar GPS"
+                        class="btn-primary"
+                        groups="uta_transport_monitor.group_transport_manager"/>
+            </xpath>
+
+            <!-- Smart button in button box -->
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_positions"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-map-marker">
+                    <field name="position_count" widget="statinfo" string="Posiciones GPS"/>
+                </button>
+            </xpath>
+
+            <!-- Dedicated Notebook Page for Traccar Telemetry -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Telemetría GPS / Traccar" name="georutex_gps">
+                    <group>
+                        <group string="Vinculación de Dispositivo">
+                            <field name="traccar_device_id"/>
+                            <field name="traccar_unique_id"/>
+                            <field name="gps_tracking_enabled"/>
+                            <field name="gps_connection_status"
+                                   widget="badge"
+                                   decoration-success="gps_connection_status == 'online'"
+                                   decoration-info="gps_connection_status == 'recent'"
+                                   decoration-warning="gps_connection_status == 'offline'"
+                                   decoration-muted="gps_connection_status == 'unlinked'"/>
+                        </group>
+                        <group string="Última Telemetría Recibida">
+                            <field name="last_gps_fix_time"/>
+                            <field name="last_gps_latitude"/>
+                            <field name="last_gps_longitude"/>
+                            <field name="last_gps_speed"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>
+
