@@ -243,25 +243,36 @@ class TestEndToEndIntegration(TransactionCase):
         )
         trips.append(t9)
 
-        # Trip 10: Cancelled Trip (excluded from denominator)
-        t10 = self.trip_model.create({
-            "name": "REC-2026-TRIP-10-CANCELLED",
-            "vehicle_id": self.vehicle_sim.id,
-            "route_id": self.routes[0].id,
-            "route_version_id": self.routes[0].current_version_id.id,
-            "driver_id": self.partner_driver.id,
-            "scheduled_start_utc": base_t + timedelta(hours=9),
-            "scheduled_end_utc": base_t + timedelta(hours=9, minutes=30),
-            "state": "cancelled",
-        })
+        # Trip 10: Compliant Afternoon Return (Achieving 10 Executed Trips)
+        t10 = self._create_executed_trip(
+            vehicle=self.vehicle_sim,
+            route=self.routes[0],
+            start_dt=base_t + timedelta(hours=9),
+            duration_min=30,
+            outcome="compliant",
+        )
         trips.append(t10)
 
-        # Verify exactly 10 test trips created
-        self.assertEqual(len(trips), 10)
+        # Trip 11: Cancelled Trip (excluded from executed denominator)
+        t11 = self.trip_model.create({
+            "name": "REC-2026-TRIP-11-CANCELLED",
+            "vehicle_id": self.vehicle_sim.id,
+            "route_id": self.routes[1].id,
+            "route_version_id": self.routes[1].current_version_id.id,
+            "driver_id": self.partner_driver.id,
+            "scheduled_start_utc": base_t + timedelta(hours=10),
+            "scheduled_end_utc": base_t + timedelta(hours=10, minutes=30),
+            "source_type": "simulated",
+            "state": "cancelled",
+        })
+        trips.append(t11)
 
-        # Verify evaluations and audit records exist
+        # Verify exactly 11 trips created (10 executed + 1 cancelled)
+        self.assertEqual(len(trips), 11)
+
+        # Verify exactly 10 executed test trips have audit evaluations
         eval_trips = [t for t in trips if t.state != "cancelled"]
-        self.assertEqual(len(eval_trips), 9)
+        self.assertEqual(len(eval_trips), 10)
         for t in eval_trips:
             self.assertTrue(t.last_evaluation_id)
 
@@ -271,10 +282,10 @@ class TestEndToEndIntegration(TransactionCase):
             "date_to": "2026-11-10",
         })
 
-        # Summary check
+        # Summary check: 11 total trips, exactly 10 executed trips
         summary = dash["summary"]
-        self.assertEqual(summary["total_trips"], 10)
-        self.assertEqual(summary["executed_trips"], 9)
+        self.assertEqual(summary["total_trips"], 11)
+        self.assertEqual(summary["executed_trips"], 10)
         self.assertGreater(summary["compliant_trips_gross"], 0)
         self.assertGreater(summary["compliant_trips_adjusted"], 0)
         self.assertGreater(summary["non_compliant_trips"], 0)

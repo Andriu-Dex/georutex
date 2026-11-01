@@ -1,0 +1,51 @@
+# ==============================================================================
+# GeoRutex — SonarQube Community Local Evaluation Stack
+# Independent from operational stack (Odoo/PostgreSQL/Traccar).
+# Strictly restricted to localhost (127.0.0.1) for local quality analysis.
+# ==============================================================================
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: georutex-sonarqube
+    restart: unless-stopped
+    ports:
+      # Restrict SonarQube web UI and API to localhost only
+      - "127.0.0.1:9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    networks:
+      - sonarqube_net
+
+  sonar-scanner:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: georutex-sonar-scanner
+    profiles:
+      - scan
+    depends_on:
+      - sonarqube
+    volumes:
+      - .:/usr/src
+    working_dir: /usr/src
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
+    networks:
+      - sonarqube_net
+
+networks:
+  sonarqube_net:
+    driver: bridge
+
+volumes:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
+
