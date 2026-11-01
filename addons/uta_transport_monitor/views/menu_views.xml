@@ -61,7 +61,7 @@
     <menuitem id="menu_georutex_fleet"
               name="Vehículos Monitoreados"
               parent="menu_georutex_routes_cat"
-              action="fleet.fleet_vehicle_action"
+              action="action_transport_monitored_fleet"
               sequence="30"/>
 
     <!-- 3. Monitoreo y Telemetría -->

@@ -6,8 +6,9 @@
         <field name="model">transport.vehicle.position</field>
         <field name="arch" type="xml">
             <tree string="Posiciones GPS" create="false" edit="false">
-                <field name="fix_time"/>
+                <field name="fix_time_utc"/>
                 <field name="fix_time_local"/>
+                <field name="fix_time" string="Fecha/Hora Odoo" optional="hide"/>
                 <field name="vehicle_id"/>
                 <field name="trip_id"/>
                 <field name="latitude"/>
@@ -50,8 +51,9 @@
                             <field name="source" widget="badge"/>
                         </group>
                         <group string="Coordenadas y Tiempo">
-                            <field name="fix_time"/>
+                            <field name="fix_time_utc"/>
                             <field name="fix_time_local"/>
+                            <field name="fix_time" string="Fecha/Hora (Local Odoo)"/>
                             <field name="server_time"/>
                             <field name="latitude"/>
                             <field name="longitude"/>

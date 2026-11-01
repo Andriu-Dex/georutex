@@ -118,6 +118,10 @@ export class TripMapWidget extends Component {
                 });
 
                 const marker = window.L.marker(pos, { icon }).addTo(stopGroup);
+                marker.bindTooltip(`Parada ${s.sequence}: ${s.name}`, {
+                    direction: "top",
+                    offset: [0, -14],
+                });
                 marker.bindPopup(`
                     <div style="font-size: 12px; line-height: 1.4;">
                         <strong>Control ${s.sequence}: ${s.name}</strong><br/>

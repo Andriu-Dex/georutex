@@ -91,4 +91,41 @@
             </xpath>
         </field>
     </record>
+
+    <!-- Search View Inheritance for GPS Filters -->
+    <record id="view_fleet_vehicle_search_inherit_georutex" model="ir.ui.view">
+        <field name="name">fleet.vehicle.search.georutex</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='alert_true']" position="before">
+                <filter string="Monitoreo GPS Activo"
+                        name="filter_gps_monitored"
+                        domain="[('gps_tracking_enabled', '=', True)]"/>
+                <filter string="Dispositivos Vinculados"
+                        name="filter_gps_linked"
+                        domain="['|', ('traccar_device_id', '!=', False), ('traccar_unique_id', '!=', False)]"/>
+                <filter string="Solo Físicos Acreditados"
+                        name="filter_physical_accredited"
+                        domain="[('is_physical_accredited', '=', True)]"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Dedicated GeoRutex Monitored Fleet Action -->
+    <record id="action_transport_monitored_fleet" model="ir.actions.act_window">
+        <field name="name">Vehículos Monitoreados</field>
+        <field name="res_model">fleet.vehicle</field>
+        <field name="view_mode">kanban,tree,form,activity</field>
+        <field name="context">{'search_default_filter_gps_monitored': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No hay vehículos monitoreados registrados en GeoRutex.
+            </p>
+            <p>
+                Configure el rastreo GPS y vincule identificadores Traccar para comenzar el monitoreo.
+            </p>
+        </field>
+    </record>
 </odoo>

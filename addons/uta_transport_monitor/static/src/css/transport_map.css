@@ -81,6 +81,29 @@
     border: 1px solid #ffab91;
 }
 
+/* Custom Leaflet div-icon container reset */
+.custom-div-icon {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* OpenStreetMap attribution styling */
+.leaflet-control-attribution {
+    font-size: 11px !important;
+    background-color: rgba(255, 255, 255, 0.85) !important;
+    padding: 2px 6px !important;
+    border-radius: 4px 0 0 0;
+}
+
+.leaflet-control-attribution a {
+    color: #1976d2 !important;
+    text-decoration: none;
+}
+
+.leaflet-control-attribution a:hover {
+    text-decoration: underline;
+}
+
 /* Custom Leaflet stop numbers and pins */
 .georutex-stop-marker {
     background-color: #1976d2;
@@ -217,15 +240,26 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 8px;
     font-weight: 600;
     font-size: 13px;
     color: #1f2937;
+}
+
+.o_georutex_vehicle_card_title span.name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
 }
 
 .o_georutex_vehicle_card_sub {
     font-size: 11px;
     color: #6b7280;
     margin-top: 3px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .o_georutex_vehicle_card_footer {
@@ -240,5 +274,34 @@
     flex: 1;
     position: relative;
     height: 100%;
+}
+
+/* Responsive adjustments for mobile and tablets */
+@media (max-width: 768px) {
+    .o_georutex_map_container {
+        height: 380px;
+        min-height: 320px;
+    }
+
+    .o_georutex_live_fleet_view {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 80px);
+        overflow-y: auto;
+    }
+
+    .o_georutex_live_sidebar {
+        width: 100%;
+        min-width: 100%;
+        max-height: 280px;
+        border-right: none;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .o_georutex_live_main {
+        width: 100%;
+        height: 420px;
+        min-height: 360px;
+    }
 }
 

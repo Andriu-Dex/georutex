@@ -101,6 +101,11 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
                 </header>
                 <sheet>
+                    <field name="is_schedule_overdue" invisible="1"/>
+                    <div class="alert alert-warning mb-3" role="alert" attrs="{'invisible': [('is_schedule_overdue', '=', False)]}">
+                        <i class="fa fa-exclamation-triangle me-2" title="Alerta"/>
+                        <strong>Atención Operacional:</strong> El horario programado para este recorrido ha concluido pero el viaje continúa <b>En Curso</b> a la espera de confirmación de llegada a destino o telemetría GPS suficiente.
+                    </div>
                     <widget name="web_ribbon" title="Simulado" bg_color="bg-warning" attrs="{'invisible': [('source_type', '!=', 'simulated')]}"/>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" icon="fa-map-marker">
@@ -161,8 +166,9 @@
                         <page string="Telemetrías GPS Asociadas" name="positions_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
                             <field name="position_ids" readonly="1">
                                 <tree string="Posiciones GPS" limit="20">
-                                    <field name="fix_time"/>
+                                    <field name="fix_time_utc"/>
                                     <field name="fix_time_local"/>
+                                    <field name="fix_time" string="Fecha/Hora Odoo" optional="hide"/>
                                     <field name="latitude"/>
                                     <field name="longitude"/>
                                     <field name="speed"/>

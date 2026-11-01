@@ -254,7 +254,7 @@ class TransportRouteVersion(models.Model):
                 f"Actualmente cuenta con {len(self.stop_ids)}."
             )
 
-        # Validate polyline if present
+        # Validate polyline if present and calculate distance if empty
         if self.reference_polyline:
             try:
                 data = json.loads(self.reference_polyline)
@@ -267,6 +267,9 @@ class TransportRouteVersion(models.Model):
                     raise ValidationError(
                         "La polilínea debe tener al menos 2 puntos."
                     )
+                if not self.estimated_distance_m:
+                    dist = calculate_polyline_distance(coords, is_geojson=True)
+                    self.estimated_distance_m = round(dist, 2)
             except json.JSONDecodeError:
                 raise ValidationError(
                     "La polilínea de referencia no es un JSON válido."

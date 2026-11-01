@@ -52,14 +52,22 @@ class TransportVehiclePosition(models.Model):
         index=True,
     )
     fix_time = fields.Datetime(
-        string="Hora GPS (UTC)",
+        string="Fecha/Hora GPS",
         required=True,
         index=True,
+        help="Instante técnico UTC del fix (renderizado en hora local).",
+    )
+    fix_time_utc = fields.Char(
+        string="Hora GPS (UTC)",
+        compute="_compute_fix_time_utc",
+        store=False,
+        help="Representación textual UTC sin conversión de zona horaria.",
     )
     fix_time_local = fields.Char(
         string="Hora Local (Ecuador)",
         compute="_compute_fix_time_local",
         store=False,
+        help="Representación horaria en América/Guayaquil (ECT, UTC-5).",
     )
     server_time = fields.Datetime(
         string="Hora Servidor (UTC)",
@@ -118,6 +126,16 @@ class TransportVehiclePosition(models.Model):
             "La posición para este dispositivo y hora ya existe.",
         )
     ]
+
+    @api.depends("fix_time")
+    def _compute_fix_time_utc(self):
+        for rec in self:
+            if rec.fix_time:
+                rec.fix_time_utc = rec.fix_time.strftime(
+                    "%Y-%m-%d %H:%M:%S UTC"
+                )
+            else:
+                rec.fix_time_utc = ""
 
     @api.depends("fix_time")
     def _compute_fix_time_local(self):

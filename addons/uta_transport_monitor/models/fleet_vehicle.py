@@ -4,7 +4,7 @@ from datetime import timedelta, timezone
 import secrets
 import zoneinfo
 from odoo import api, fields, models
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 
 class FleetVehicle(models.Model):
@@ -56,7 +56,7 @@ class FleetVehicle(models.Model):
         ],
         string="Estado de Conexión GPS",
         compute="_compute_gps_status",
-        store=True,
+        store=False,
     )
     gps_freshness_state = fields.Selection(
         selection=[
@@ -144,6 +144,7 @@ class FleetVehicle(models.Model):
                         f"ya está asignado a '{clashing.name}' (RF-08)."
                     )
 
+    @api.depends("last_gps_fix_time", "traccar_device_id", "traccar_unique_id")
     def _compute_gps_status(self):
         now = fields.Datetime.now()
         for vehicle in self:
@@ -197,11 +198,30 @@ class FleetVehicle(models.Model):
 
     @api.model
     def get_live_fleet_positions(self):
-        """Return live telemetry for all tracked vehicles (RF-15, RF-16)."""
-        vehicles = self.search([
+        """Return live telemetry for tracked vehicles (RF-15, RF-16)."""
+        user = self.env.user
+        is_manager_or_analyst = (
+            user.has_group("uta_transport_monitor.group_transport_manager")
+            or user.has_group("uta_transport_monitor.group_transport_analyst")
+        )
+
+        domain = [
             ("gps_tracking_enabled", "=", True),
             ("active", "=", True),
-        ])
+        ]
+        if not is_manager_or_analyst:
+            if user.partner_id:
+                domain = [
+                    "&",
+                    ("gps_tracking_enabled", "=", True),
+                    "|",
+                    ("driver_id", "=", user.partner_id.id),
+                    ("trip_ids.driver_id", "=", user.partner_id.id),
+                ]
+            else:
+                return []
+
+        vehicles = self.sudo().search(domain)
         results = []
         for v in vehicles:
             results.append({
@@ -233,6 +253,27 @@ class FleetVehicle(models.Model):
     def get_vehicle_live_map_data(self):
         """Return map telemetry and recent history points for this vehicle."""
         self.ensure_one()
+        user = self.env.user
+        is_manager_or_analyst = (
+            user.has_group("uta_transport_monitor.group_transport_manager")
+            or user.has_group("uta_transport_monitor.group_transport_analyst")
+        )
+        if not is_manager_or_analyst:
+            is_own_vehicle = (
+                self.driver_id == user.partner_id
+                or self.env["transport.trip"].search_count([
+                    ("vehicle_id", "=", self.id),
+                    "|",
+                    ("driver_user_id", "=", user.id),
+                    ("driver_id", "=", user.partner_id.id),
+                ]) > 0
+            )
+            if not is_own_vehicle:
+                raise AccessError(
+                    "No tiene permisos para consultar la telemetría "
+                    "de este vehículo."
+                )
+
         recent_positions = self.env["transport.vehicle.position"].search([
             ("vehicle_id", "=", self.id),
         ], order="fix_time desc", limit=50)

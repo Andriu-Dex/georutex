@@ -113,6 +113,11 @@ class TransportTrip(models.Model):
         digits=(10, 2),
         readonly=True,
     )
+    is_schedule_overdue = fields.Boolean(
+        string="Horario Programado Vencido",
+        compute="_compute_schedule_overdue",
+        help="Indica que la hora de fin expiró y el viaje sigue en curso.",
+    )
 
     # Frozen parameter snapshot (RF-14 & Section 7.1)
     parameter_snapshot_json = fields.Text(
@@ -166,6 +171,30 @@ class TransportTrip(models.Model):
             self.env["ir.sequence"].next_by_code("transport.trip")
             or "REC-NUEVO"
         )
+
+    @api.depends("state", "scheduled_end_utc")
+    def _compute_schedule_overdue(self):
+        now = fields.Datetime.now()
+        for trip in self:
+            trip.is_schedule_overdue = bool(
+                trip.state == "in_progress"
+                and trip.scheduled_end_utc
+                and trip.scheduled_end_utc < now
+            )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            if (
+                not vals.get("scheduled_distance_m")
+                and vals.get("route_version_id")
+            ):
+                ver = self.env["transport.route.version"].browse(
+                    vals["route_version_id"]
+                )
+                if ver and ver.estimated_distance_m:
+                    vals["scheduled_distance_m"] = ver.estimated_distance_m
+        return super().create(vals_list)
 
     def _compute_position_count(self):
         for trip in self:
@@ -376,6 +405,29 @@ class TransportTrip(models.Model):
         if visits_to_create:
             self.env["transport.stop.visit"].create(visits_to_create)
 
+    def _reconcile_gps_times(self):
+        """Ensure actual start/end timestamps match verified fixes."""
+        for trip in self:
+            if trip.position_ids:
+                fixes = trip.position_ids.mapped("fix_time")
+                earliest = min(fixes)
+                latest = max(fixes)
+                vals = {}
+                if trip.state in ("in_progress", "completed"):
+                    if (
+                        not trip.actual_start_utc
+                        or trip.actual_start_utc > earliest
+                    ):
+                        vals["actual_start_utc"] = earliest
+                if trip.state == "completed":
+                    if (
+                        not trip.actual_end_utc
+                        or trip.actual_end_utc < latest
+                    ):
+                        vals["actual_end_utc"] = latest
+                if vals:
+                    trip.write(vals)
+
     # State transition actions
     def action_schedule(self):
         """Transition from draft to scheduled and generate stop visits."""
@@ -388,6 +440,13 @@ class TransportTrip(models.Model):
             if trip.route_version_id.state != "approved":
                 raise UserError(
                     "La versión de ruta asignada debe estar aprobada."
+                )
+            if (
+                not trip.scheduled_distance_m
+                and trip.route_version_id.estimated_distance_m
+            ):
+                trip.scheduled_distance_m = (
+                    trip.route_version_id.estimated_distance_m
                 )
             trip._freeze_parameter_snapshot()
             trip._generate_scheduled_stop_visits()
@@ -403,7 +462,12 @@ class TransportTrip(models.Model):
                     f"(actual: {trip.state})."
                 )
             vals = {"state": "in_progress"}
-            if not trip.actual_start_utc:
+            earliest_pos = self.env["transport.vehicle.position"].search([
+                ("trip_id", "=", trip.id),
+            ], order="fix_time asc", limit=1)
+            if earliest_pos:
+                vals["actual_start_utc"] = earliest_pos.fix_time
+            elif not trip.actual_start_utc:
                 vals["actual_start_utc"] = fields.Datetime.now()
             trip.write(vals)
         return True
@@ -417,7 +481,12 @@ class TransportTrip(models.Model):
                     f"(actual: {trip.state})."
                 )
             vals = {"state": "completed"}
-            if not trip.actual_end_utc:
+            latest_pos = self.env["transport.vehicle.position"].search([
+                ("trip_id", "=", trip.id),
+            ], order="fix_time desc", limit=1)
+            if latest_pos:
+                vals["actual_end_utc"] = latest_pos.fix_time
+            elif not trip.actual_end_utc:
                 vals["actual_end_utc"] = fields.Datetime.now()
             trip.write(vals)
         return True

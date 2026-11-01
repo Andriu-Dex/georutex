@@ -1,0 +1,109 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* uta_transport_monitor
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 16.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-11-01 12:00+0000\n"
+"PO-Revision-Date: 2026-11-01 12:00+0000\n"
+"Last-Translator: GeoRutex Team\n"
+"Language-Team: Spanish (Ecuador)\n"
+"Language: es_EC\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_route
+msgid "Ruta de Transporte Universitario"
+msgstr "Ruta de Transporte Universitario"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_route_version
+msgid "Versión de Ruta y Parámetros de Control"
+msgstr "Versión de Ruta y Parámetros de Control"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_route_stop
+msgid "Punto de Control / Parada de Ruta"
+msgstr "Punto de Control / Parada de Ruta"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_trip
+msgid "Recorrido de Transporte"
+msgstr "Recorrido de Transporte"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_stop_visit
+msgid "Visita a Punto de Control / Parada"
+msgstr "Visita a Punto de Control / Parada"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_transport_vehicle_position
+msgid "Posición GPS de Vehículo"
+msgstr "Posición GPS de Vehículo"
+
+#. module: uta_transport_monitor
+#: model:ir.model,name:uta_transport_monitor.model_fleet_vehicle
+msgid "Vehicle"
+msgstr "Vehículo"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_route
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_routes
+msgid "Rutas"
+msgstr "Rutas"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_route_version
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_route_versions
+msgid "Versiones de Ruta"
+msgstr "Versiones de Ruta"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_trip
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_trips
+msgid "Recorridos Operacionales"
+msgstr "Recorridos Operacionales"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_monitored_fleet
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_fleet
+msgid "Vehículos Monitoreados"
+msgstr "Vehículos Monitoreados"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.act_window,name:uta_transport_monitor.action_transport_vehicle_position
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_positions
+msgid "Historial de Posiciones"
+msgstr "Historial de Posiciones"
+
+#. module: uta_transport_monitor
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_root
+msgid "GeoRutex"
+msgstr "GeoRutex"
+
+#. module: uta_transport_monitor
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_operations
+msgid "Operaciones"
+msgstr "Operaciones"
+
+#. module: uta_transport_monitor
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_monitoring
+msgid "Telemetría GPS"
+msgstr "Telemetría GPS"
+
+#. module: uta_transport_monitor
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_my_trips
+msgid "Mis Recorridos"
+msgstr "Mis Recorridos"
+
+#. module: uta_transport_monitor
+#: model:ir.actions.client,name:uta_transport_monitor.action_transport_live_fleet_map
+#: model:ir.ui.menu,name:uta_transport_monitor.menu_georutex_live_fleet_map
+msgid "Mapa en Vivo"
+msgstr "Mapa en Vivo"
+

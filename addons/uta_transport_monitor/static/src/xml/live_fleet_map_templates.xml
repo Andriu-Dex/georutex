@@ -41,7 +41,7 @@
                     <t t-foreach="filteredVehicles" t-as="v" t-key="v.vehicle_id">
                         <div class="o_georutex_vehicle_card" t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''" t-on-click="() => this.selectVehicle(v)">
                             <div class="o_georutex_vehicle_card_title">
-                                <span><t t-esc="v.name"/></span>
+                                <span class="name" t-att-title="v.name"><t t-esc="v.name"/></span>
                                 <t t-if="v.freshness === 'fresh'">
                                     <span class="badge bg-success">En vivo</span>
                                 </t>

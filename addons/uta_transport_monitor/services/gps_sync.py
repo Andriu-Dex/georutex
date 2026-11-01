@@ -94,6 +94,7 @@ class TransportGpsSyncService(models.AbstractModel):
         position_model = self.env["transport.vehicle.position"].sudo()
         new_count = 0
         latest_position = None
+        affected_trips = self.env["transport.trip"]
 
         for pos in raw_positions:
             fix_time_str = pos.get("fixTime")
@@ -208,6 +209,8 @@ class TransportGpsSyncService(models.AbstractModel):
                         }
                     )
                     new_count += 1
+                    if matched_trip:
+                        affected_trips |= matched_trip
             except Exception as savepoint_exc:
                 _logger.debug(
                     "Position for device %s at %s already recorded: %s",
@@ -234,6 +237,9 @@ class TransportGpsSyncService(models.AbstractModel):
                     "last_gps_speed": latest_position["speed"],
                 }
             )
+
+        if affected_trips:
+            affected_trips._reconcile_gps_times()
 
         return new_count
 
