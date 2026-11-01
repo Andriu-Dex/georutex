@@ -125,3 +125,35 @@ def calculate_speed_kmh(
         return 0.0
     speed_mps = distance_meters / duration_seconds
     return speed_mps * 3.6
+
+
+def calculate_polyline_distance(
+    coordinates: list, is_geojson: bool = False
+) -> float:
+    """Calculate cumulative distance along a sequence of coordinate points.
+
+    :param coordinates: List of coordinate pairs.
+    :param is_geojson: True if [lon, lat] (GeoJSON), False if (lat, lon).
+    :return: Cumulative distance in meters.
+    :raises ValueError: If fewer than 2 points or coordinates invalid.
+    """
+    if not isinstance(coordinates, list) or len(coordinates) < 2:
+        raise ValueError(
+            "Polyline must contain at least 2 coordinate points."
+        )
+
+    total_distance = 0.0
+    for idx in range(len(coordinates) - 1):
+        pt1 = coordinates[idx]
+        pt2 = coordinates[idx + 1]
+
+        if is_geojson:
+            lon1, lat1 = pt1[0], pt1[1]
+            lon2, lat2 = pt2[0], pt2[1]
+        else:
+            lat1, lon1 = pt1[0], pt1[1]
+            lat2, lon2 = pt2[0], pt2[1]
+
+        total_distance += haversine_distance(lat1, lon1, lat2, lon2)
+
+    return total_distance

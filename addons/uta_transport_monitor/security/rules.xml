@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Regla por registro: Conductores solo ven posiciones de su vehículo asignado -->
+    <!-- ==================== POSICIONES GPS ==================== -->
     <record id="rule_transport_position_driver" model="ir.rule">
         <field name="name">Conductor: ver únicamente posiciones de vehículo asignado</field>
         <field name="model_id" ref="model_transport_vehicle_position"/>
@@ -12,10 +12,55 @@
         <field name="perm_unlink" eval="False"/>
     </record>
 
-    <!-- Regla por registro: Administradores y analistas ven todas las posiciones -->
     <record id="rule_transport_position_global" model="ir.rule">
         <field name="name">Administrador y Analista: acceso global a posiciones</field>
         <field name="model_id" ref="model_transport_vehicle_position"/>
+        <field name="groups" eval="[(4, ref('group_transport_analyst')), (4, ref('group_transport_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==================== RECORRIDOS (transport.trip) ==================== -->
+    <record id="rule_transport_trip_driver" model="ir.rule">
+        <field name="name">Conductor: ver únicamente sus recorridos asignados</field>
+        <field name="model_id" ref="model_transport_trip"/>
+        <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
+        <field name="domain_force">['|', ('driver_user_id', '=', user.id), ('driver_id', '=', user.partner_id.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_transport_trip_global" model="ir.rule">
+        <field name="name">Administrador y Analista: acceso global a recorridos</field>
+        <field name="model_id" ref="model_transport_trip"/>
+        <field name="groups" eval="[(4, ref('group_transport_analyst')), (4, ref('group_transport_manager'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <!-- ==================== VISITAS A PARADAS (transport.stop.visit) ==================== -->
+    <record id="rule_transport_stop_visit_driver" model="ir.rule">
+        <field name="name">Conductor: ver paradas de sus recorridos asignados</field>
+        <field name="model_id" ref="model_transport_stop_visit"/>
+        <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
+        <field name="domain_force">['|', ('trip_id.driver_user_id', '=', user.id), ('trip_id.driver_id', '=', user.partner_id.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_transport_stop_visit_global" model="ir.rule">
+        <field name="name">Administrador y Analista: acceso global a visitas de parada</field>
+        <field name="model_id" ref="model_transport_stop_visit"/>
         <field name="groups" eval="[(4, ref('group_transport_analyst')), (4, ref('group_transport_manager'))]"/>
         <field name="domain_force">[(1, '=', 1)]</field>
         <field name="perm_read" eval="True"/>

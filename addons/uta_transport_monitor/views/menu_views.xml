@@ -1,28 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Root Menu -->
+    <!-- Root Menu: GeoRutex -->
     <menuitem id="menu_georutex_root"
               name="GeoRutex"
               web_icon="fleet,static/description/icon.png"
               sequence="10"/>
 
-    <!-- Operations Menu Category -->
+    <!-- 1. Operaciones -->
     <menuitem id="menu_georutex_operations"
               name="Operaciones"
               parent="menu_georutex_root"
               sequence="10"/>
 
-    <menuitem id="menu_georutex_positions"
-              name="Posiciones GPS"
+    <menuitem id="menu_georutex_trips"
+              name="Recorridos Operacionales"
               parent="menu_georutex_operations"
-              action="action_transport_vehicle_position"
+              action="action_transport_trip"
+              groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
+              sequence="10"/>
+
+    <menuitem id="menu_georutex_my_trips"
+              name="Mis Recorridos"
+              parent="menu_georutex_operations"
+              action="action_transport_trip_my_driver"
+              groups="uta_transport_monitor.group_transport_driver"
+              sequence="15"/>
+
+    <!-- 2. Catálogos y Rutas -->
+    <menuitem id="menu_georutex_routes_cat"
+              name="Rutas y Flota"
+              parent="menu_georutex_root"
+              groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
               sequence="20"/>
 
-    <!-- Fleet Menu Shortcut -->
+    <menuitem id="menu_georutex_routes"
+              name="Rutas"
+              parent="menu_georutex_routes_cat"
+              action="action_transport_route"
+              sequence="10"/>
+
+    <menuitem id="menu_georutex_route_versions"
+              name="Versiones de Ruta"
+              parent="menu_georutex_routes_cat"
+              action="action_transport_route_version"
+              sequence="20"/>
+
     <menuitem id="menu_georutex_fleet"
-              name="Vehículos"
-              parent="menu_georutex_operations"
+              name="Vehículos Monitoreados"
+              parent="menu_georutex_routes_cat"
               action="fleet.fleet_vehicle_action"
+              sequence="30"/>
+
+    <!-- 3. Monitoreo y Telemetría -->
+    <menuitem id="menu_georutex_monitoring"
+              name="Telemetría GPS"
+              parent="menu_georutex_root"
+              groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
+              sequence="30"/>
+
+    <menuitem id="menu_georutex_positions"
+              name="Historial de Posiciones"
+              parent="menu_georutex_monitoring"
+              action="action_transport_vehicle_position"
               sequence="10"/>
 </odoo>
-

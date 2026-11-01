@@ -103,3 +103,35 @@ def test_calculate_speed_kmh():
     # Non-positive duration
     assert geo.calculate_speed_kmh(100.0, 0.0) == 0.0
     assert geo.calculate_speed_kmh(100.0, -10.0) == 0.0
+
+
+@pytest.mark.unit
+def test_calculate_polyline_distance():
+    coords_lat_lon = [
+        (-1.2618, -78.6272),
+        (-1.2580, -78.6250),
+        (-1.2425, -78.6265),
+    ]
+    dist1 = geo.haversine_distance(-1.2618, -78.6272, -1.2580, -78.6250)
+    dist2 = geo.haversine_distance(-1.2580, -78.6250, -1.2425, -78.6265)
+    total = geo.calculate_polyline_distance(
+        coords_lat_lon, is_geojson=False
+    )
+    assert math.isclose(total, dist1 + dist2, rel_tol=1e-5)
+
+    coords_geojson = [
+        [-78.6272, -1.2618],
+        [-78.6250, -1.2580],
+        [-78.6265, -1.2425],
+    ]
+    total_geojson = geo.calculate_polyline_distance(
+        coords_geojson, is_geojson=True
+    )
+    assert math.isclose(total, total_geojson, rel_tol=1e-5)
+
+    with pytest.raises(ValueError):
+        geo.calculate_polyline_distance(
+            [[-78.6272, -1.2618]], is_geojson=True
+        )
+    with pytest.raises(ValueError):
+        geo.calculate_polyline_distance("not-a-list")  # type: ignore

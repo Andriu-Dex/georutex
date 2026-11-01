@@ -17,6 +17,12 @@
                         string="Sincronizar GPS"
                         class="btn-primary"
                         groups="uta_transport_monitor.group_transport_manager"/>
+                <button name="action_generate_secure_unique_id"
+                        type="object"
+                        string="Generar uniqueId Seguro"
+                        class="btn-secondary"
+                        groups="uta_transport_monitor.group_transport_manager"
+                        help="Genera un identificador con 64 bits de entropía para Traccar Client."/>
             </xpath>
 
             <!-- Smart button in button box -->
@@ -24,12 +30,18 @@
                 <button name="action_view_positions"
                         type="object"
                         class="oe_stat_button"
-                        icon="fa-map-marker">
+                        icon="fa-location-arrow">
                     <field name="position_count" widget="statinfo" string="Posiciones GPS"/>
+                </button>
+                <button name="action_view_trips"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-road">
+                    <field name="trip_count" widget="statinfo" string="Recorridos"/>
                 </button>
             </xpath>
 
-            <!-- Dedicated Notebook Page for Traccar Telemetry -->
+            <!-- Dedicated Notebook Page for Traccar Telemetry and Trips -->
             <xpath expr="//notebook" position="inside">
                 <page string="Telemetría GPS / Traccar" name="georutex_gps">
                     <group>
@@ -37,6 +49,8 @@
                             <field name="traccar_device_id"/>
                             <field name="traccar_unique_id"/>
                             <field name="gps_tracking_enabled"/>
+                            <field name="is_physical_accredited" widget="boolean_toggle"/>
+                            <field name="is_simulated" widget="boolean_toggle"/>
                             <field name="gps_connection_status"
                                    widget="badge"
                                    decoration-success="gps_connection_status == 'online'"
@@ -52,8 +66,19 @@
                         </group>
                     </group>
                 </page>
+                <page string="Recorridos Asignados" name="georutex_trips">
+                    <field name="trip_ids" readonly="1">
+                        <tree string="Recorridos">
+                            <field name="name"/>
+                            <field name="route_id"/>
+                            <field name="scheduled_start_utc"/>
+                            <field name="scheduled_end_utc"/>
+                            <field name="source_type" widget="badge"/>
+                            <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'"/>
+                        </tree>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>
 </odoo>
-

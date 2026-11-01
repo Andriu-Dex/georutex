@@ -66,6 +66,19 @@ class TransportGpsSyncService(models.AbstractModel):
             _logger.warning("Vehicle %s has no Traccar binding.", vehicle.name)
             return 0
 
+        # Concurrency protection: prevent concurrent syncs on the same vehicle
+        try:
+            self.env.cr.execute(
+                "SELECT id FROM fleet_vehicle WHERE id = %s FOR UPDATE NOWAIT",
+                [vehicle.id],
+            )
+        except Exception:
+            _logger.info(
+                "Vehicle %s is locked by a concurrent sync process; skipping.",
+                vehicle.name,
+            )
+            return 0
+
         try:
             raw_positions = client.get_positions(
                 device_id=device_id,
@@ -90,13 +103,22 @@ class TransportGpsSyncService(models.AbstractModel):
             fix_time = self._parse_utc_datetime(fix_time_str)
             pos_id = pos.get("id")
 
-            existing = position_model.search(
-                [
+            dedup_domain = [
+                ("traccar_device_id", "=", device_id),
+                ("fix_time", "=", fix_time),
+            ]
+            if pos_id:
+                dedup_domain = [
+                    "|",
+                    "&",
+                    ("traccar_position_id", "=", pos_id),
+                    ("traccar_position_id", "!=", 0),
+                    "&",
                     ("traccar_device_id", "=", device_id),
                     ("fix_time", "=", fix_time),
-                ],
-                limit=1,
-            )
+                ]
+
+            existing = position_model.search(dedup_domain, limit=1)
             if existing:
                 continue
 
@@ -113,13 +135,22 @@ class TransportGpsSyncService(models.AbstractModel):
                 round(float(raw_speed) * 1.852, 2) if raw_speed else 0.0
             )
 
-            # Preserve source classification: simulated vs real
-            is_sim = (
-                vehicle.is_simulated
-                or bool(pos.get("attributes", {}).get("simulated"))
-                or pos.get("protocol") == "simulated"
+            # Preserve strict origin classification:
+            # Positions are ONLY "real" if physical origin is accredited
+            # and not marked mock/simulated by hardware or protocol.
+            is_accredited_physical = (
+                vehicle.is_physical_accredited and not vehicle.is_simulated
             )
-            source_val = "simulated" if is_sim else "real"
+            is_mock_or_sim = (
+                bool(pos.get("attributes", {}).get("simulated"))
+                or bool(pos.get("attributes", {}).get("mock"))
+                or pos.get("protocol") in ("simulated", "mock", "demo")
+            )
+            source_val = (
+                "real"
+                if (is_accredited_physical and not is_mock_or_sim)
+                else "simulated"
+            )
 
             try:
                 with self.env.cr.savepoint():

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 1. Marca y Modelo de Vehículos Demo -->
+        <record id="demo_vehicle_brand_mercedes" model="fleet.vehicle.model.brand">
+            <field name="name">Mercedes-Benz</field>
+        </record>
+
+        <record id="demo_vehicle_model_bus" model="fleet.vehicle.model">
+            <field name="name">Sprinter Transporte Universitario</field>
+            <field name="brand_id" ref="demo_vehicle_brand_mercedes"/>
+        </record>
+
+        <!-- 2. Conductores Demo (res.partner) -->
+        <record id="demo_driver_carlos" model="res.partner">
+            <field name="name">Carlos Morales (Conductor 1)</field>
+            <field name="email">carlos.morales@uta.edu.ec</field>
+            <field name="is_company" eval="False"/>
+        </record>
+
+        <record id="demo_driver_manuel" model="res.partner">
+            <field name="name">Manuel Pérez (Conductor 2)</field>
+            <field name="email">manuel.perez@uta.edu.ec</field>
+            <field name="is_company" eval="False"/>
+        </record>
+
+        <!-- 3. Vehículos Demo: 1 Real Acreditado + 1 Simulado -->
+        <record id="demo_vehicle_01_real" model="fleet.vehicle">
+            <field name="model_id" ref="demo_vehicle_model_bus"/>
+            <field name="license_plate">TBA-1001</field>
+            <field name="driver_id" ref="demo_driver_carlos"/>
+            <field name="traccar_device_id">101</field>
+            <field name="traccar_unique_id">UTA-BUS-DEMO0101</field>
+            <field name="gps_tracking_enabled" eval="True"/>
+            <field name="is_physical_accredited" eval="True"/>
+            <field name="is_simulated" eval="False"/>
+        </record>
+
+        <record id="demo_vehicle_02_sim" model="fleet.vehicle">
+            <field name="model_id" ref="demo_vehicle_model_bus"/>
+            <field name="license_plate">TBA-1002</field>
+            <field name="driver_id" ref="demo_driver_manuel"/>
+            <field name="traccar_device_id">102</field>
+            <field name="traccar_unique_id">UTA-BUS-DEMO0102</field>
+            <field name="gps_tracking_enabled" eval="True"/>
+            <field name="is_physical_accredited" eval="False"/>
+            <field name="is_simulated" eval="True"/>
+        </record>
+
+        <!-- 4. Rutas Demo: 3 Rutas en Ambato, Ecuador -->
+        <!-- RUTA 1: Huachi - Ingahurco -->
+        <record id="demo_route_1" model="transport.route">
+            <field name="code">RUT-01-HUA-ING</field>
+            <field name="name">Ruta 1: Campus Huachi - Campus Ingahurco</field>
+            <field name="origin_name">Campus Huachi</field>
+            <field name="destination_name">Campus Ingahurco</field>
+            <field name="direction">outbound</field>
+            <field name="description">Ruta troncal universitaria desde el campus sur Huachi hacia el campus norte Ingahurco pasando por el centro de Ambato.</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- RUTA 2: Huachi - Querochaca -->
+        <record id="demo_route_2" model="transport.route">
+            <field name="code">RUT-02-HUA-QUE</field>
+            <field name="name">Ruta 2: Campus Huachi - Campus Querochaca</field>
+            <field name="origin_name">Campus Huachi</field>
+            <field name="destination_name">Campus Querochaca (Cevallos)</field>
+            <field name="direction">outbound</field>
+            <field name="description">Conexión intercampus hacia la Facultad de Ciencias Agropecuarias en Querochaca.</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- RUTA 3: Circunvalación Centro -->
+        <record id="demo_route_3" model="transport.route">
+            <field name="code">RUT-03-CIR-CEN</field>
+            <field name="name">Ruta 3: Circunvalación Centro - Huachi</field>
+            <field name="origin_name">Campus Ingahurco</field>
+            <field name="destination_name">Campus Ingahurco</field>
+            <field name="direction">circular</field>
+            <field name="description">Recorrido circular de conexión urbana entre facultades periféricas y paradas céntricas.</field>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- 5. Versiones de Ruta Aprobadas -->
+        <!-- Versión Ruta 1 -->
+        <record id="demo_route_1_v1" model="transport.route.version">
+            <field name="route_id" ref="demo_route_1"/>
+            <field name="version_number">1</field>
+            <field name="state">approved</field>
+            <field name="stop_radius_m">30.0</field>
+            <field name="route_corridor_m">40.0</field>
+            <field name="lateness_tolerance_s">300</field>
+            <field name="gps_gap_threshold_s">180</field>
+            <field name="estimated_distance_m">4200.0</field>
+            <field name="active_for_new_trips" eval="True"/>
+            <field name="reference_polyline">[[-78.6272, -1.2618], [-78.6250, -1.2580], [-78.6265, -1.2425], [-78.6225, -1.2335]]</field>
+        </record>
+
+        <!-- Versión Ruta 2 -->
+        <record id="demo_route_2_v1" model="transport.route.version">
+            <field name="route_id" ref="demo_route_2"/>
+            <field name="version_number">1</field>
+            <field name="state">approved</field>
+            <field name="stop_radius_m">30.0</field>
+            <field name="route_corridor_m">40.0</field>
+            <field name="lateness_tolerance_s">300</field>
+            <field name="gps_gap_threshold_s">180</field>
+            <field name="estimated_distance_m">12500.0</field>
+            <field name="active_for_new_trips" eval="True"/>
+            <field name="reference_polyline">[[-78.6272, -1.2618], [-78.6180, -1.2750], [-78.6050, -1.3050], [-78.5940, -1.3390]]</field>
+        </record>
+
+        <!-- Versión Ruta 3 -->
+        <record id="demo_route_3_v1" model="transport.route.version">
+            <field name="route_id" ref="demo_route_3"/>
+            <field name="version_number">1</field>
+            <field name="state">approved</field>
+            <field name="stop_radius_m">30.0</field>
+            <field name="route_corridor_m">40.0</field>
+            <field name="lateness_tolerance_s">300</field>
+            <field name="gps_gap_threshold_s">180</field>
+            <field name="estimated_distance_m">5800.0</field>
+            <field name="active_for_new_trips" eval="True"/>
+            <field name="reference_polyline">[[-78.6225, -1.2335], [-78.6320, -1.2400], [-78.6180, -1.2380], [-78.6225, -1.2335]]</field>
+        </record>
+
+        <!-- Asignar versión activa a cada ruta -->
+        <record id="demo_route_1" model="transport.route">
+            <field name="current_version_id" ref="demo_route_1_v1"/>
+        </record>
+        <record id="demo_route_2" model="transport.route">
+            <field name="current_version_id" ref="demo_route_2_v1"/>
+        </record>
+        <record id="demo_route_3" model="transport.route">
+            <field name="current_version_id" ref="demo_route_3_v1"/>
+        </record>
+
+        <!-- 6. Puntos de Control por Versión (Mínimo 4 por cada una - RF-10) -->
+        <!-- Paradas Ruta 1 -->
+        <record id="demo_stop_r1_1" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_1_v1"/>
+            <field name="sequence">10</field>
+            <field name="name">Parada Origen: Puerta Principal Huachi</field>
+            <field name="stop_type">origin</field>
+            <field name="latitude">-1.261800</field>
+            <field name="longitude">-78.627200</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">0</field>
+        </record>
+        <record id="demo_stop_r1_2" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_1_v1"/>
+            <field name="sequence">20</field>
+            <field name="name">Control 1: Redondel Huachi Chico</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.258000</field>
+            <field name="longitude">-78.625000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">300</field>
+        </record>
+        <record id="demo_stop_r1_3" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_1_v1"/>
+            <field name="sequence">30</field>
+            <field name="name">Control 2: Parque Cevallos</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.242500</field>
+            <field name="longitude">-78.626500</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">900</field>
+        </record>
+        <record id="demo_stop_r1_4" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_1_v1"/>
+            <field name="sequence">40</field>
+            <field name="name">Parada Destino: Campus Ingahurco</field>
+            <field name="stop_type">destination</field>
+            <field name="latitude">-1.233500</field>
+            <field name="longitude">-78.622500</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">1500</field>
+        </record>
+
+        <!-- Paradas Ruta 2 -->
+        <record id="demo_stop_r2_1" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_2_v1"/>
+            <field name="sequence">10</field>
+            <field name="name">Parada Origen: Estación Huachi</field>
+            <field name="stop_type">origin</field>
+            <field name="latitude">-1.261800</field>
+            <field name="longitude">-78.627200</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">0</field>
+        </record>
+        <record id="demo_stop_r2_2" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_2_v1"/>
+            <field name="sequence">20</field>
+            <field name="name">Control 1: Paso Lateral Sur</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.275000</field>
+            <field name="longitude">-78.618000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">600</field>
+        </record>
+        <record id="demo_stop_r2_3" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_2_v1"/>
+            <field name="sequence">30</field>
+            <field name="name">Control 2: Entrada Benítez</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.305000</field>
+            <field name="longitude">-78.605000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">1200</field>
+        </record>
+        <record id="demo_stop_r2_4" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_2_v1"/>
+            <field name="sequence">40</field>
+            <field name="name">Parada Destino: Campus Querochaca</field>
+            <field name="stop_type">destination</field>
+            <field name="latitude">-1.339000</field>
+            <field name="longitude">-78.594000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">1800</field>
+        </record>
+
+        <!-- Paradas Ruta 3 -->
+        <record id="demo_stop_r3_1" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_3_v1"/>
+            <field name="sequence">10</field>
+            <field name="name">Parada Origen: Ingahurco Terminal</field>
+            <field name="stop_type">origin</field>
+            <field name="latitude">-1.233500</field>
+            <field name="longitude">-78.622500</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">0</field>
+        </record>
+        <record id="demo_stop_r3_2" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_3_v1"/>
+            <field name="sequence">20</field>
+            <field name="name">Control 1: Av. Miraflores</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.240000</field>
+            <field name="longitude">-78.632000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">400</field>
+        </record>
+        <record id="demo_stop_r3_3" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_3_v1"/>
+            <field name="sequence">30</field>
+            <field name="name">Control 2: Puente del Socavón</field>
+            <field name="stop_type">checkpoint</field>
+            <field name="latitude">-1.238000</field>
+            <field name="longitude">-78.618000</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">800</field>
+        </record>
+        <record id="demo_stop_r3_4" model="transport.route.stop">
+            <field name="route_version_id" ref="demo_route_3_v1"/>
+            <field name="sequence">40</field>
+            <field name="name">Parada Retorno: Ingahurco Norte</field>
+            <field name="stop_type">destination</field>
+            <field name="latitude">-1.233500</field>
+            <field name="longitude">-78.622500</field>
+            <field name="radius_m">30.0</field>
+            <field name="required" eval="True"/>
+            <field name="planned_offset_seconds">1200</field>
+        </record>
+    </data>
+</odoo>

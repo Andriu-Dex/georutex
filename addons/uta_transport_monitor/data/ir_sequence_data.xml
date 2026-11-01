@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Secuencia automática para código de recorrido -->
+        <record id="seq_transport_trip" model="ir.sequence">
+            <field name="name">Secuencia de Recorridos GeoRutex</field>
+            <field name="code">transport.trip</field>
+            <field name="prefix">REC-%(year)s-</field>
+            <field name="padding">4</field>
+            <field name="number_next">1</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range" eval="True"/>
+        </record>
+    </data>
+</odoo>

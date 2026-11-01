@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View: Recorridos -->
+    <record id="view_transport_trip_tree" model="ir.ui.view">
+        <field name="name">transport.trip.tree</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <tree string="Recorridos Operacionales" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'">
+                <field name="name"/>
+                <field name="scheduled_start_utc"/>
+                <field name="scheduled_end_utc"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="route_id"/>
+                <field name="route_version_id"/>
+                <field name="source_type" widget="badge" decoration-warning="source_type == 'simulated'" decoration-info="source_type == 'real'"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Kanban View: Recorridos (Optimizado para Conductor y vista móvil) -->
+    <record id="view_transport_trip_kanban" model="ir.ui.view">
+        <field name="name">transport.trip.kanban</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state" class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="route_id"/>
+                <field name="scheduled_start_utc"/>
+                <field name="scheduled_end_utc"/>
+                <field name="source_type"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click p-2">
+                            <div class="o_kanban_record_top mb-1">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title fs-5">
+                                        <field name="name"/>
+                                    </strong>
+                                    <span class="text-muted d-block">
+                                        <i class="fa fa-road me-1" title="Ruta"/>
+                                        <field name="route_id"/>
+                                    </span>
+                                </div>
+                                <span class="badge rounded-pill" t-attf-class="#{record.state.raw_value == 'completed' ? 'bg-success' : (record.state.raw_value == 'in_progress' ? 'bg-warning text-dark' : (record.state.raw_value == 'scheduled' ? 'bg-primary' : 'bg-secondary'))}">
+                                    <field name="state"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body my-2">
+                                <div>
+                                    <i class="fa fa-bus me-1 text-primary" title="Vehículo"/>
+                                    <strong>Vehículo: </strong><field name="vehicle_id"/>
+                                </div>
+                                <div>
+                                    <i class="fa fa-user me-1 text-secondary" title="Conductor"/>
+                                    <strong>Conductor: </strong><field name="driver_id"/>
+                                </div>
+                                <div class="mt-1">
+                                    <i class="fa fa-clock-o me-1 text-info" title="Horario Programado"/>
+                                    <span class="text-muted"><field name="scheduled_start_utc"/></span>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_bottom mt-1 pt-1 border-top">
+                                <div class="oe_kanban_bottom_left">
+                                    <span t-if="record.source_type.raw_value == 'simulated'" class="badge bg-warning text-dark">
+                                        Simulado
+                                    </span>
+                                    <span t-else="" class="badge bg-info text-white">
+                                        GPS Real
+                                    </span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <field name="position_count"/> pts GPS
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form View: Recorridos -->
+    <record id="view_transport_trip_form" model="ir.ui.view">
+        <field name="name">transport.trip.form</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <form string="Recorrido Operacional">
+                <header>
+                    <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
+                    <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                    <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}"/>
+                    <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Simulado" bg_color="bg-warning" attrs="{'invisible': [('source_type', '!=', 'simulated')]}"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-map-marker">
+                            <field name="stop_visit_count" widget="statinfo" string="Paradas"/>
+                        </button>
+                        <button class="oe_stat_button" icon="fa-location-arrow">
+                            <field name="position_count" widget="statinfo" string="Posiciones GPS"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" string="Código de Recorrido"/>
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Asignación Operacional">
+                            <field name="vehicle_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="driver_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="driver_user_id" options="{'no_create': True}" groups="uta_transport_monitor.group_transport_manager" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="source_type" widget="radio" options="{'horizontal': true}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group string="Ruta y Trazado">
+                            <field name="route_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="route_version_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="scheduled_distance_m"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Programación Horaria (UTC / Planificada)">
+                            <field name="scheduled_start_utc" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="scheduled_end_utc" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group string="Ejecución Real Observada (RF-20)">
+                            <field name="actual_start_utc"/>
+                            <field name="actual_end_utc"/>
+                            <field name="actual_distance_m"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Paradas y Controles Programados" name="stops_page">
+                            <field name="stop_visit_ids" readonly="1">
+                                <tree string="Visitas a Puntos de Control">
+                                    <field name="sequence"/>
+                                    <field name="stop_name"/>
+                                    <field name="stop_type" widget="badge" decoration-info="stop_type == 'checkpoint'" decoration-primary="stop_type == 'origin'" decoration-success="stop_type == 'destination'"/>
+                                    <field name="required" widget="boolean_toggle"/>
+                                    <field name="scheduled_at_utc"/>
+                                    <field name="first_arrival_utc"/>
+                                    <field name="delay_s"/>
+                                    <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Snapshot de Parámetros Congelados (RF-14)" name="parameters_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
+                            <group>
+                                <group string="Tolerancias Congeladas">
+                                    <field name="stop_radius_m"/>
+                                    <field name="route_corridor_m"/>
+                                    <field name="lateness_tolerance_s"/>
+                                    <field name="gps_gap_threshold_s"/>
+                                </group>
+                                <group string="JSON Inmutable">
+                                    <field name="parameter_snapshot_json" widget="ace" options="{'mode': 'json'}"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Observaciones Operacionales" name="notes_page">
+                            <field name="notes" placeholder="Registro de novedades del conductor o despachador..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View: Recorridos -->
+    <record id="view_transport_trip_search" model="ir.ui.view">
+        <field name="name">transport.trip.search</field>
+        <field name="model">transport.trip</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Recorridos">
+                <field name="name"/>
+                <field name="vehicle_id"/>
+                <field name="driver_id"/>
+                <field name="route_id"/>
+                <separator/>
+                <filter string="Mis Recorridos" name="filter_my_trips" domain="['|', ('driver_user_id', '=', uid), ('driver_id.user_ids', 'in', [uid])]"/>
+                <separator/>
+                <filter string="Borradores" name="filter_draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Programados" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
+                <filter string="En Curso" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Finalizados" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+                <separator/>
+                <filter string="Datos Reales" name="filter_real" domain="[('source_type', '=', 'real')]"/>
+                <filter string="Simulados" name="filter_simulated" domain="[('source_type', '=', 'simulated')]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
+                    <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Conductor" name="group_driver" context="{'group_by': 'driver_id'}"/>
+                    <filter string="Tipo de Datos" name="group_source" context="{'group_by': 'source_type'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Window: Todos los Recorridos (Administrador / Analista) -->
+    <record id="action_transport_trip" model="ir.actions.act_window">
+        <field name="name">Recorridos Operacionales</field>
+        <field name="res_model">transport.trip</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="search_view_id" ref="view_transport_trip_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Planifica y agenda un nuevo recorrido de transporte
+            </p>
+            <p>
+                Asigna vehículo, conductor, ruta, versión aprobada y horario previsto, con validación de conflictos y prevención de solapamientos (RF-12).
+            </p>
+        </field>
+    </record>
+
+    <!-- Action Window: Mis Recorridos (Conductor) -->
+    <record id="action_transport_trip_my_driver" model="ir.actions.act_window">
+        <field name="name">Mis Recorridos</field>
+        <field name="res_model">transport.trip</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="domain">['|', ('driver_user_id', '=', uid), ('driver_id.user_ids', 'in', [uid])]</field>
+        <field name="context">{'search_default_filter_my_trips': 1}</field>
+        <field name="search_view_id" ref="view_transport_trip_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No tienes recorridos asignados actualmente
+            </p>
+            <p>
+                Aquí podrás consultar tus recorridos asignados, consultar las paradas obligatorias y verificar tus horarios.
+            </p>
+        </field>
+    </record>
+</odoo>

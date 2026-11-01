@@ -1,8 +1,8 @@
 """Extension of Fleet vehicle model with GPS tracking capabilities."""
 
 from datetime import timedelta
-from odoo import fields, models
-from odoo.exceptions import UserError
+from odoo import api, fields, models
+from odoo.exceptions import UserError, ValidationError
 
 
 class FleetVehicle(models.Model):
@@ -29,6 +29,21 @@ class FleetVehicle(models.Model):
         string="Vehículo de Simulación",
         default=False,
         help="Si está activo, las telemetrías se marcan como simuladas.",
+    )
+    is_physical_accredited = fields.Boolean(
+        string="Origen Físico Acreditado",
+        default=False,
+        help="Acredita formalmente que este vehículo cuenta con validación "
+             "de hardware físico o transmisión móvil certificada.",
+    )
+    trip_ids = fields.One2many(
+        comodel_name="transport.trip",
+        inverse_name="vehicle_id",
+        string="Recorridos",
+    )
+    trip_count = fields.Integer(
+        string="Nº Recorridos",
+        compute="_compute_trip_count",
     )
     gps_connection_status = fields.Selection(
         selection=[
@@ -74,6 +89,39 @@ class FleetVehicle(models.Model):
         for vehicle in self:
             vehicle.position_count = len(vehicle.position_ids)
 
+    def _compute_trip_count(self):
+        for vehicle in self:
+            vehicle.trip_count = len(vehicle.trip_ids)
+
+    @api.constrains("traccar_device_id", "traccar_unique_id", "active")
+    def _check_traccar_device_uniqueness(self):
+        """Enforce RF-08: No two active vehicles can share device bindings."""
+        for vehicle in self:
+            if not vehicle.active:
+                continue
+            if vehicle.traccar_device_id:
+                clashing = self.search([
+                    ("id", "!=", vehicle.id),
+                    ("active", "=", True),
+                    ("traccar_device_id", "=", vehicle.traccar_device_id),
+                ], limit=1)
+                if clashing:
+                    raise ValidationError(
+                        f"El ID Traccar {vehicle.traccar_device_id} ya está "
+                        f"asignado a '{clashing.name}' (RF-08)."
+                    )
+            if vehicle.traccar_unique_id:
+                clashing = self.search([
+                    ("id", "!=", vehicle.id),
+                    ("active", "=", True),
+                    ("traccar_unique_id", "=", vehicle.traccar_unique_id),
+                ], limit=1)
+                if clashing:
+                    raise ValidationError(
+                        f"El identificador '{vehicle.traccar_unique_id}' "
+                        f"ya está asignado a '{clashing.name}' (RF-08)."
+                    )
+
     def _compute_gps_status(self):
         now = fields.Datetime.now()
         for vehicle in self:
@@ -91,10 +139,10 @@ class FleetVehicle(models.Model):
                     vehicle.gps_connection_status = "offline"
 
     def action_generate_secure_unique_id(self):
-        """Generate a cryptographically random, non-predictable uniqueId."""
+        """Generate non-predictable uniqueId with 64-bit entropy."""
         import secrets
         for vehicle in self:
-            token = secrets.token_hex(4).upper()
+            token = secrets.token_hex(8).upper()
             vehicle.traccar_unique_id = f"UTA-BUS-{token}"
 
     def action_test_traccar_connection(self):
@@ -158,4 +206,14 @@ class FleetVehicle(models.Model):
             "uta_transport_monitor.action_transport_vehicle_position"
         )
         action["domain"] = [("vehicle_id", "=", self.id)]
+        return action
+
+    def action_view_trips(self):
+        """Open the list of operational trips associated with this vehicle."""
+        self.ensure_one()
+        action = self.env["ir.actions.act_window"]._for_xml_id(
+            "uta_transport_monitor.action_transport_trip"
+        )
+        action["domain"] = [("vehicle_id", "=", self.id)]
+        action["context"] = {"default_vehicle_id": self.id}
         return action

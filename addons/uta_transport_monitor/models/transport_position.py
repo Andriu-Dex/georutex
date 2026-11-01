@@ -22,6 +22,13 @@ class TransportVehiclePosition(models.Model):
         ondelete="cascade",
         index=True,
     )
+    trip_id = fields.Many2one(
+        comodel_name="transport.trip",
+        string="Recorrido Asignado",
+        ondelete="set null",
+        index=True,
+        help="Recorrido operacional al que se vincula esta posición.",
+    )
     traccar_device_id = fields.Integer(
         string="ID Dispositivo Traccar",
         index=True,

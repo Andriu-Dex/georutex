@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Tree View: Rutas -->
+    <record id="view_transport_route_tree" model="ir.ui.view">
+        <field name="name">transport.route.tree</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <tree string="Rutas de Transporte" decoration-muted="not active">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="origin_name"/>
+                <field name="destination_name"/>
+                <field name="direction" widget="badge" decoration-info="direction == 'outbound'" decoration-warning="direction == 'inbound'" decoration-success="direction == 'circular'"/>
+                <field name="current_version_id"/>
+                <field name="version_count"/>
+                <field name="trip_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View: Rutas -->
+    <record id="view_transport_route_form" model="ir.ui.view">
+        <field name="name">transport.route.form</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <form string="Ruta de Transporte">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_versions" type="object" class="oe_stat_button" icon="fa-code-fork">
+                            <field name="version_count" widget="statinfo" string="Versiones"/>
+                        </button>
+                        <button name="action_view_trips" type="object" class="oe_stat_button" icon="fa-road">
+                            <field name="trip_count" widget="statinfo" string="Recorridos"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only" string="Nombre de la Ruta"/>
+                        <h1>
+                            <field name="name" placeholder="Ej. Ruta 1: Campus Huachi - Campus Ingahurco"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Identificación y Sentido">
+                            <field name="code" placeholder="Ej. RUT-HUA-ING"/>
+                            <field name="direction"/>
+                            <field name="current_version_id" options="{'no_create': True}"/>
+                            <field name="active" widget="boolean_toggle"/>
+                        </group>
+                        <group string="Cabeceras Operacionales">
+                            <field name="origin_name" placeholder="Ej. Campus Huachi"/>
+                            <field name="destination_name" placeholder="Ej. Campus Ingahurco"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripción y Notas" name="description_page">
+                            <field name="description" placeholder="Instrucciones operacionales, características de la vía o restricciones de horario..."/>
+                        </page>
+                        <page string="Historial de Versiones" name="versions_page">
+                            <field name="version_ids" readonly="1">
+                                <tree string="Versiones de Ruta">
+                                    <field name="version_number"/>
+                                    <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'archived'"/>
+                                    <field name="stop_count"/>
+                                    <field name="estimated_distance_m"/>
+                                    <field name="approved_at"/>
+                                    <field name="active_for_new_trips" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View: Rutas -->
+    <record id="view_transport_route_search" model="ir.ui.view">
+        <field name="name">transport.route.search</field>
+        <field name="model">transport.route</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Rutas">
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <field name="code"/>
+                <field name="origin_name"/>
+                <field name="destination_name"/>
+                <separator/>
+                <filter string="Activas" name="filter_active" domain="[('active', '=', True)]"/>
+                <filter string="Archivadas" name="filter_inactive" domain="[('active', '=', False)]"/>
+                <separator/>
+                <filter string="Ida" name="filter_outbound" domain="[('direction', '=', 'outbound')]"/>
+                <filter string="Vuelta" name="filter_inbound" domain="[('direction', '=', 'inbound')]"/>
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Sentido" name="group_direction" context="{'group_by': 'direction'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action Window: Rutas -->
+    <record id="action_transport_route" model="ir.actions.act_window">
+        <field name="name">Rutas de Transporte</field>
+        <field name="res_model">transport.route</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_transport_route_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Registra la primera ruta de transporte institucional
+            </p>
+            <p>
+                Define rutas con origen, destino, sentido y versiones geométricas aprobadas con al menos 4 puntos de control (RF-09, RF-10).
+            </p>
+        </field>
+    </record>
+</odoo>
