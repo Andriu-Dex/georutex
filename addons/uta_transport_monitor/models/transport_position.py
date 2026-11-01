@@ -1,6 +1,8 @@
 """Model for storing raw GPS telemetries from Traccar or simulated fixtures."""
 
-from odoo import fields, models
+from datetime import timezone
+import zoneinfo
+from odoo import api, fields, models
 
 
 class TransportVehiclePosition(models.Model):
@@ -29,6 +31,18 @@ class TransportVehiclePosition(models.Model):
         index=True,
         help="Recorrido operacional al que se vincula esta posición.",
     )
+    association_status = fields.Selection(
+        selection=[
+            ("unassigned", "Sin Asignar"),
+            ("associated", "Asociado"),
+            ("ambiguous", "Ambiguo / En Conflicto"),
+        ],
+        string="Estado de Asociación",
+        default="unassigned",
+        required=True,
+        index=True,
+        help="Trazabilidad sobre la asignación del punto al recorrido.",
+    )
     traccar_device_id = fields.Integer(
         string="ID Dispositivo Traccar",
         index=True,
@@ -41,6 +55,11 @@ class TransportVehiclePosition(models.Model):
         string="Hora GPS (UTC)",
         required=True,
         index=True,
+    )
+    fix_time_local = fields.Char(
+        string="Hora Local (Ecuador)",
+        compute="_compute_fix_time_local",
+        store=False,
     )
     server_time = fields.Datetime(
         string="Hora Servidor (UTC)",
@@ -63,6 +82,15 @@ class TransportVehiclePosition(models.Model):
         string="Altitud (m)",
         digits=(6, 2),
     )
+    accuracy = fields.Float(
+        string="Precisión (m)",
+        digits=(6, 2),
+        help="Incertidumbre horizontal HDOP/precisión estimada.",
+    )
+    heading = fields.Float(
+        string="Rumbo (°)",
+        digits=(5, 1),
+    )
     is_valid = fields.Boolean(
         string="Posición Válida",
         default=True,
@@ -71,9 +99,10 @@ class TransportVehiclePosition(models.Model):
         selection=[
             ("real", "Datos Reales / GPS"),
             ("simulated", "Simulado"),
+            ("unverified", "No Verificado"),
         ],
         string="Origen de Datos",
-        default="real",
+        default="unverified",
         required=True,
         index=True,
     )
@@ -89,6 +118,17 @@ class TransportVehiclePosition(models.Model):
             "La posición para este dispositivo y hora ya existe.",
         )
     ]
+
+    @api.depends("fix_time")
+    def _compute_fix_time_local(self):
+        tz_guayaquil = zoneinfo.ZoneInfo("America/Guayaquil")
+        for rec in self:
+            if rec.fix_time:
+                utc_aware = rec.fix_time.replace(tzinfo=timezone.utc)
+                local_dt = utc_aware.astimezone(tz_guayaquil)
+                rec.fix_time_local = local_dt.strftime("%Y-%m-%d %H:%M:%S ECT")
+            else:
+                rec.fix_time_local = ""
 
     def _compute_name(self):
         for rec in self:

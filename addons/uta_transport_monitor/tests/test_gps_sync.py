@@ -144,7 +144,7 @@ class TestGpsSync(TransactionCase):
             self.sync_service.sync_vehicle_positions(unaccredited_vehicle)
             self.assertEqual(len(unaccredited_vehicle.position_ids), 1)
             self.assertEqual(
-                unaccredited_vehicle.position_ids[0].source, "simulated"
+                unaccredited_vehicle.position_ids[0].source, "unverified"
             )
 
     def test_mock_attributes_tagged_simulated(self):
@@ -192,10 +192,10 @@ class TestGpsSync(TransactionCase):
         self.assertEqual(self.vehicle.gps_connection_status, "offline")
 
     def test_generate_secure_unique_id(self):
-        """Test unique ID generation with 64 bits of entropy."""
+        """Test unique ID generation with 128 bits of entropy (RF-08)."""
         self.vehicle.action_generate_secure_unique_id()
         self.assertTrue(self.vehicle.traccar_unique_id.startswith("UTA-BUS-"))
-        self.assertEqual(len(self.vehicle.traccar_unique_id), 24)
+        self.assertEqual(len(self.vehicle.traccar_unique_id), 40)
 
     def test_traccar_device_uniqueness_constraint(self):
         """RF-08: No two active vehicles can share Traccar device bindings."""

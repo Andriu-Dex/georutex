@@ -22,7 +22,7 @@
                         string="Generar uniqueId Seguro"
                         class="btn-secondary"
                         groups="uta_transport_monitor.group_transport_manager"
-                        help="Genera un identificador con 64 bits de entropía para Traccar Client."/>
+                        help="Genera un identificador con 128 bits de entropía para Traccar Client."/>
             </xpath>
 
             <!-- Smart button in button box -->
@@ -60,11 +60,21 @@
                         </group>
                         <group string="Última Telemetría Recibida">
                             <field name="last_gps_fix_time"/>
+                            <field name="last_gps_time_local"/>
+                            <field name="gps_freshness_state"
+                                   widget="badge"
+                                   decoration-success="gps_freshness_state == 'fresh'"
+                                   decoration-warning="gps_freshness_state == 'stale'"
+                                   decoration-danger="gps_freshness_state == 'offline'"/>
+                            <field name="last_gps_age_seconds"/>
                             <field name="last_gps_latitude"/>
                             <field name="last_gps_longitude"/>
                             <field name="last_gps_speed"/>
                         </group>
                     </group>
+                </page>
+                <page string="Ubicación en Vivo" name="vehicle_live_map">
+                    <field name="id" widget="vehicle_map_widget" nolabel="1"/>
                 </page>
                 <page string="Recorridos Asignados" name="georutex_trips">
                     <field name="trip_ids" readonly="1">

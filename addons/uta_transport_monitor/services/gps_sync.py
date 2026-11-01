@@ -49,7 +49,7 @@ class TransportGpsSyncService(models.AbstractModel):
         return dt_utc.replace(tzinfo=None)
 
     def sync_vehicle_positions(
-        self, vehicle, from_time=None, to_time=None
+        self, vehicle, from_time=None, to_time=None, target_trip=None
     ) -> int:
         """Synchronize positions for a single vehicle."""
         vehicle.ensure_one()
@@ -135,7 +135,7 @@ class TransportGpsSyncService(models.AbstractModel):
                 round(float(raw_speed) * 1.852, 2) if raw_speed else 0.0
             )
 
-            # Preserve strict origin classification:
+            # Preserve strict origin classification (Section 2.1 & 3):
             # Positions are ONLY "real" if physical origin is accredited
             # and not marked mock/simulated by hardware or protocol.
             is_accredited_physical = (
@@ -146,17 +146,50 @@ class TransportGpsSyncService(models.AbstractModel):
                 or bool(pos.get("attributes", {}).get("mock"))
                 or pos.get("protocol") in ("simulated", "mock", "demo")
             )
-            source_val = (
-                "real"
-                if (is_accredited_physical and not is_mock_or_sim)
-                else "simulated"
+            if is_accredited_physical and not is_mock_or_sim:
+                source_val = "real"
+            elif vehicle.is_simulated or is_mock_or_sim:
+                source_val = "simulated"
+            else:
+                source_val = "unverified"
+
+            # Determine trip association and traceability
+            matched_trip = None
+            assoc_status = "unassigned"
+            if (
+                target_trip
+                and target_trip.scheduled_start_utc <= fix_time
+                <= target_trip.scheduled_end_utc
+            ):
+                matched_trip = target_trip
+                assoc_status = "associated"
+            else:
+                candidate_trips = self.env["transport.trip"].search([
+                    ("vehicle_id", "=", vehicle.id),
+                    ("state", "in", ["scheduled", "in_progress", "completed"]),
+                    ("scheduled_start_utc", "<=", fix_time),
+                    ("scheduled_end_utc", ">=", fix_time),
+                ])
+                if len(candidate_trips) == 1:
+                    matched_trip = candidate_trips[0]
+                    assoc_status = "associated"
+                elif len(candidate_trips) > 1:
+                    assoc_status = "ambiguous"
+
+            raw_acc = pos.get("accuracy") or pos.get("attributes", {}).get(
+                "accuracy", 0.0
             )
+            heading_val = pos.get("course", 0.0)
 
             try:
                 with self.env.cr.savepoint():
                     created = position_model.create(
                         {
                             "vehicle_id": vehicle.id,
+                            "trip_id": (
+                                matched_trip.id if matched_trip else False
+                            ),
+                            "association_status": assoc_status,
                             "traccar_device_id": device_id,
                             "traccar_position_id": pos_id,
                             "fix_time": fix_time,
@@ -165,6 +198,10 @@ class TransportGpsSyncService(models.AbstractModel):
                             "longitude": pos.get("longitude", 0.0),
                             "speed": speed_kmh,
                             "altitude": pos.get("altitude", 0.0),
+                            "accuracy": float(raw_acc) if raw_acc else 0.0,
+                            "heading": (
+                                float(heading_val) if heading_val else 0.0
+                            ),
                             "is_valid": pos.get("valid", True),
                             "source": source_val,
                             "protocol": pos.get("protocol", "osmand"),

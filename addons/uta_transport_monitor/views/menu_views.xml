@@ -12,6 +12,19 @@
               parent="menu_georutex_root"
               sequence="10"/>
 
+    <!-- Client action for Live Fleet Map (RF-16) -->
+    <record id="action_transport_live_fleet_map" model="ir.actions.client">
+        <field name="name">Mapa en Vivo de Flota</field>
+        <field name="tag">uta_transport_live_fleet_map</field>
+        <field name="target">main</field>
+    </record>
+
+    <menuitem id="menu_georutex_live_fleet_map"
+              name="Mapa en Vivo"
+              parent="menu_georutex_operations"
+              action="action_transport_live_fleet_map"
+              sequence="5"/>
+
     <menuitem id="menu_georutex_trips"
               name="Recorridos Operacionales"
               parent="menu_georutex_operations"

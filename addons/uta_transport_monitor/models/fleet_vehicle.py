@@ -1,6 +1,8 @@
 """Extension of Fleet vehicle model with GPS tracking capabilities."""
 
-from datetime import timedelta
+from datetime import timedelta, timezone
+import secrets
+import zoneinfo
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -55,6 +57,26 @@ class FleetVehicle(models.Model):
         string="Estado de Conexión GPS",
         compute="_compute_gps_status",
         store=True,
+    )
+    gps_freshness_state = fields.Selection(
+        selection=[
+            ("fresh", "En vivo (< 3 min)"),
+            ("stale", "Sin reporte reciente (3-15 min)"),
+            ("offline", "Sin señal (> 15 min)"),
+            ("no_data", "Sin posiciones registradas"),
+            ("unlinked", "No vinculado"),
+        ],
+        string="Frescura de Señal GPS",
+        compute="_compute_gps_status",
+        store=False,
+    )
+    last_gps_age_seconds = fields.Integer(
+        string="Antigüedad GPS (segundos)",
+        compute="_compute_gps_status",
+    )
+    last_gps_time_local = fields.Char(
+        string="Última Hora GPS (Ecuador)",
+        compute="_compute_last_gps_time_local",
     )
     last_gps_fix_time = fields.Datetime(
         string="Última Posición GPS (UTC)",
@@ -127,10 +149,16 @@ class FleetVehicle(models.Model):
         for vehicle in self:
             if not vehicle.traccar_device_id and not vehicle.traccar_unique_id:
                 vehicle.gps_connection_status = "unlinked"
+                vehicle.gps_freshness_state = "unlinked"
+                vehicle.last_gps_age_seconds = 0
             elif not vehicle.last_gps_fix_time:
                 vehicle.gps_connection_status = "offline"
+                vehicle.gps_freshness_state = "no_data"
+                vehicle.last_gps_age_seconds = 0
             else:
                 elapsed = now - vehicle.last_gps_fix_time
+                age_secs = int(elapsed.total_seconds())
+                vehicle.last_gps_age_seconds = max(0, age_secs)
                 if elapsed <= timedelta(minutes=5):
                     vehicle.gps_connection_status = "online"
                 elif elapsed <= timedelta(hours=1):
@@ -138,12 +166,112 @@ class FleetVehicle(models.Model):
                 else:
                     vehicle.gps_connection_status = "offline"
 
-    def action_generate_secure_unique_id(self):
-        """Generate non-predictable uniqueId with 64-bit entropy."""
-        import secrets
+                # RF-06: Freshness evaluation against gap threshold (180s)
+                if age_secs <= 180:
+                    vehicle.gps_freshness_state = "fresh"
+                elif age_secs <= 900:
+                    vehicle.gps_freshness_state = "stale"
+                else:
+                    vehicle.gps_freshness_state = "offline"
+
+    @api.depends("last_gps_fix_time")
+    def _compute_last_gps_time_local(self):
+        tz_guayaquil = zoneinfo.ZoneInfo("America/Guayaquil")
         for vehicle in self:
-            token = secrets.token_hex(8).upper()
+            if vehicle.last_gps_fix_time:
+                utc_aware = vehicle.last_gps_fix_time.replace(
+                    tzinfo=timezone.utc
+                )
+                local_dt = utc_aware.astimezone(tz_guayaquil)
+                vehicle.last_gps_time_local = local_dt.strftime(
+                    "%Y-%m-%d %H:%M:%S ECT"
+                )
+            else:
+                vehicle.last_gps_time_local = "Sin registro"
+
+    def action_generate_secure_unique_id(self):
+        """Generate non-predictable uniqueId with 128-bit entropy (RF-08)."""
+        for vehicle in self:
+            token = secrets.token_hex(16).upper()
             vehicle.traccar_unique_id = f"UTA-BUS-{token}"
+
+    @api.model
+    def get_live_fleet_positions(self):
+        """Return live telemetry for all tracked vehicles (RF-15, RF-16)."""
+        vehicles = self.search([
+            ("gps_tracking_enabled", "=", True),
+            ("active", "=", True),
+        ])
+        results = []
+        for v in vehicles:
+            results.append({
+                "vehicle_id": v.id,
+                "name": v.name,
+                "license_plate": v.license_plate or "",
+                "driver_name": (
+                    v.driver_id.name if v.driver_id else "Sin conductor"
+                ),
+                "latitude": v.last_gps_latitude or 0.0,
+                "longitude": v.last_gps_longitude or 0.0,
+                "speed": v.last_gps_speed or 0.0,
+                "fix_time_utc": (
+                    v.last_gps_fix_time.strftime("%Y-%m-%d %H:%M:%S")
+                    if v.last_gps_fix_time
+                    else None
+                ),
+                "fix_time_local": v.last_gps_time_local or "Sin datos",
+                "freshness": v.gps_freshness_state or "no_data",
+                "age_seconds": v.last_gps_age_seconds or 0,
+                "is_simulated": v.is_simulated,
+                "is_physical_accredited": v.is_physical_accredited,
+                "has_coordinates": bool(
+                    v.last_gps_latitude and v.last_gps_longitude
+                ),
+            })
+        return results
+
+    def get_vehicle_live_map_data(self):
+        """Return map telemetry and recent history points for this vehicle."""
+        self.ensure_one()
+        recent_positions = self.env["transport.vehicle.position"].search([
+            ("vehicle_id", "=", self.id),
+        ], order="fix_time desc", limit=50)
+
+        history_trail = []
+        for p in reversed(recent_positions):
+            history_trail.append({
+                "id": p.id,
+                "latitude": p.latitude,
+                "longitude": p.longitude,
+                "speed": p.speed,
+                "fix_time_utc": p.fix_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "fix_time_local": p.fix_time_local,
+                "source": p.source,
+                "is_valid": p.is_valid,
+            })
+
+        return {
+            "vehicle_id": self.id,
+            "name": self.name,
+            "license_plate": self.license_plate or "",
+            "driver_name": (
+                self.driver_id.name if self.driver_id else "Sin conductor"
+            ),
+            "latitude": self.last_gps_latitude or 0.0,
+            "longitude": self.last_gps_longitude or 0.0,
+            "speed": self.last_gps_speed or 0.0,
+            "fix_time_utc": (
+                self.last_gps_fix_time.strftime("%Y-%m-%d %H:%M:%S")
+                if self.last_gps_fix_time
+                else None
+            ),
+            "fix_time_local": self.last_gps_time_local or "Sin datos",
+            "freshness": self.gps_freshness_state or "no_data",
+            "age_seconds": self.last_gps_age_seconds or 0,
+            "is_simulated": self.is_simulated,
+            "is_physical_accredited": self.is_physical_accredited,
+            "history_trail": history_trail,
+        }
 
     def action_test_traccar_connection(self):
         """Test API connectivity and confirm bound device existence."""

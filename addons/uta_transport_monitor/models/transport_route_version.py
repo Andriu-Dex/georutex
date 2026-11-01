@@ -201,6 +201,16 @@ class TransportRouteVersion(models.Model):
                     )
         return super().write(vals)
 
+    def unlink(self):
+        for ver in self:
+            if ver.state == "approved" or ver.trip_count > 0:
+                raise UserError(
+                    f"No es posible eliminar la versión '{ver.name}' porque "
+                    f"está aprobada o cuenta con {ver.trip_count} recorridos "
+                    f"asociados. Archívela en su lugar (RF-14)."
+                )
+        return super().unlink()
+
     def action_compute_distance_from_polyline(self):
         """Compute estimated distance in meters from reference polyline."""
         self.ensure_one()

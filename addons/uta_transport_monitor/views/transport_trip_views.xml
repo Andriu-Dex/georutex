@@ -95,6 +95,7 @@
                     <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
                     <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                    <button name="action_sync_trip_gps" string="Sincronizar GPS" type="object" class="btn-info" icon="fa-refresh" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
                     <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}"/>
                     <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
@@ -140,6 +141,9 @@
                         </group>
                     </group>
                     <notebook>
+                        <page string="Mapa del Recorrido" name="map_page">
+                            <field name="id" widget="trip_map_widget" nolabel="1"/>
+                        </page>
                         <page string="Paradas y Controles Programados" name="stops_page">
                             <field name="stop_visit_ids" readonly="1">
                                 <tree string="Visitas a Puntos de Control">
@@ -151,6 +155,19 @@
                                     <field name="first_arrival_utc"/>
                                     <field name="delay_s"/>
                                     <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Telemetrías GPS Asociadas" name="positions_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
+                            <field name="position_ids" readonly="1">
+                                <tree string="Posiciones GPS" limit="20">
+                                    <field name="fix_time"/>
+                                    <field name="fix_time_local"/>
+                                    <field name="latitude"/>
+                                    <field name="longitude"/>
+                                    <field name="speed"/>
+                                    <field name="source" widget="badge" decoration-success="source == 'real'" decoration-warning="source == 'simulated'" decoration-info="source == 'unverified'"/>
+                                    <field name="association_status" widget="badge" decoration-success="association_status == 'associated'" decoration-danger="association_status == 'ambiguous'"/>
                                 </tree>
                             </field>
                         </page>

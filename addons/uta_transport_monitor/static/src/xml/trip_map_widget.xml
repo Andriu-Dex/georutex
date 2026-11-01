@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Template for Trip Map Widget inside transport.trip form -->
+    <t t-name="uta_transport_monitor.TripMapWidget" owl="1">
+        <div class="o_georutex_map_container">
+            <div class="o_georutex_map_toolbar">
+                <div class="o_georutex_map_stats">
+                    <span class="fw-bold">Mapa Operacional del Recorrido</span>
+                    <t t-if="props.record and props.record.data.source_type == 'real'">
+                        <span class="o_georutex_badge o_georutex_badge_real">
+                            <i class="fa fa-satellite-dish me-1"/>GPS Real
+                        </span>
+                    </t>
+                    <t t-else="">
+                        <span class="o_georutex_badge o_georutex_badge_simulated">
+                            <i class="fa fa-desktop me-1"/>Simulado
+                        </span>
+                    </t>
+                    <span class="text-muted">
+                        Puntos capturados: <b t-esc="props.record and props.record.data.position_count or 0"/>
+                    </span>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="onFitBounds" title="Ajustar encuadre del mapa">
+                        <i class="fa fa-crosshairs me-1"/>Enfocar Ruta
+                    </button>
+                </div>
+            </div>
+            <div t-ref="mapContainer" class="o_georutex_map"/>
+        </div>
+    </t>
+
+    <!-- Template for Vehicle Map Widget inside fleet.vehicle form -->
+    <t t-name="uta_transport_monitor.VehicleMapWidget" owl="1">
+        <div class="o_georutex_map_container">
+            <div class="o_georutex_map_toolbar">
+                <div class="o_georutex_map_stats">
+                    <span class="fw-bold">Última Ubicación GPS e Historial Reciente</span>
+                    <t t-if="props.record and props.record.data.gps_freshness_state == 'fresh'">
+                        <span class="o_georutex_badge o_georutex_badge_fresh">
+                            <i class="fa fa-check-circle me-1"/>En Vivo (&lt; 3 min)
+                        </span>
+                    </t>
+                    <t t-elif="props.record and props.record.data.gps_freshness_state == 'stale'">
+                        <span class="o_georutex_badge o_georutex_badge_stale">
+                            <i class="fa fa-clock me-1"/>Sin reporte reciente
+                        </span>
+                    </t>
+                    <t t-elif="props.record and props.record.data.gps_freshness_state == 'offline'">
+                        <span class="o_georutex_badge o_georutex_badge_offline">
+                            <i class="fa fa-ban me-1"/>Sin señal (&gt; 15 min)
+                        </span>
+                    </t>
+                    <t t-else="">
+                        <span class="badge bg-secondary">Sin datos GPS</span>
+                    </t>
+                </div>
+            </div>
+            <div t-ref="vehicleMapContainer" class="o_georutex_map"/>
+        </div>
+    </t>
+
+</templates>
+

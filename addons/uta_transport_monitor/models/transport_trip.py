@@ -291,6 +291,27 @@ class TransportTrip(models.Model):
                         f"el recorrido '{c_name}' en [{c_start} - {c_end}]."
                     )
 
+            # 3. Check Traccar device overlap (CP-27, RF-08, RF-12)
+            dev_id = trip.vehicle_id.traccar_device_id
+            if dev_id:
+                device_conflict = self.search([
+                    ("id", "!=", trip.id),
+                    ("vehicle_id.traccar_device_id", "=", dev_id),
+                    ("state", "in", active_states),
+                    ("scheduled_start_utc", "<", trip.scheduled_end_utc),
+                    ("scheduled_end_utc", ">", trip.scheduled_start_utc),
+                ], limit=1)
+                if (
+                    device_conflict
+                    and device_conflict.vehicle_id != trip.vehicle_id
+                ):
+                    raise ValidationError(
+                        f"Conflicto de Dispositivo (RF-08/12): El dispositivo "
+                        f"Traccar {dev_id} ya está asignado a "
+                        f"'{device_conflict.vehicle_id.name}' en el recorrido "
+                        f"'{device_conflict.name}'."
+                    )
+
     def _freeze_parameter_snapshot(self):
         """Freeze canonical evaluation parameters into snapshot (RF-14)."""
         for trip in self:
@@ -420,3 +441,121 @@ class TransportTrip(models.Model):
                 )
             trip.write({"state": "draft"})
         return True
+
+    def action_sync_trip_gps(self):
+        """Sync telemetry for this trip's time window and associate points."""
+        self.ensure_one()
+        trip_service = self.env["transport.trip.service"]
+        count = trip_service.sync_trip_gps_telemetry(self)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": "Sincronización de Recorrido",
+                "message": (
+                    f"Se procesaron {count} nuevas posiciones para el "
+                    f"recorrido {self.name}."
+                ),
+                "type": "info",
+                "sticky": False,
+            },
+        }
+
+    def get_map_data(self):
+        """Return structured GeoJSON and telemetry payload for Leaflet map."""
+        self.ensure_one()
+        ref_polyline = []
+        if self.route_version_id and self.route_version_id.reference_polyline:
+            try:
+                data = json.loads(self.route_version_id.reference_polyline)
+                raw_coords = (
+                    data.get("coordinates")
+                    if isinstance(data, dict)
+                    and data.get("type") == "LineString"
+                    else data
+                )
+                if isinstance(raw_coords, list):
+                    for pt in raw_coords:
+                        if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                            ref_polyline.append([pt[1], pt[0]])
+            except Exception:
+                ref_polyline = []
+
+        stops_data = []
+        for stop in self.stop_visit_ids.sorted(key=lambda s: s.sequence):
+            stops_data.append({
+                "id": stop.id,
+                "name": stop.stop_name,
+                "sequence": stop.sequence,
+                "stop_type": stop.stop_type,
+                "latitude": stop.latitude,
+                "longitude": stop.longitude,
+                "radius_m": stop.radius_m,
+                "required": stop.required,
+                "scheduled_at": (
+                    stop.scheduled_at_utc.strftime("%Y-%m-%d %H:%M:%S")
+                    if stop.scheduled_at_utc
+                    else ""
+                ),
+                "status": stop.status,
+            })
+
+        positions_data = []
+        latest_pos = None
+        for pos in self.position_ids.sorted(key=lambda p: (p.fix_time, p.id)):
+            pt_dict = {
+                "id": pos.id,
+                "latitude": pos.latitude,
+                "longitude": pos.longitude,
+                "speed": pos.speed,
+                "altitude": pos.altitude,
+                "accuracy": pos.accuracy,
+                "fix_time_utc": pos.fix_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "fix_time_local": pos.fix_time_local or "",
+                "source": pos.source,
+                "is_valid": pos.is_valid,
+            }
+            positions_data.append(pt_dict)
+            latest_pos = pt_dict
+
+        return {
+            "trip_id": self.id,
+            "name": self.name,
+            "state": self.state,
+            "source_type": self.source_type,
+            "vehicle_id": self.vehicle_id.id if self.vehicle_id else False,
+            "vehicle_name": self.vehicle_id.name if self.vehicle_id else "",
+            "vehicle_plate": (
+                self.vehicle_id.license_plate if self.vehicle_id else ""
+            ),
+            "driver_name": (
+                self.driver_id.name if self.driver_id else "Sin conductor"
+            ),
+            "route_name": self.route_id.name if self.route_id else "",
+            "route_code": self.route_id.code if self.route_id else "",
+            "scheduled_start": (
+                self.scheduled_start_utc.strftime("%Y-%m-%d %H:%M:%S")
+                if self.scheduled_start_utc
+                else ""
+            ),
+            "scheduled_end": (
+                self.scheduled_end_utc.strftime("%Y-%m-%d %H:%M:%S")
+                if self.scheduled_end_utc
+                else ""
+            ),
+            "reference_polyline": ref_polyline,
+            "stops": stops_data,
+            "positions": positions_data,
+            "position_count": len(positions_data),
+            "latest_position": latest_pos,
+            "freshness": (
+                self.vehicle_id.gps_freshness_state
+                if self.vehicle_id
+                else "no_data"
+            ),
+            "is_physical_accredited": (
+                self.vehicle_id.is_physical_accredited
+                if self.vehicle_id
+                else False
+            ),
+        }

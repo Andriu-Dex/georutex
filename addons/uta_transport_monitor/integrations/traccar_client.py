@@ -7,6 +7,7 @@ timeouts, and typed exceptions. Completely decoupled from Odoo ORM.
 import base64
 import json
 import logging
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -45,13 +46,15 @@ class TraccarClient:
         base_url: str,
         username: str,
         password: str,
-        timeout: int = 10,
+        timeout: int = 5,
+        max_retries: int = 3,
     ):
         """Initialize Traccar client."""
         self.base_url = base_url.rstrip("/")
         self.username = username
         self.password = password
         self.timeout = timeout
+        self.max_retries = max_retries
         self._auth_header = self._build_auth_header()
 
     def _build_auth_header(self) -> str:
@@ -66,7 +69,7 @@ class TraccarClient:
         params: Optional[Dict[str, Any]] = None,
         data: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        """Perform an authenticated HTTP request to Traccar."""
+        """Perform an authenticated HTTP request to Traccar with retries."""
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         if params:
             query_string = urllib.parse.urlencode(params)
@@ -82,34 +85,50 @@ class TraccarClient:
             headers["Content-Type"] = "application/json"
             body = json.dumps(data).encode("utf-8")
 
-        req = urllib.request.Request(
-            url=url,
-            data=body,
-            headers=headers,
-            method=method,
-        )
-
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                resp_bytes = resp.read()
-                if not resp_bytes:
-                    return None
-                return json.loads(resp_bytes.decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            if exc.code in (401, 403):
-                raise TraccarAuthError(
-                    f"Authentication failed for {self.username}: "
-                    f"HTTP {exc.code}"
+        last_error = None
+        for attempt in range(self.max_retries):
+            req = urllib.request.Request(
+                url=url,
+                data=body,
+                headers=headers,
+                method=method,
+            )
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    resp_bytes = resp.read()
+                    if not resp_bytes:
+                        return None
+                    return json.loads(resp_bytes.decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                if exc.code in (401, 403):
+                    raise TraccarAuthError(
+                        f"Authentication failed for {self.username}: "
+                        f"HTTP {exc.code}"
+                    ) from exc
+                if exc.code >= 500 and attempt < self.max_retries - 1:
+                    last_error = exc
+                    time.sleep(0.3 * (2 ** attempt))
+                    continue
+                error_body = exc.read().decode("utf-8", errors="replace")
+                raise TraccarApiError(
+                    f"Traccar API error {exc.code} on {endpoint}: "
+                    f"{error_body}",
+                    status_code=exc.code,
                 ) from exc
-            error_body = exc.read().decode("utf-8", errors="replace")
-            raise TraccarApiError(
-                f"Traccar API error {exc.code} on {endpoint}: {error_body}",
-                status_code=exc.code,
-            ) from exc
-        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            except (urllib.error.URLError, TimeoutError, OSError) as exc:
+                last_error = exc
+                if attempt < self.max_retries - 1:
+                    time.sleep(0.3 * (2 ** attempt))
+                    continue
+                raise TraccarConnectionError(
+                    f"Failed to connect to Traccar at {self.base_url} after "
+                    f"{self.max_retries} attempts: {exc}"
+                ) from exc
+
+        if last_error:
             raise TraccarConnectionError(
-                f"Failed to connect to Traccar at {self.base_url}: {exc}"
-            ) from exc
+                f"Failed request to {self.base_url}/{endpoint}: {last_error}"
+            )
 
     def test_connection(self) -> Dict[str, Any]:
         """Test API connectivity and return server metadata."""

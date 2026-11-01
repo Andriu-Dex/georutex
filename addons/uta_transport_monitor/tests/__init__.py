@@ -5,3 +5,7 @@ from . import test_gps_sync  # noqa: F401
 from . import test_route_and_version  # noqa: F401
 from . import test_trip_scheduling  # noqa: F401
 from . import test_security_roles  # noqa: F401
+from . import test_gps_association  # noqa: F401
+from . import test_gps_history_sync  # noqa: F401
+from . import test_telemetry_freshness  # noqa: F401
+from . import test_security_positions  # noqa: F401

@@ -7,15 +7,22 @@
         <field name="arch" type="xml">
             <tree string="Posiciones GPS" create="false" edit="false">
                 <field name="fix_time"/>
+                <field name="fix_time_local"/>
                 <field name="vehicle_id"/>
-                <field name="traccar_device_id"/>
+                <field name="trip_id"/>
                 <field name="latitude"/>
                 <field name="longitude"/>
                 <field name="speed"/>
                 <field name="source"
                        widget="badge"
                        decoration-success="source == 'real'"
-                       decoration-info="source == 'simulated'"/>
+                       decoration-warning="source == 'simulated'"
+                       decoration-info="source == 'unverified'"/>
+                <field name="association_status"
+                       widget="badge"
+                       decoration-success="association_status == 'associated'"
+                       decoration-danger="association_status == 'ambiguous'"
+                       decoration-muted="association_status == 'unassigned'"/>
                 <field name="is_valid" widget="boolean_toggle"/>
             </tree>
         </field>
@@ -34,19 +41,24 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Datos del Vehículo">
+                        <group string="Datos del Vehículo y Recorrido">
                             <field name="vehicle_id"/>
+                            <field name="trip_id"/>
+                            <field name="association_status" widget="badge"/>
                             <field name="traccar_device_id"/>
                             <field name="traccar_position_id"/>
                             <field name="source" widget="badge"/>
                         </group>
                         <group string="Coordenadas y Tiempo">
                             <field name="fix_time"/>
+                            <field name="fix_time_local"/>
                             <field name="server_time"/>
                             <field name="latitude"/>
                             <field name="longitude"/>
                             <field name="speed"/>
                             <field name="altitude"/>
+                            <field name="accuracy"/>
+                            <field name="heading"/>
                             <field name="is_valid"/>
                             <field name="protocol"/>
                         </group>
@@ -63,13 +75,21 @@
         <field name="arch" type="xml">
             <search string="Buscar Posiciones GPS">
                 <field name="vehicle_id"/>
+                <field name="trip_id"/>
                 <field name="traccar_device_id"/>
                 <filter string="Datos Reales" name="filter_real" domain="[('source', '=', 'real')]"/>
                 <filter string="Simulados" name="filter_simulated" domain="[('source', '=', 'simulated')]"/>
+                <filter string="No Verificados" name="filter_unverified" domain="[('source', '=', 'unverified')]"/>
+                <separator/>
+                <filter string="Asociados a Viaje" name="filter_associated" domain="[('association_status', '=', 'associated')]"/>
+                <filter string="Sin Asignar" name="filter_unassigned" domain="[('association_status', '=', 'unassigned')]"/>
+                <filter string="Ambiguos / Conflicto" name="filter_ambiguous" domain="[('association_status', '=', 'ambiguous')]"/>
                 <separator/>
                 <filter string="Válidos" name="filter_valid" domain="[('is_valid', '=', True)]"/>
                 <group expand="0" string="Agrupar Por">
                     <filter string="Vehículo" name="group_by_vehicle" context="{'group_by': 'vehicle_id'}"/>
+                    <filter string="Recorrido" name="group_by_trip" context="{'group_by': 'trip_id'}"/>
+                    <filter string="Estado Asociación" name="group_by_association" context="{'group_by': 'association_status'}"/>
                     <filter string="Origen" name="group_by_source" context="{'group_by': 'source'}"/>
                     <filter string="Fecha" name="group_by_date" context="{'group_by': 'fix_time:day'}"/>
                 </group>

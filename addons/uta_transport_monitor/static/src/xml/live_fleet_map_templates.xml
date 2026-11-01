@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="uta_transport_monitor.LiveFleetMapAction" owl="1">
+        <div class="o_georutex_live_fleet_view">
+            <!-- Sidebar -->
+            <div class="o_georutex_live_sidebar">
+                <div class="o_georutex_sidebar_header">
+                    <h4><i class="fa fa-map-marker-alt text-primary me-2"/>Monitoreo en Vivo</h4>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <small class="text-muted">
+                            Última actualización: <b t-esc="state.lastUpdated"/>
+                        </small>
+                        <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.loadFleetData(true)" title="Refrescar posiciones">
+                            <i class="fa fa-sync-alt" t-att-class="state.isLoading ? 'fa-spin' : ''"/>
+                        </button>
+                    </div>
+
+                    <!-- Filter buttons -->
+                    <div class="btn-group btn-group-sm w-100" role="group">
+                        <button type="button" class="btn" t-att-class="state.filter === 'all' ? 'btn-primary' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('all')">
+                            Todos (<t t-esc="state.vehicles.length"/>)
+                        </button>
+                        <button type="button" class="btn" t-att-class="state.filter === 'fresh' ? 'btn-success' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('fresh')">
+                            En Vivo
+                        </button>
+                        <button type="button" class="btn" t-att-class="state.filter === 'stale' ? 'btn-warning' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('stale')">
+                            Sin Reporte
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Vehicle list -->
+                <div class="o_georutex_vehicle_list">
+                    <t t-if="filteredVehicles.length === 0">
+                        <div class="text-center text-muted p-4">
+                            <i class="fa fa-bus fa-2x mb-2 d-block"/>
+                            No hay vehículos con el filtro seleccionado
+                        </div>
+                    </t>
+                    <t t-foreach="filteredVehicles" t-as="v" t-key="v.vehicle_id">
+                        <div class="o_georutex_vehicle_card" t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''" t-on-click="() => this.selectVehicle(v)">
+                            <div class="o_georutex_vehicle_card_title">
+                                <span><t t-esc="v.name"/></span>
+                                <t t-if="v.freshness === 'fresh'">
+                                    <span class="badge bg-success">En vivo</span>
+                                </t>
+                                <t t-elif="v.freshness === 'stale'">
+                                    <span class="badge bg-warning text-dark">Reciente</span>
+                                </t>
+                                <t t-elif="v.freshness === 'offline'">
+                                    <span class="badge bg-danger">Sin señal</span>
+                                </t>
+                                <t t-else="">
+                                    <span class="badge bg-secondary">Sin datos</span>
+                                </t>
+                            </div>
+                            <div class="o_georutex_vehicle_card_sub">
+                                <span>Placa: <b t-esc="v.license_plate || 'S/P'"/></span> | 
+                                <span>Conductor: <t t-esc="v.driver_name"/></span>
+                            </div>
+                            <div class="o_georutex_vehicle_card_footer">
+                                <span><i class="fa fa-tachometer-alt me-1"/> <t t-esc="v.speed"/> km/h</span>
+                                <span class="text-muted"><i class="fa fa-clock me-1"/> <t t-esc="v.fix_time_local"/></span>
+                            </div>
+                        </div>
+                    </t>
+                </div>
+            </div>
+
+            <!-- Main Map Area -->
+            <div class="o_georutex_live_main">
+                <div t-ref="liveMapContainer" class="o_georutex_map"/>
+            </div>
+        </div>
+    </t>
+
+</templates>
+

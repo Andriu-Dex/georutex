@@ -2,10 +2,10 @@
 <odoo>
     <!-- ==================== POSICIONES GPS ==================== -->
     <record id="rule_transport_position_driver" model="ir.rule">
-        <field name="name">Conductor: ver únicamente posiciones de vehículo asignado</field>
+        <field name="name">Conductor: ver únicamente posiciones de sus recorridos o vehículo asignado</field>
         <field name="model_id" ref="model_transport_vehicle_position"/>
         <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
-        <field name="domain_force">[('vehicle_id.driver_id', '=', user.partner_id.id)]</field>
+        <field name="domain_force">['|', '&amp;', ('trip_id', '!=', False), '|', ('trip_id.driver_user_id', '=', user.id), ('trip_id.driver_id', '=', user.partner_id.id), '&amp;', ('trip_id', '=', False), ('vehicle_id.driver_id', '=', user.partner_id.id)]</field>
         <field name="perm_read" eval="True"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
