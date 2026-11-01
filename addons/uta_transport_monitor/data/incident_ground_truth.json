@@ -1,0 +1,155 @@
+[
+  {
+    "case_id": "GT-INC-01",
+    "title": "Salida con 12 minutos de retraso (tolerancia 5 min)",
+    "incident_type": "delay_start",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "scheduled_start_offset_s": 0,
+      "actual_start_offset_s": 720,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Retraso de 720s supera la tolerancia de 300s."
+  },
+  {
+    "case_id": "GT-INC-02",
+    "title": "Salida puntual dentro de margen (3 minutos de retraso)",
+    "incident_type": "delay_start",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "scheduled_start_offset_s": 0,
+      "actual_start_offset_s": 180,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Retraso de 180s es inferior a la tolerancia de 300s."
+  },
+  {
+    "case_id": "GT-INC-03",
+    "title": "Salida en frontera exacta de tolerancia (5 minutos)",
+    "incident_type": "delay_start",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "scheduled_start_offset_s": 0,
+      "actual_start_offset_s": 300,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Retraso exacto de 300s está dentro de la tolerancia de 300s."
+  },
+  {
+    "case_id": "GT-INC-04",
+    "title": "Llegada con 15 minutos de retraso a destino",
+    "incident_type": "delay_arrival",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "scheduled_end_offset_s": 1200,
+      "actual_end_offset_s": 2100,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Retraso de llegada de 900s supera tolerancia de 300s."
+  },
+  {
+    "case_id": "GT-INC-05",
+    "title": "Llegada anticipada a destino (-5 minutos)",
+    "incident_type": "delay_arrival",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "scheduled_end_offset_s": 1200,
+      "actual_end_offset_s": 900,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Llegada anticipada no constituye retraso ni incumplimiento."
+  },
+  {
+    "case_id": "GT-INC-06",
+    "title": "Parada intermedia obligatoria omitida con cobertura GPS continua",
+    "incident_type": "stop_omitted",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "stop_latitude": -1.250000,
+      "stop_longitude": -78.624500,
+      "stop_radius_m": 30.0,
+      "closest_distance_m": 450.0,
+      "has_gps_gap": false
+    },
+    "reason": "El bus pasó a 450m sin ingresar a la geocerca y con GPS continuo."
+  },
+  {
+    "case_id": "GT-INC-07",
+    "title": "Parada intermedia visitada exitosamente dentro de su radio",
+    "incident_type": "stop_omitted",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "stop_latitude": -1.250000,
+      "stop_longitude": -78.624500,
+      "stop_radius_m": 30.0,
+      "closest_distance_m": 12.0,
+      "has_gps_gap": false
+    },
+    "reason": "El bus ingresó al radio de 30m de la parada."
+  },
+  {
+    "case_id": "GT-INC-08",
+    "title": "Desvío confirmado: 3 puntos a 150m durante 60s",
+    "incident_type": "route_deviation",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "corridor_m": 40.0,
+      "max_distance_m": 150.0,
+      "point_count": 3,
+      "duration_s": 60,
+      "accuracy_m": 5.0
+    },
+    "reason": "Distancia ortogonal de 150m excede corredor y dura 60s con 3 puntos."
+  },
+  {
+    "case_id": "GT-INC-09",
+    "title": "Pico de ruido GPS aislado de 1 punto (filtrado de ruido)",
+    "incident_type": "route_deviation",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "corridor_m": 40.0,
+      "max_distance_m": 300.0,
+      "point_count": 1,
+      "duration_s": 0,
+      "accuracy_m": 5.0
+    },
+    "reason": "Un punto aislado no cumple con el mínimo de 2 puntos consecutivos."
+  },
+  {
+    "case_id": "GT-INC-10",
+    "title": "Puntos fuera del corredor pero con incertidumbre horizontal alta",
+    "incident_type": "route_deviation",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "corridor_m": 40.0,
+      "max_distance_m": 50.0,
+      "point_count": 3,
+      "duration_s": 60,
+      "accuracy_m": 25.0
+    },
+    "reason": "Distancia neta (50m - 25m = 25m) no supera el corredor de 40m."
+  },
+  {
+    "case_id": "GT-INC-11",
+    "title": "Pérdida de señal GPS por 300 segundos (> 180s)",
+    "incident_type": "gps_loss",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "gap_threshold_s": 180,
+      "gap_duration_s": 300
+    },
+    "reason": "Interrupción de telemetría de 300s supera el umbral de 180s."
+  },
+  {
+    "case_id": "GT-INC-12",
+    "title": "Intervalo normal entre posiciones de 60 segundos",
+    "incident_type": "gps_loss",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "gap_threshold_s": 180,
+      "gap_duration_s": 60
+    },
+    "reason": "Intervalo de 60s es normal y no constituye pérdida de cobertura."
+  }
+]
+

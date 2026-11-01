@@ -373,9 +373,13 @@ class TestEvaluationEngine(TransactionCase):
             ("trip_id", "=", trip.id)
         ])
 
+        # Incidents must not be duplicated upon re-evaluation
         self.assertEqual(inc_c1, inc_c2)
-        self.assertEqual(ev_c1, ev_c2)
-        self.assertEqual(eval1.id, eval2.id)
+        # Historical evaluations are immutable: previous is preserved
+        self.assertEqual(ev_c2, ev_c1 + 1)
+        self.assertNotEqual(eval1.id, eval2.id)
+        # Trip references the latest active evaluation unequivocally
+        self.assertEqual(trip.last_evaluation_id.id, eval2.id)
 
     def test_05_driver_cannot_self_approve_justification(self):
         """Driver can submit justification but CANNOT self-approve (RF-29)."""

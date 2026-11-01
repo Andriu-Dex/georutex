@@ -168,6 +168,7 @@ class TransportTripEvaluationService(models.AbstractModel):
             "actual_start_utc": trip.actual_start_utc,
             "actual_end_utc": trip.actual_end_utc,
             "position_count": len(positions),
+            "state": trip.state,
         }
         compliance = evaluate_trip_compliance(
             trip_info=trip_info,
@@ -459,9 +460,8 @@ class TransportTripEvaluationService(models.AbstractModel):
     def _persist_evaluation_record(
         self, trip, params, compliance, is_compliant_adjusted, incidents
     ):
-        """Idempotently persist or update trip evaluation audit record."""
+        """Persist immutable trip evaluation audit record."""
         eval_model = self.env["transport.trip.evaluation"]
-        existing_eval = eval_model.search([("trip_id", "=", trip.id)], limit=1)
 
         eval_vals = {
             "trip_id": trip.id,
@@ -489,8 +489,4 @@ class TransportTripEvaluationService(models.AbstractModel):
             "incident_ids": [(6, 0, incidents.ids)],
         }
 
-        if existing_eval:
-            existing_eval.write(eval_vals)
-            return existing_eval
-        else:
-            return eval_model.create(eval_vals)
+        return eval_model.create(eval_vals)

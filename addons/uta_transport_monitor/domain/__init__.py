@@ -2,5 +2,6 @@
 
 from . import geo
 from . import evaluation
+from . import metrics
 
-__all__ = ["geo", "evaluation"]
+__all__ = ["geo", "evaluation", "metrics"]

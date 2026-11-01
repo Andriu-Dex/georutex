@@ -6,6 +6,14 @@
               web_icon="fleet,static/description/icon.png"
               sequence="10"/>
 
+    <!-- 0. Resumen / Dashboard Gerencial (Phase 5, MT-01..08, MCS-01..04) -->
+    <menuitem id="menu_georutex_dashboard_main"
+              name="Resumen / Dashboard"
+              parent="menu_georutex_root"
+              action="action_transport_dashboard"
+              groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
+              sequence="5"/>
+
     <!-- 1. Operaciones -->
     <menuitem id="menu_georutex_operations"
               name="Operaciones"

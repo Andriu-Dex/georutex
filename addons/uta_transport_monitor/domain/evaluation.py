@@ -352,10 +352,17 @@ def detect_route_deviations(
         dist = distance_to_polyline(
             p["latitude"], p["longitude"], polyline_coords, is_geojson=True
         )
+        accuracy = p.get("accuracy")
+        # Section 7.5.2: d_i - a_i > route_corridor_m with accuracy
+        if accuracy is not None and accuracy > 0:
+            is_outside = (dist - accuracy) > corridor_m
+        else:
+            is_outside = dist > corridor_m
+
         tagged_positions.append({
             "pos": p,
             "distance_m": dist,
-            "is_outside": dist > corridor_m,
+            "is_outside": is_outside,
         })
 
     # Cluster consecutive outside points
@@ -506,8 +513,11 @@ def evaluate_trip_compliance(
     gap_duration = sum(g["duration_s"] for g in gaps)
 
     # 4. Integrity classification (RF-26)
+    trip_state = trip_info.get("state")
     pos_count = trip_info.get("position_count", 0)
-    if pos_count < 2 or indet_stops == total_stops:
+    if trip_state == "cancelled":
+        integrity_status = "cancelled"
+    elif pos_count < 2 or indet_stops == total_stops:
         integrity_status = "insufficient_data"
     elif actual_end:
         integrity_status = "completed"

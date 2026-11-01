@@ -1,7 +1,7 @@
-"""Unit tests for pure domain evaluation functions in GeoRutex (Phase 4).
+"""Unit tests for pure domain evaluation functions in GeoRutex (Phase 4 & 5).
 
 Executes deterministically in Pytest without Odoo ORM or database.
-Tests RF-20 through RF-26 rules and edge cases.
+Tests RF-20 through RF-26 rules and edge cases with >= 85% domain coverage.
 """
 
 from datetime import datetime, timedelta
@@ -58,30 +58,23 @@ def test_evaluate_trip_actual_times_departure_and_arrival():
             "accuracy": 5.0,
             "is_valid": True,
         },
+        # Still inside origin (10m)
         {
             "fix_time": t0 + timedelta(minutes=2),
-            "latitude": -1.26182,
-            "longitude": -78.62721,
+            "latitude": -1.26185,
+            "longitude": -78.62725,
             "accuracy": 5.0,
             "is_valid": True,
         },
-        # Departs origin (> 30m away)
+        # Departs origin (> 30m) -> RF-20 actual start
         {
             "fix_time": t0 + timedelta(minutes=5),
-            "latitude": -1.2580,
-            "longitude": -78.6250,
-            "accuracy": 5.0,
-            "is_valid": True,
-        },
-        # En route
-        {
-            "fix_time": t0 + timedelta(minutes=15),
-            "latitude": -1.2450,
+            "latitude": -1.2600,
             "longitude": -78.6260,
             "accuracy": 5.0,
             "is_valid": True,
         },
-        # Enters destination
+        # Arrives at destination (< 30m) -> RF-20 actual end
         {
             "fix_time": t0 + timedelta(minutes=25),
             "latitude": -1.2335,
@@ -94,109 +87,262 @@ def test_evaluate_trip_actual_times_departure_and_arrival():
     res = evaluate_trip_actual_times(
         positions, origin, dest, default_radius_m=30.0
     )
+
     assert res["actual_start_utc"] == t0 + timedelta(minutes=5)
     assert res["actual_end_utc"] == t0 + timedelta(minutes=25)
+    assert res["first_gps_fix_utc"] == t0
     assert res["start_evidence"] == "origin_geofence_departure"
     assert res["end_evidence"] == "destination_geofence_arrival"
 
 
+def test_evaluate_trip_actual_times_edge_cases():
+    """Test edge cases: empty positions, accuracy, stay, fallback outside."""
+    origin = {"latitude": -1.2618, "longitude": -78.6272, "radius_m": 30.0}
+    dest = {"latitude": -1.2335, "longitude": -78.6225, "radius_m": 30.0}
+
+    # 1. Empty positions
+    res = evaluate_trip_actual_times([], origin, dest)
+    assert res["actual_start_utc"] is None
+    assert res["start_evidence"] == "no_data"
+
+    # 2. Inaccurate positions filtered out
+    t0 = datetime(2026, 11, 1, 8, 0, 0)
+    inacc = [{
+        "fix_time": t0,
+        "latitude": -1.2618,
+        "longitude": -78.6272,
+        "accuracy": 150.0,
+        "is_valid": True,
+    }]
+    res = evaluate_trip_actual_times(inacc, origin, dest, accuracy_max_m=100.0)
+    assert res["start_evidence"] == "insufficient_accuracy"
+
+    # 3. Stays inside origin geofence throughout
+    stay = [
+        {
+            "fix_time": t0,
+            "latitude": -1.2618,
+            "longitude": -78.6272,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+        {
+            "fix_time": t0 + timedelta(minutes=5),
+            "latitude": -1.26181,
+            "longitude": -78.62721,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+    ]
+    res = evaluate_trip_actual_times(stay, origin, dest)
+    assert res["actual_start_utc"] is None
+    assert res["start_evidence"] == "still_at_origin"
+    assert res["end_evidence"] == "destination_not_reached"
+
+    # 4. Bus starts outside origin with moving speed >= 5 km/h
+    outside_moving = [
+        {
+            "fix_time": t0,
+            "latitude": -1.2500,
+            "longitude": -78.6200,
+            "speed": 15.0,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+        {
+            "fix_time": t0 + timedelta(minutes=1),
+            "latitude": -1.2400,
+            "longitude": -78.6210,
+            "speed": 20.0,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+    ]
+    res = evaluate_trip_actual_times(outside_moving, origin, dest)
+    assert res["actual_start_utc"] == t0
+    assert res["start_evidence"] == "first_moving_fix_outside_origin"
+
+    # 5. Bus starts outside stationary (speed 0)
+    outside_stat = [{
+        "fix_time": t0,
+        "latitude": -1.2500,
+        "longitude": -78.6200,
+        "speed": 0.0,
+        "accuracy": 5.0,
+        "is_valid": True,
+    }]
+    res = evaluate_trip_actual_times(outside_stat, origin, dest)
+    assert res["actual_start_utc"] == t0
+    assert res["start_evidence"] == "first_valid_fix_fallback"
+
+    # 6. No origin defined
+    res = evaluate_trip_actual_times(outside_stat, None, None)
+    assert res["actual_start_utc"] == t0
+    assert res["start_evidence"] == "first_valid_fix_no_origin"
+
+
 def test_evaluate_stop_visits_on_time_late_missed():
-    """Test checkpoint evaluations under lateness tolerances."""
+    """Verify RF-22/23: on_time, late, missed, and gap handling."""
     t0 = datetime(2026, 11, 1, 8, 0, 0)
     stops = [
         {
             "id": 1,
-            "sequence": 10,
+            "sequence": 1,
             "name": "Parada 1",
-            "stop_type": "checkpoint",
-            "latitude": -1.2500,
+            "latitude": -1.2600,
             "longitude": -78.6200,
             "radius_m": 30.0,
-            "required": True,
             "scheduled_at_utc": t0 + timedelta(minutes=10),
+            "required": True,
         },
         {
             "id": 2,
-            "sequence": 20,
-            "name": "Parada 2 (Late)",
-            "stop_type": "checkpoint",
-            "latitude": -1.2400,
+            "sequence": 2,
+            "name": "Parada 2",
+            "latitude": -1.2500,
             "longitude": -78.6200,
             "radius_m": 30.0,
-            "required": True,
             "scheduled_at_utc": t0 + timedelta(minutes=20),
+            "required": True,
         },
         {
             "id": 3,
-            "sequence": 30,
-            "name": "Parada 3 (Missed)",
-            "stop_type": "checkpoint",
-            "latitude": -1.2300,
+            "sequence": 3,
+            "name": "Parada 3",
+            "latitude": -1.2400,
             "longitude": -78.6200,
             "radius_m": 30.0,
-            "required": True,
             "scheduled_at_utc": t0 + timedelta(minutes=30),
+            "required": True,
         },
     ]
 
     positions = [
-        # Visited stop 1 on time (+1 min delay <= 300s)
+        # Parada 1: visited at 08:12 (2 min late, tolerance 5 min) -> on_time
         {
-            "fix_time": t0 + timedelta(minutes=11),
-            "latitude": -1.2500,
+            "fix_time": t0 + timedelta(minutes=12),
+            "latitude": -1.2600,
             "longitude": -78.6200,
+            "accuracy": 5.0,
             "is_valid": True,
         },
-        # Visited stop 2 late (+15 min delay = 900s > 300s)
-        {
-            "fix_time": t0 + timedelta(minutes=35),
-            "latitude": -1.2400,
-            "longitude": -78.6200,
-            "is_valid": True,
-        },
-        # Continuous stream around stop 3 window staying 2.2 km away
+        # Parada 2: visited at 08:28 (8 min late, > tolerance 5 min) -> late
         {
             "fix_time": t0 + timedelta(minutes=28),
-            "latitude": -1.2100,
+            "latitude": -1.2500,
             "longitude": -78.6200,
+            "accuracy": 5.0,
             "is_valid": True,
         },
+        # Intermediate points without gaps (every 2 min <= 180s)
         {
             "fix_time": t0 + timedelta(minutes=30),
-            "latitude": -1.2100,
-            "longitude": -78.6200,
+            "latitude": -1.2450,
+            "longitude": -78.6250,
+            "accuracy": 5.0,
             "is_valid": True,
         },
         {
             "fix_time": t0 + timedelta(minutes=32),
-            "latitude": -1.2100,
-            "longitude": -78.6200,
+            "latitude": -1.2400,
+            "longitude": -78.6250,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+        # Parada 3: not visited, trace bypasses at ~556m away at 08:34
+        {
+            "fix_time": t0 + timedelta(minutes=34),
+            "latitude": -1.2400,
+            "longitude": -78.6250,
+            "accuracy": 5.0,
             "is_valid": True,
         },
     ]
 
-    eval_results = evaluate_stop_visits(
+    eval_stops = evaluate_stop_visits(
         stops,
         positions,
-        default_stop_radius_m=30.0,
+        default_lateness_tolerance_s=300,
+        gap_threshold_s=180,
+    )
+
+    assert len(eval_stops) == 3
+    assert eval_stops[0]["status"] == "on_time"
+    assert eval_stops[0]["delay_s"] == 120
+    assert eval_stops[1]["status"] == "late"
+    assert eval_stops[1]["delay_s"] == 480
+    assert eval_stops[2]["status"] == "missed"
+
+
+def test_evaluate_stop_visits_edge_cases():
+    """Verify stop evaluation with invalid coords, no fixes, and gap."""
+    t0 = datetime(2026, 11, 1, 8, 0, 0)
+    stops = [
+        {
+            "id": 1,
+            "sequence": 1,
+            "latitude": 999.0,
+            "longitude": 999.0,
+            "required": True,
+        },
+        {
+            "id": 2,
+            "sequence": 2,
+            "latitude": -1.2500,
+            "longitude": -78.6200,
+            "scheduled_at_utc": t0,
+            "required": True,
+        },
+    ]
+
+    # Invalid coordinates
+    res = evaluate_stop_visits(stops, [])
+    assert res[0]["status"] == "indeterminate"
+    assert res[1]["status"] == "indeterminate"
+
+    # Gap across scheduled stop window
+    t_sched = t0 + timedelta(minutes=10)
+    stop_gap = [{
+        "id": 3,
+        "latitude": -1.2500,
+        "longitude": -78.6200,
+        "scheduled_at_utc": t_sched,
+        "required": True,
+    }]
+    positions_gap = [
+        {
+            "fix_time": t_sched - timedelta(minutes=10),
+            "latitude": -1.2600,
+            "longitude": -78.6200,
+            "is_valid": True,
+        },
+        # Gap of 1200 seconds (> 180s) spanning t_sched
+        {
+            "fix_time": t_sched + timedelta(minutes=10),
+            "latitude": -1.2400,
+            "longitude": -78.6200,
+            "is_valid": True,
+        },
+    ]
+    res_gap = evaluate_stop_visits(
+        stop_gap,
+        positions_gap,
+        gap_threshold_s=180,
         default_lateness_tolerance_s=300,
     )
-    assert eval_results[0]["status"] == "on_time"
-    assert eval_results[1]["status"] == "late"
-    assert eval_results[2]["status"] == "missed"
+    assert res_gap[0]["status"] == "indeterminate"
 
 
 def test_detect_route_deviations_and_noise_filtering():
-    """Verify route deviations are detected and isolated noise filtered."""
+    """Verify route deviations are confirmed only when cluster >= 2 points."""
     polyline = [
         [-78.6272, -1.2618],
         [-78.6250, -1.2580],
-        [-78.6265, -1.2425],
+        [-78.6230, -1.2540],
     ]
     t0 = datetime(2026, 11, 1, 9, 0, 0)
-
     positions = [
-        # Normal point on route
+        # Point on route
         {
             "fix_time": t0,
             "latitude": -1.2618,
@@ -258,6 +404,75 @@ def test_detect_route_deviations_and_noise_filtering():
     assert deviations[0]["max_distance_m"] > 40.0
 
 
+def test_detect_route_deviations_accuracy_filtering_and_terminal():
+    """Verify Section 7.5.2: (d_i - a_i > corridor_m) and terminal cluster."""
+    polyline = [
+        [-78.6200, -1.2500],
+        [-78.6250, -1.2500],
+    ]
+    t0 = datetime(2026, 11, 1, 9, 0, 0)
+
+    # Point at -1.25045 (~50m away from polyline).
+    # Accuracy 20m -> 50 - 20 = 30m <= 40m corridor -> NOT outside!
+    positions_uncertain = [
+        {
+            "fix_time": t0,
+            "latitude": -1.25045,
+            "longitude": -78.6220,
+            "accuracy": 20.0,
+            "is_valid": True,
+        },
+        {
+            "fix_time": t0 + timedelta(seconds=20),
+            "latitude": -1.25045,
+            "longitude": -78.6230,
+            "accuracy": 20.0,
+            "is_valid": True,
+        },
+    ]
+    devs = detect_route_deviations(
+        positions_uncertain,
+        polyline,
+        corridor_m=40.0,
+        min_consecutive_points=2,
+    )
+    assert len(devs) == 0  # Inaccuracy prevents false deviation
+
+    # Terminal cluster (deviating until the end of the trace)
+    positions_terminal = [
+        {
+            "fix_time": t0,
+            "latitude": -1.2500,
+            "longitude": -78.6200,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+        {
+            "fix_time": t0 + timedelta(seconds=30),
+            "latitude": -1.2600,
+            "longitude": -78.6220,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+        {
+            "fix_time": t0 + timedelta(seconds=60),
+            "latitude": -1.2600,
+            "longitude": -78.6230,
+            "accuracy": 5.0,
+            "is_valid": True,
+        },
+    ]
+    devs_terminal = detect_route_deviations(
+        positions_terminal,
+        polyline,
+        corridor_m=40.0,
+        min_consecutive_points=2,
+        min_duration_s=10,
+    )
+    assert len(devs_terminal) == 1
+    assert devs_terminal[0]["point_count"] == 2
+
+
 def test_detect_gps_gaps():
     """Verify telemetry gaps exceeding 180 seconds are detected."""
     t0 = datetime(2026, 11, 1, 10, 0, 0)
@@ -274,9 +489,13 @@ def test_detect_gps_gaps():
     assert len(gaps) == 1
     assert gaps[0]["duration_s"] == 300
 
+    # Less than 2 positions -> empty
+    assert detect_gps_gaps([]) == []
+    assert detect_gps_gaps([positions[0]]) == []
 
-def test_evaluate_trip_compliance_non_compliant():
-    """Verify trip compliance fails if mandatory stops missed or deviated."""
+
+def test_evaluate_trip_compliance_non_compliant_and_cancelled():
+    """Verify trip compliance fails if stops missed, deviated, or cancelled."""
     t0 = datetime(2026, 11, 1, 8, 0, 0)
     trip_info = {
         "scheduled_start_utc": t0,
@@ -284,6 +503,7 @@ def test_evaluate_trip_compliance_non_compliant():
         "actual_start_utc": t0,
         "actual_end_utc": t0 + timedelta(hours=1),
         "position_count": 50,
+        "state": "in_progress",
     }
     stops_eval = [
         {"status": "on_time", "required": True},
@@ -300,3 +520,25 @@ def test_evaluate_trip_compliance_non_compliant():
     assert res["stops_missed"] == 1
     assert res["deviation_count"] == 1
     assert "No Conforme" in res["evaluation_summary"]
+
+    # Cancelled trip state
+    trip_cancelled = dict(trip_info, state="cancelled")
+    res_canc = evaluate_trip_compliance(
+        trip_cancelled, stops_eval, deviations, gaps, params
+    )
+    assert res_canc["integrity_status"] == "cancelled"
+    assert res_canc["is_compliant_gross"] is False
+
+    # Early start and arrival
+    trip_early = {
+        "scheduled_start_utc": t0,
+        "scheduled_end_utc": t0 + timedelta(hours=1),
+        "actual_start_utc": t0 - timedelta(minutes=10),  # 600s early > 300s
+        "actual_end_utc": t0 + timedelta(minutes=30),     # 1800s early
+        "position_count": 50,
+    }
+    res_early = evaluate_trip_compliance(
+        trip_early, [{"status": "on_time", "required": True}], [], [], params
+    )
+    assert res_early["start_punctuality"] == "early"
+    assert res_early["arrival_punctuality"] == "early"

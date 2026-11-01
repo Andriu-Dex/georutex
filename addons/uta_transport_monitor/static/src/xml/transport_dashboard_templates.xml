@@ -1,0 +1,481 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="uta_transport_monitor.TransportDashboardAction" owl="1">
+        <div class="georutex-dashboard-container">
+            <!-- Header Section -->
+            <div class="georutex-dashboard-header d-flex flex-wrap align-items-center justify-content-between p-3 border-bottom bg-white shadow-sm">
+                <div class="d-flex align-items-center mb-2 mb-md-0">
+                    <i class="fa fa-tachometer text-primary fa-2x me-3"/>
+                    <div>
+                        <h4 class="mb-0 fw-bold text-dark">GeoRutex — Panel Gerencial y Métricas de Transporte</h4>
+                        <small class="text-muted">Sistema de Monitoreo y Evaluación de Rutas Universitarias (UTA)</small>
+                    </div>
+                </div>
+
+                <!-- Source Selector Pills (RF-08, RF-31) -->
+                <div class="d-flex align-items-center">
+                    <div class="btn-group btn-group-sm me-3" role="group">
+                        <button type="button" 
+                                t-attf-class="btn #{state.filters.source_type == 'combined' ? 'btn-primary active' : 'btn-outline-primary'}"
+                                t-on-click="() => this.onSourceTypeChange('combined')">
+                            <i class="fa fa-database me-1"/> Combinado (Todos)
+                        </button>
+                        <button type="button" 
+                                t-attf-class="btn #{state.filters.source_type == 'real' ? 'btn-success active' : 'btn-outline-success'}"
+                                t-on-click="() => this.onSourceTypeChange('real')">
+                            <i class="fa fa-signal me-1"/> Solo Reales
+                        </button>
+                        <button type="button" 
+                                t-attf-class="btn #{state.filters.source_type == 'simulated' ? 'btn-info active' : 'btn-outline-info'}"
+                                t-on-click="() => this.onSourceTypeChange('simulated')">
+                            <i class="fa fa-cogs me-1"/> Solo Simulados
+                        </button>
+                    </div>
+
+                    <button class="btn btn-sm btn-outline-secondary" t-on-click="loadDashboardData" title="Recargar datos">
+                        <i class="fa fa-refresh me-1"/> Actualizar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Filter Controls Bar -->
+            <div class="georutex-filters-bar bg-light p-3 border-bottom">
+                <form class="row g-2 align-items-end" t-on-submit="onFilterSubmit">
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Fecha Desde</label>
+                        <input type="date" class="form-control form-control-sm" t-model="state.filters.date_from"/>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1">Fecha Hasta</label>
+                        <input type="date" class="form-control form-control-sm" t-model="state.filters.date_to"/>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Ruta</label>
+                        <select class="form-select form-select-sm" t-model="state.filters.route_id">
+                            <option value="">Todas las rutas</option>
+                            <t t-foreach="state.availableRoutes" t-as="r" t-key="r.id">
+                                <option t-att-value="r.id"><t t-esc="r.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="col-12 col-sm-6 col-md-2">
+                        <label class="form-label small fw-bold text-muted mb-1">Vehículo</label>
+                        <select class="form-select form-select-sm" t-model="state.filters.vehicle_id">
+                            <option value="">Todos los vehículos</option>
+                            <t t-foreach="state.availableVehicles" t-as="v" t-key="v.id">
+                                <option t-att-value="v.id"><t t-esc="v.name"/></option>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-sm btn-primary flex-fill">
+                            <i class="fa fa-filter me-1"/> Filtrar
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="onResetFilters" title="Limpiar filtros">
+                            <i class="fa fa-eraser"/>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="georutex-dashboard-content p-3 overflow-auto">
+                <t t-if="state.isLoading">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <p class="text-muted mt-2">Calculando métricas canónicas...</p>
+                    </div>
+                </t>
+                <t t-else="">
+                    <!-- Summary Strip -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border-0 bg-primary text-white h-100 cursor-pointer" t-on-click="() => this.openTripsList('all')">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Recorridos Evaluados</h6>
+                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.executed_trips || 0"/></h3>
+                                        <small class="text-white-50">Total programados: <t t-esc="state.summary.total_trips || 0"/></small>
+                                    </div>
+                                    <i class="fa fa-bus fa-2x text-white-50"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border-0 bg-success text-white h-100 cursor-pointer" t-on-click="() => this.openTripsList('compliant')">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Recorridos Conformes</h6>
+                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.compliant_trips || 0"/></h3>
+                                        <small class="text-white-50">Conforme bruto y ajustado</small>
+                                    </div>
+                                    <i class="fa fa-check-circle fa-2x text-white-50"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border-0 bg-danger text-white h-100 cursor-pointer" t-on-click="openIncidentsList">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Incidencias Totales</h6>
+                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.total_incidents || 0"/></h3>
+                                        <small class="text-white-50">Automáticas y manuales</small>
+                                    </div>
+                                    <i class="fa fa-exclamation-triangle fa-2x text-white-50"/>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-sm-6 col-xl-3">
+                            <div class="card shadow-sm border-0 bg-dark text-white h-100 cursor-pointer" t-on-click="openEvaluationsList">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Auditoría / Trazabilidad</h6>
+                                        <h4 class="mb-0 fw-bold">Snapshots</h4>
+                                        <small class="text-white-50">Parámetros inmutables</small>
+                                    </div>
+                                    <i class="fa fa-history fa-2x text-white-50"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational KPI Cards (MT-01 to MT-08) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa fa-road text-primary me-2"/>Métricas de Transporte (MT-01 a MT-08)
+                        </h5>
+                        <span class="badge bg-secondary">
+                            Fuente: <t t-esc="state.filters.source_type"/>
+                        </span>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- MT-01 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-primary">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-primary">MT-01</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Cumplimiento de Rutas</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-primary mb-0 me-2"><t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].display_value : 'N/A'"/></h2>
+                                        <small class="text-muted">Bruto</small>
+                                    </div>
+                                    <t t-if="state.kpis['MT-01'] and state.kpis['MT-01'].secondary">
+                                        <div class="small text-success mb-2">
+                                            <strong>Ajustado:</strong> <t t-esc="state.kpis['MT-01'].secondary.adjusted_display"/>
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-02 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-success">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-success">MT-02</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Puntualidad de Viajes</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-success mb-0 me-2"><t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/></h2>
+                                    </div>
+                                    <t t-if="state.kpis['MT-02'] and state.kpis['MT-02'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Salida: <t t-esc="state.kpis['MT-02'].secondary.departure_punctuality_pct"/>% | Llegada: <t t-esc="state.kpis['MT-02'].secondary.arrival_punctuality_pct"/>%
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-03 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-warning">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-warning text-dark">MT-03</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Retraso Promedio Llegada</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-warning text-dark mb-0 me-2"><t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].display_value : 'N/A'"/></h2>
+                                        <small class="text-muted">General</small>
+                                    </div>
+                                    <t t-if="state.kpis['MT-03'] and state.kpis['MT-03'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Condicionado (tardías): <t t-esc="state.kpis['MT-03'].secondary.conditional_avg_delay_min"/> min
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-04 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-info">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-info text-white">MT-04</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Paradas Intermedias</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-info mb-0 me-2"><t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].display_value : 'N/A'"/></h2>
+                                    </div>
+                                    <t t-if="state.kpis['MT-04'] and state.kpis['MT-04'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Visitadas: <t t-esc="state.kpis['MT-04'].secondary.visited_count"/> | Omitidas: <t t-esc="state.kpis['MT-04'].secondary.missed_count"/>
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-05 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-secondary">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-secondary">MT-05</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Desviación Máxima</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-secondary mb-0 me-2"><t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].display_value : 'N/A'"/></h2>
+                                    </div>
+                                    <t t-if="state.kpis['MT-05'] and state.kpis['MT-05'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Viajes con desvío: <t t-esc="state.kpis['MT-05'].secondary.deviated_trips_pct"/>% | Tiempo fuera: <t t-esc="state.kpis['MT-05'].secondary.total_outside_time_min"/> min
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-06 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-dark">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-dark">MT-06</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Diferencia de Distancia</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-dark mb-0 me-2"><t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].display_value : 'N/A'"/></h2>
+                                    </div>
+                                    <t t-if="state.kpis['MT-06'] and state.kpis['MT-06'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Diferencia neta: <t t-esc="state.kpis['MT-06'].secondary.diff_km"/> km | MAE: <t t-esc="state.kpis['MT-06'].secondary.mae_km"/> km
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-07 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-primary">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-primary">MT-07</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Duración Promedio</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-primary mb-0 me-2"><t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].display_value : 'N/A'"/></h2>
+                                    </div>
+                                    <t t-if="state.kpis['MT-07'] and state.kpis['MT-07'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Planificada: <t t-esc="state.kpis['MT-07'].secondary.planned_avg_duration_min"/> min | Dif: <t t-esc="state.kpis['MT-07'].secondary.duration_difference_min"/> min
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MT-08 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-danger cursor-pointer" t-on-click="openIncidentsList">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <span class="badge bg-danger">MT-08</span>
+                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].sample_size : 0"/></small>
+                                    </div>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Frecuencia Incidencias</h6>
+                                    <div class="d-flex align-items-baseline mb-2">
+                                        <h2 class="fw-bold text-danger mb-0 me-2"><t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].display_value : 'N/A'"/></h2>
+                                        <small class="text-muted">por 10 viajes</small>
+                                    </div>
+                                    <t t-if="state.kpis['MT-08'] and state.kpis['MT-08'].secondary">
+                                        <div class="small text-muted mb-2">
+                                            Total: <t t-esc="state.kpis['MT-08'].secondary.total_incident_count"/> incidencias
+                                        </div>
+                                    </t>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts & Route Comparison Section -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-lg-8">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom py-3">
+                                    <h6 class="fw-bold text-dark mb-0">
+                                        <i class="fa fa-line-chart text-primary me-2"/>Tendencia Diaria de Cumplimiento y Puntualidad
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container position-relative" style="height: 280px;">
+                                        <canvas t-ref="trendChartCanvas"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-lg-4">
+                            <div class="card shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom py-3">
+                                    <h6 class="fw-bold text-dark mb-0">
+                                        <i class="fa fa-pie-chart text-danger me-2"/>Incidencias por Tipo
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container position-relative" style="height: 280px;">
+                                        <canvas t-ref="incidentChartCanvas"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Route Comparison Table -->
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h6 class="fw-bold text-dark mb-0">
+                                <i class="fa fa-table text-primary me-2"/>Comparativa de Rendimiento por Ruta
+                            </h6>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Ruta</th>
+                                        <th class="text-center">Recorridos</th>
+                                        <th class="text-center">Cumplimiento Bruto</th>
+                                        <th class="text-center">Cumplimiento Ajustado</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
+                                        <t t-foreach="state.charts.route_comparison" t-as="rc" t-key="rc.route_name">
+                                            <tr>
+                                                <td class="fw-bold"><t t-esc="rc.route_name"/></td>
+                                                <td class="text-center"><t t-esc="rc.total_trips"/></td>
+                                                <td class="text-center">
+                                                    <span t-attf-class="badge #{rc.compliance_gross_pct >= 80 ? 'bg-success' : 'bg-warning text-dark'}">
+                                                        <t t-esc="rc.compliance_gross_pct !== null ? rc.compliance_gross_pct + ' %' : 'N/A'"/>
+                                                    </span>
+                                                </td>
+                                                <td class="text-center">
+                                                    <span t-attf-class="badge #{rc.compliance_adj_pct >= 80 ? 'bg-success' : 'bg-secondary'}">
+                                                        <t t-esc="rc.compliance_adj_pct !== null ? rc.compliance_adj_pct + ' %' : 'N/A'"/>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-3">Sin rutas evaluadas en el período.</td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Software Quality Benchmarks Section (MCS-01 to MCS-04) -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-dark mb-0">
+                            <i class="fa fa-shield text-success me-2"/>Métricas de Calidad del Software (MCS-01 a MCS-04)
+                        </h5>
+                        <button class="btn btn-sm btn-outline-success" t-on-click="onRunQualityBenchmarks" t-att-disabled="state.qualityRunning">
+                            <i t-attf-class="fa #{state.qualityRunning ? 'fa-spinner fa-spin' : 'fa-play'} me-1"/>
+                            Ejecutar Benchmarks de Calidad
+                        </button>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <!-- MCS-01 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 border-start border-4 border-success">
+                                <div class="card-body">
+                                    <span class="badge bg-success mb-2">MCS-01</span>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Integridad Registros GPS</h6>
+                                    <h3 class="fw-bold text-success mb-2"><t t-esc="state.kpis['MCS-01'] ? state.kpis['MCS-01'].display_value : 'N/A'"/></h3>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-01'] ? state.kpis['MCS-01'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MCS-02 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 border-start border-4 border-primary">
+                                <div class="card-body">
+                                    <span class="badge bg-primary mb-2">MCS-02</span>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Sincronización Traccar</h6>
+                                    <h3 class="fw-bold text-primary mb-2"><t t-esc="state.kpis['MCS-02'] ? state.kpis['MCS-02'].display_value : 'N/A'"/></h3>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-02'] ? state.kpis['MCS-02'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MCS-03 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 border-start border-4 border-info">
+                                <div class="card-body">
+                                    <span class="badge bg-info text-white mb-2">MCS-03</span>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Tiempo de Respuesta</h6>
+                                    <h3 class="fw-bold text-info mb-2"><t t-esc="state.kpis['MCS-03'] ? state.kpis['MCS-03'].display_value : 'N/A'"/></h3>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-03'] ? state.kpis['MCS-03'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MCS-04 -->
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <div class="card shadow-sm h-100 border-start border-4 border-warning">
+                                <div class="card-body">
+                                    <span class="badge bg-warning text-dark mb-2">MCS-04</span>
+                                    <h6 class="card-title fw-bold text-dark mb-1">Detección Incidencias</h6>
+                                    <h3 class="fw-bold text-warning text-dark mb-2"><t t-esc="state.kpis['MCS-04'] ? state.kpis['MCS-04'].display_value : 'N/A'"/></h3>
+                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-04'] ? state.kpis['MCS-04'].interpretation : ''"/></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </div>
+        </div>
+    </t>
+
+</templates>
+

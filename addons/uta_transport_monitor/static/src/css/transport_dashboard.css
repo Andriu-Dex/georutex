@@ -1,0 +1,44 @@
+/* GeoRutex Executive Dashboard Styles (Phase 5) */
+
+.georutex-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: #f8f9fa;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.georutex-dashboard-header {
+    flex-shrink: 0;
+}
+
+.georutex-filters-bar {
+    flex-shrink: 0;
+}
+
+.georutex-dashboard-content {
+    flex: 1 1 auto;
+}
+
+.kpi-card {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.cursor-pointer:hover {
+    filter: brightness(0.95);
+}
+
+.chart-container {
+    width: 100%;
+}
+
