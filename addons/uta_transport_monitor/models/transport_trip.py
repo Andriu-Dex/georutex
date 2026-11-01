@@ -259,6 +259,10 @@ class TransportTrip(models.Model):
                 )
                 if ver and ver.estimated_distance_m:
                     vals["scheduled_distance_m"] = ver.estimated_distance_m
+            if not vals.get("source_type") and vals.get("vehicle_id"):
+                v = self.env["fleet.vehicle"].browse(vals["vehicle_id"])
+                if v and v.is_simulated:
+                    vals["source_type"] = "simulated"
         return super().create(vals_list)
 
     def _compute_position_count(self):

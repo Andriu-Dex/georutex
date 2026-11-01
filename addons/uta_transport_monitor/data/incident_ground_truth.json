@@ -69,7 +69,8 @@
       "stop_longitude": -78.624500,
       "stop_radius_m": 30.0,
       "closest_distance_m": 450.0,
-      "has_gps_gap": false
+      "has_gps_gap": false,
+      "required": true
     },
     "reason": "El bus pasó a 450m sin ingresar a la geocerca y con GPS continuo."
   },
@@ -83,7 +84,8 @@
       "stop_longitude": -78.624500,
       "stop_radius_m": 30.0,
       "closest_distance_m": 12.0,
-      "has_gps_gap": false
+      "has_gps_gap": false,
+      "required": true
     },
     "reason": "El bus ingresó al radio de 30m de la parada."
   },
@@ -150,6 +152,83 @@
       "gap_duration_s": 60
     },
     "reason": "Intervalo de 60s es normal y no constituye pérdida de cobertura."
+  },
+  {
+    "case_id": "GT-INC-13",
+    "title": "Salida puntual exacta sin segundo de retraso",
+    "incident_type": "delay_start",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "scheduled_start_offset_s": 0,
+      "actual_start_offset_s": 0,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Salida exactamente a la hora programada."
+  },
+  {
+    "case_id": "GT-INC-14",
+    "title": "Llegada con retraso de 6 minutos (360s sobre tolerancia 300s)",
+    "incident_type": "delay_arrival",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "scheduled_end_offset_s": 1800,
+      "actual_end_offset_s": 2160,
+      "lateness_tolerance_s": 300
+    },
+    "reason": "Retraso de 360s supera la tolerancia de 300s por 60 segundos."
+  },
+  {
+    "case_id": "GT-INC-15",
+    "title": "Parada intermedia opcional omitida (no obligatoria)",
+    "incident_type": "stop_omitted",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "stop_latitude": -1.251000,
+      "stop_longitude": -78.625000,
+      "stop_radius_m": 30.0,
+      "closest_distance_m": 150.0,
+      "has_gps_gap": false,
+      "required": false
+    },
+    "reason": "Paradas opcionales no generan incidencias por omisión."
+  },
+  {
+    "case_id": "GT-INC-16",
+    "title": "Desvío severo: 6 puntos a 220m durante 180 segundos",
+    "incident_type": "route_deviation",
+    "expected_has_incident": true,
+    "scenario_data": {
+      "corridor_m": 40.0,
+      "max_distance_m": 220.0,
+      "point_count": 6,
+      "duration_s": 180,
+      "accuracy_m": 5.0
+    },
+    "reason": "Desvío manifiesto prolongado y confirmado fuera del corredor."
+  },
+  {
+    "case_id": "GT-INC-17",
+    "title": "Posiciones cercanas a 35m dentro del corredor de 40m",
+    "incident_type": "route_deviation",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "corridor_m": 40.0,
+      "max_distance_m": 35.0,
+      "point_count": 5,
+      "duration_s": 120,
+      "accuracy_m": 3.0
+    },
+    "reason": "Distancia máxima no supera el ancho del corredor de 40m."
+  },
+  {
+    "case_id": "GT-INC-18",
+    "title": "Brecha GPS en frontera exacta del umbral de 180 segundos",
+    "incident_type": "gps_loss",
+    "expected_has_incident": false,
+    "scenario_data": {
+      "gap_threshold_s": 180,
+      "gap_duration_s": 180
+    },
+    "reason": "Intervalo exacto de 180s no excede el umbral de desconexión."
   }
 ]
-

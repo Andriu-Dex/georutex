@@ -198,17 +198,31 @@ class TransportMetricsService(models.AbstractModel):
         )
 
         # 5. Compute Software Quality Metrics MCS-01 through MCS-04
-        quality_service = self.env["transport.software.quality.service"]
-        mcs_metrics = quality_service.compute_all_quality_metrics()
+        if not self.env.context.get("in_quality_benchmark"):
+            quality_service = self.env["transport.software.quality.service"]
+            mcs_metrics = quality_service.compute_all_quality_metrics()
+        else:
+            mcs_metrics = {
+                f"MCS-0{i}": {"is_na": True, "value": None, "sample_size": 0}
+                for i in range(1, 5)
+            }
 
         # 6. Build chart datasets
         charts = self._build_chart_data(trips, incidents_recs)
 
         # 7. Summary cards
+        gross_compliant = mt01.get("secondary", {}).get(
+            "gross_compliant_count", mt01.get("numerator", 0)
+        )
+        adj_compliant = mt01.get("numerator", 0)
+        non_compliant = max(0, mt01.get("denominator", 0) - adj_compliant)
         summary = {
             "total_trips": len(trips),
             "executed_trips": executed_count,
-            "compliant_trips": mt01.get("numerator", 0),
+            "compliant_trips": adj_compliant,
+            "compliant_trips_gross": gross_compliant,
+            "compliant_trips_adjusted": adj_compliant,
+            "non_compliant_trips": non_compliant,
             "total_incidents": len(incidents_recs),
             "source_type": source_type,
         }

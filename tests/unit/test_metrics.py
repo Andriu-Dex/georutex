@@ -45,14 +45,22 @@ def test_mt01_route_compliance_normal_and_empty():
         "is_compliant_gross": False,
         "is_compliant_adjusted": False,
     })
+    # Add 1 insufficient data trip (should be excluded from denominator)
+    trips.append({
+        "integrity_status": "insufficient_data",
+        "state": "completed",
+        "is_compliant_gross": False,
+        "is_compliant_adjusted": False,
+    })
 
     res = calculate_mt01_route_compliance(trips)
     assert res["is_na"] is False
-    assert res["denominator"] == 10  # Cancelled excluded
+    assert res["denominator"] == 10  # Cancelled and insufficient_data excluded
     assert res["value"] == 80.0
     assert res["secondary"]["adjusted_value"] == 90.0
     assert res["secondary"]["non_compliant_count"] == 2
     assert res["secondary"]["justified_count"] == 1
+    assert res["secondary"]["indeterminate_count"] == 1
 
 
 def test_mt02_punctuality_departure_and_arrival():
@@ -170,6 +178,18 @@ def test_mt04_stops_completed_excludes_terminals():
             "status": "indeterminate",
             "required": True,
         },
+        # Checkpoint 5 (not_determinable -> excluded from denom)
+        {
+            "stop_type": "checkpoint",
+            "status": "not_determinable",
+            "required": True,
+        },
+        # Checkpoint 6 (pending -> excluded from denom)
+        {
+            "stop_type": "checkpoint",
+            "status": "pending",
+            "required": True,
+        },
         # Destination terminal (excluded)
         {"stop_type": "destination", "status": "on_time", "required": True},
     ]
@@ -180,7 +200,7 @@ def test_mt04_stops_completed_excludes_terminals():
     # Numerator: 2 visited (on_time + late)
     assert res["numerator"] == 2
     assert round(res["value"], 2) == 66.67
-    assert res["secondary"]["indeterminate_count"] == 1
+    assert res["secondary"]["indeterminate_count"] == 2
 
 
 def test_mt05_route_deviation_aggregation():
@@ -200,6 +220,14 @@ def test_mt05_route_deviation_aggregation():
             "deviation_count": 1,
             "deviation_duration_s": 120,
         },
+        # Trip with insufficient telemetry (excluded from denominator)
+        {
+            "integrity_status": "insufficient_data",
+            "state": "completed",
+            "max_deviation_distance_m": 0.0,
+            "deviation_count": 0,
+            "deviation_duration_s": 0,
+        },
     ]
 
     res = calculate_mt05_route_deviation(trips)
@@ -209,6 +237,7 @@ def test_mt05_route_deviation_aggregation():
     assert res["secondary"]["deviated_trips_pct"] == 50.0
     # Total outside time = 120s / 60 = 2.0 min
     assert res["secondary"]["total_outside_time_min"] == 2.0
+    assert res["secondary"]["indeterminate_count"] == 1
 
 
 def test_mt06_distance_difference_weighted():

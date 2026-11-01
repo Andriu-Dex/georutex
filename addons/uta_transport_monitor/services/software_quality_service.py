@@ -25,7 +25,24 @@ class TransportSoftwareQualityService(models.AbstractModel):
 
     @api.model
     def compute_all_quality_metrics(self):
-        """Compute latest snapshot of all 4 software quality metrics."""
+        """Compute latest snapshot of all 4 software quality metrics.
+
+        Enforces manager/analyst privileges and read-only bounds.
+        """
+        user = self.env.user
+        has_mgr = user.has_group(
+            "uta_transport_monitor.group_transport_manager"
+        )
+        has_ana = user.has_group(
+            "uta_transport_monitor.group_transport_analyst"
+        )
+        if not (has_mgr or has_ana or user._is_superuser()):
+            from odoo.exceptions import AccessError
+            raise AccessError(
+                "Solo los administradores y analistas pueden ejecutar "
+                "benchmarks de calidad del software."
+            )
+
         return {
             "MCS-01": self.compute_mcs01_gps_integrity(),
             "MCS-02": self.compute_mcs02_sync_accuracy(),
@@ -88,7 +105,7 @@ class TransportSoftwareQualityService(models.AbstractModel):
         """Calculate MCS-02 by comparing stored points with Traccar API."""
         vehicles = self.env["fleet.vehicle"].search([
             ("traccar_device_id", "!=", False)
-        ], limit=5)
+        ], limit=10)
 
         if not vehicles:
             return calculate_mcs02_sync_accuracy(
@@ -111,9 +128,9 @@ class TransportSoftwareQualityService(models.AbstractModel):
                 )
                 if not raw_positions:
                     continue
-                # Take sample of up to 20
-                if len(raw_positions) > 20:
-                    raw_positions = raw_positions[-20:]
+                # Take sample of up to 50 positions per device
+                if len(raw_positions) > 50:
+                    raw_positions = raw_positions[-50:]
 
                 total_expected += len(raw_positions)
                 for raw in raw_positions:
@@ -143,8 +160,9 @@ class TransportSoftwareQualityService(models.AbstractModel):
         """Measure system response times for cold and warm operations."""
         trip_model = self.env["transport.trip"]
         pos_model = self.env["transport.vehicle.position"]
+        metrics_svc = self.env["transport.metrics.service"]
 
-        # 1. Cold measurements
+        # 1. Cold measurements (ORM query)
         cold_latencies = []
         for _ in range(cold_repeats):
             t_start = time.perf_counter()
@@ -168,11 +186,30 @@ class TransportSoftwareQualityService(models.AbstractModel):
             t_end = time.perf_counter()
             warm_latencies.append((t_end - t_start) * 1000.0)
 
-        # Return warm as primary with cold metrics in secondary
+        # 3. Full dashboard end-to-end request latencies (cold and warm)
+        dash_svc = metrics_svc.with_context(in_quality_benchmark=True)
+        t_d_start = time.perf_counter()
+        _ = dash_svc.get_dashboard_metrics({})
+        dash_cold_ms = (time.perf_counter() - t_d_start) * 1000.0
+
+        dash_warm = []
+        for _ in range(10):
+            t_dw_start = time.perf_counter()
+            _ = dash_svc.get_dashboard_metrics({})
+            dash_warm.append((time.perf_counter() - t_dw_start) * 1000.0)
+
+        dash_warm_mean = sum(dash_warm) / len(dash_warm) if dash_warm else 0.0
+
+        # Return warm as primary with cold metrics and dashboard in secondary
         res_warm = calculate_mcs03_response_time(warm_latencies, is_cold=False)
         res_cold = calculate_mcs03_response_time(cold_latencies, is_cold=True)
 
         res_warm["secondary"]["cold_measurements"] = res_cold
+        res_warm["secondary"]["dashboard_request_latencies"] = {
+            "cold_ms": round(dash_cold_ms, 2),
+            "warm_mean_ms": round(dash_warm_mean, 2),
+            "sample_size": len(dash_warm),
+        }
         return res_warm
 
     @api.model
@@ -240,7 +277,8 @@ class TransportSoftwareQualityService(models.AbstractModel):
                 dist = scen.get("closest_distance_m", 0.0)
                 rad = scen.get("stop_radius_m", 30.0)
                 has_gap = scen.get("has_gps_gap", False)
-                detected = (dist > rad) and not has_gap
+                is_req = scen.get("required", True)
+                detected = is_req and (dist > rad) and not has_gap
 
             elif t == "route_deviation":
                 corr = scen.get("corridor_m", 40.0)

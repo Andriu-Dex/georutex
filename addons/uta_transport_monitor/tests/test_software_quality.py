@@ -86,11 +86,17 @@ class TestSoftwareQuality(TransactionCase):
         self.assertFalse(cold["is_na"])
         self.assertEqual(cold["sample_size"], 2)
 
+        # Full dashboard request latencies in secondary
+        dash_lat = res["secondary"]["dashboard_request_latencies"]
+        self.assertIn("cold_ms", dash_lat)
+        self.assertIn("warm_mean_ms", dash_lat)
+        self.assertGreater(dash_lat["sample_size"], 0)
+
     def test_04_mcs04_ground_truth_execution(self):
         """Verify MCS-04 evaluates the independent labeled dataset fixture."""
         res = self.quality_service.compute_mcs04_incident_detection()
         self.assertFalse(res["is_na"])
-        self.assertEqual(res["sample_size"], 12)  # 12 cases in fixture
+        self.assertEqual(res["sample_size"], 18)  # 18 cases in fixture
 
         # Check accuracy, precision, and recall are non-empty
         self.assertGreaterEqual(res["value"], 80.0)
@@ -108,3 +114,40 @@ class TestSoftwareQuality(TransactionCase):
         self.assertIn("stop_omitted", by_type)
         self.assertIn("route_deviation", by_type)
         self.assertIn("gps_loss", by_type)
+
+    def test_05_quality_benchmarks_security_and_non_mutation(self):
+        """Driver cannot run benchmarks and benchmarks mutate 0 records."""
+        from odoo.exceptions import AccessError
+
+        # Create driver user
+        driver_user = self.env["res.users"].create({
+            "name": "Benchmark Driver",
+            "login": "driver_bench@uta.edu.ec",
+            "email": "driver_bench@uta.edu.ec",
+            "groups_id": [(6, 0, [
+                self.env.ref("base.group_user").id,
+                self.env.ref(
+                    "uta_transport_monitor.group_transport_driver"
+                ).id,
+            ])],
+        })
+
+        # Calling as driver raises AccessError
+        with self.assertRaises(AccessError):
+            self.quality_service.with_user(
+                driver_user
+            ).compute_all_quality_metrics()
+
+        # Manager can run and operational counts remain strictly identical
+        trips_before = self.env["transport.trip"].search_count([])
+        incidents_before = self.env["transport.incident"].search_count([])
+
+        res = self.quality_service.compute_all_quality_metrics()
+        self.assertIn("MCS-01", res)
+        self.assertIn("MCS-04", res)
+
+        trips_after = self.env["transport.trip"].search_count([])
+        incidents_after = self.env["transport.incident"].search_count([])
+
+        self.assertEqual(trips_before, trips_after)
+        self.assertEqual(incidents_before, incidents_after)

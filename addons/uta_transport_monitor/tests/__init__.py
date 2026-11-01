@@ -13,3 +13,4 @@ from . import test_pre_phase4_consistency  # noqa: F401
 from . import test_evaluation_engine  # noqa: F401
 from . import test_transport_metrics  # noqa: F401
 from . import test_software_quality  # noqa: F401
+from . import test_end_to_end_integration  # noqa: F401

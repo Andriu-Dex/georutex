@@ -13,8 +13,9 @@ Módulo Odoo 16 Community para:
 - Historial de telemetrías y estado de conexión en tiempo real.
 - Motor de evaluación de recorridos y gestión de incidencias.
 - Dashboard gerencial interactivo y cálculo de métricas MT-01..08 y MCS-01..04.
+- Pruebas integrales extremo a extremo y evaluación de calidad ISO/IEC 25010.
     """,
-    "version": "16.0.5.0.0",
+    "version": "16.0.6.0.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",

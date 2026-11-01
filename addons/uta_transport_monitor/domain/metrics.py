@@ -83,6 +83,12 @@ def calculate_mt01_route_compliance(
         and t.get("state") not in ("draft", "scheduled", "cancelled")
     ]
     denom = len(evaluable)
+    indet_count = sum(
+        1 for t in trips_eval
+        if t.get("integrity_status") == "insufficient_data"
+        and t.get("state") not in ("draft", "scheduled", "cancelled")
+    )
+
     if denom == 0:
         return _format_metric_result(
             metric_id="MT-01",
@@ -100,7 +106,15 @@ def calculate_mt01_route_compliance(
             rule_version=rule_version,
             interpretation="Sin viajes ejecutados evaluables en el período.",
             is_na=True,
-            na_reason="Denominador nulo: sin viajes ejecutados evaluables.",
+            na_reason=(
+                f"Denominador nulo: sin viajes evaluables "
+                f"({indet_count} indeterminados por datos insuficientes)."
+                if indet_count > 0
+                else "Denominador nulo: sin viajes ejecutados evaluables."
+            ),
+            secondary={
+                "indeterminate_count": indet_count,
+            },
         )
 
     num_gross = sum(1 for t in evaluable if t.get("is_compliant_gross"))
@@ -113,6 +127,8 @@ def calculate_mt01_route_compliance(
         f"Cumplimiento bruto: {pct_gross:.1f}% ({num_gross}/{denom} viajes). "
         f"Ajustado: {pct_adj:.1f}% ({num_adj}/{denom} viajes)."
     )
+    if indet_count > 0:
+        interp += f" {indet_count} viaje(s) con evidencia insuficiente."
 
     return _format_metric_result(
         metric_id="MT-01",
@@ -135,6 +151,7 @@ def calculate_mt01_route_compliance(
             "adjusted_numerator": num_adj,
             "non_compliant_count": denom - num_gross,
             "justified_count": num_adj - num_gross,
+            "indeterminate_count": indet_count,
         },
     )
 
@@ -336,13 +353,15 @@ def calculate_mt04_stops_completed(
         s for s in stops_eval
         if s.get("stop_type") in ("checkpoint", "regular")
         and s.get("required", True)
-        and s.get("status") != "indeterminate"
+        and s.get("status") not in (
+            "indeterminate", "not_determinable", "pending"
+        )
     ]
     denom = len(evaluable)
     indet_count = sum(
         1 for s in stops_eval
         if s.get("stop_type") in ("checkpoint", "regular")
-        and s.get("status") == "indeterminate"
+        and s.get("status") in ("indeterminate", "not_determinable")
     )
 
     if denom == 0:
@@ -420,6 +439,11 @@ def calculate_mt05_route_deviation(
         and t.get("state") not in ("draft", "scheduled", "cancelled")
     ]
     denom = len(evaluable)
+    indet_count = sum(
+        1 for t in trips_eval
+        if t.get("integrity_status") == "insufficient_data"
+        and t.get("state") not in ("draft", "scheduled", "cancelled")
+    )
     if denom == 0:
         return _format_metric_result(
             metric_id="MT-05",
@@ -435,7 +459,13 @@ def calculate_mt05_route_deviation(
             rule_version=rule_version,
             interpretation="Sin viajes con datos de trazado evaluables.",
             is_na=True,
-            na_reason="Denominador nulo: sin viajes con trazado evaluable.",
+            na_reason=(
+                f"Denominador nulo: sin viajes con trazado evaluable "
+                f"({indet_count} indeterminados por telemetría insuficiente)."
+                if indet_count > 0
+                else "Denominador nulo: sin viajes con trazado evaluable."
+            ),
+            secondary={"indeterminate_count": indet_count},
         )
 
     max_distances = [
@@ -459,6 +489,11 @@ def calculate_mt05_route_deviation(
         f"{deviated_trips} de {denom} viajes ({pct_deviated:.1f}%) con "
         f"desvíos ({total_outside_min:.1f} min fuera)."
     )
+    if indet_count > 0:
+        interp += (
+            f" {indet_count} viaje(s) con telemetría insuficiente "
+            f"para desvíos."
+        )
 
     return _format_metric_result(
         metric_id="MT-05",
@@ -478,6 +513,7 @@ def calculate_mt05_route_deviation(
             "deviated_trips_pct": round(pct_deviated, 2),
             "total_outside_time_min": round(total_outside_min, 2),
             "avg_outside_time_min": round(avg_outside_min, 2),
+            "indeterminate_count": indet_count,
         },
     )
 
