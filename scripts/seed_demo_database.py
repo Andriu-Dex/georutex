@@ -59,8 +59,14 @@ def load_demo_credentials():
     return creds
 
 
-def run_seed():
-    db_name = "georutex_demo"
+def run_seed(db_name="georutex_demo"):
+    # Guardrail: Fail immediately if attempting to run on non-demo databases (e.g. operational 'georutex')
+    if not db_name or db_name.strip() != "georutex_demo":
+        raise ValueError(
+            f"Operación destructiva denegada: la base de datos '{db_name}' "
+            "no está autorizada para sembrado o limpieza de demostración."
+        )
+
     config.parse_config([
         "-c", "/etc/odoo/odoo.conf",
         "--db_host=postgres",
@@ -68,6 +74,12 @@ def run_seed():
         "--db_password=odoo_dev_password",
         "-d", db_name
     ])
+
+    from odoo.addons.uta_transport_monitor.services.demo_safety import (
+        validate_target_database,
+        cleanup_demo_dataset,
+    )
+    validate_target_database(db_name)
     registry = odoo.registry(db_name)
     with registry.cursor() as cr:
         env = api.Environment(cr, SUPERUSER_ID, {})
@@ -155,13 +167,9 @@ def run_seed():
         inc_model = env["transport.incident"]
         eval_service = env["transport.trip.evaluation.service"]
 
-        # Limpiar datos previos en la base demo para garantizar aislamiento exacto y reconciliación de población
-        pos_model.search([]).unlink()
-        inc_model.search([]).unlink()
-        existing_demo_trips = trip_model.search([])
-        if existing_demo_trips:
-            print(f"Eliminando {len(existing_demo_trips)} recorridos anteriores...")
-            existing_demo_trips.unlink()
+        # Limpiar datos previos en la base demo para garantizar aislamiento exacto y reconciliación de población.
+        # Scoped cleanup protects operational/real telemetry from accidental deletion.
+        cleanup_demo_dataset(env, db_name)
 
         # 3. Definición de los 10 Recorridos de Demostración con telemetría + 1 Cancelado
         base_t = datetime(2026, 11, 15, 7, 0, 0)
