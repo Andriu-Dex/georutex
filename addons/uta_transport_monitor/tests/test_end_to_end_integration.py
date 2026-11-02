@@ -243,7 +243,7 @@ class TestEndToEndIntegration(TransactionCase):
         )
         trips.append(t9)
 
-        # Trip 10: Compliant Afternoon Return (Achieving 10 Executed Trips)
+        # Trip 10: Compliant Afternoon Return
         t10 = self._create_executed_trip(
             vehicle=self.vehicle_sim,
             route=self.routes[0],
@@ -253,6 +253,16 @@ class TestEndToEndIntegration(TransactionCase):
         )
         trips.append(t10)
 
+        # Trip 12: Compliant Intercampus Run (10 executed trips with tracks)
+        t12 = self._create_executed_trip(
+            vehicle=self.vehicle_real,
+            route=self.routes[1],
+            start_dt=base_t + timedelta(hours=10),
+            duration_min=30,
+            outcome="compliant",
+        )
+        trips.append(t12)
+
         # Trip 11: Cancelled Trip (excluded from executed denominator)
         t11 = self.trip_model.create({
             "name": "REC-2026-TRIP-11-CANCELLED",
@@ -260,19 +270,19 @@ class TestEndToEndIntegration(TransactionCase):
             "route_id": self.routes[1].id,
             "route_version_id": self.routes[1].current_version_id.id,
             "driver_id": self.partner_driver.id,
-            "scheduled_start_utc": base_t + timedelta(hours=10),
-            "scheduled_end_utc": base_t + timedelta(hours=10, minutes=30),
+            "scheduled_start_utc": base_t + timedelta(hours=11),
+            "scheduled_end_utc": base_t + timedelta(hours=11, minutes=30),
             "source_type": "simulated",
             "state": "cancelled",
         })
         trips.append(t11)
 
-        # Verify exactly 11 trips created (10 executed + 1 cancelled)
-        self.assertEqual(len(trips), 11)
+        # Exactly 12 trips: 10 executed with telemetry + 1 indet + 1 cancelled
+        self.assertEqual(len(trips), 12)
 
-        # Verify exactly 10 executed test trips have audit evaluations
+        # Verify exactly 11 evaluated test trips (excluding cancelled)
         eval_trips = [t for t in trips if t.state != "cancelled"]
-        self.assertEqual(len(eval_trips), 10)
+        self.assertEqual(len(eval_trips), 11)
         for t in eval_trips:
             self.assertTrue(t.last_evaluation_id)
 
@@ -282,18 +292,31 @@ class TestEndToEndIntegration(TransactionCase):
             "date_to": "2026-11-10",
         })
 
-        # Summary check: 11 total trips, exactly 10 executed trips
+        # Summary check: 12 total trips, exactly 10 executed trips
         summary = dash["summary"]
-        self.assertEqual(summary["total_trips"], 11)
+        self.assertEqual(summary["total_trips"], 12)
         self.assertEqual(summary["executed_trips"], 10)
         self.assertGreater(summary["compliant_trips_gross"], 0)
         self.assertGreater(summary["compliant_trips_adjusted"], 0)
         self.assertGreater(summary["non_compliant_trips"], 0)
 
-        # Check MT-01..08 values
+        # Check MT-01..08 values and sample sizes
         kpis = dash["kpis"]
         self.assertFalse(kpis["MT-01"]["is_na"])
+        self.assertEqual(kpis["MT-01"]["denominator"], 10)
+        self.assertEqual(kpis["MT-01"]["secondary"]["indeterminate_count"], 1)
+        self.assertFalse(kpis["MT-02"]["is_na"])
+        self.assertEqual(kpis["MT-02"]["denominator"], 10)
+        self.assertFalse(kpis["MT-03"]["is_na"])
+        self.assertEqual(kpis["MT-03"]["denominator"], 10)
+        self.assertFalse(kpis["MT-05"]["is_na"])
+        self.assertEqual(kpis["MT-05"]["denominator"], 10)
+        self.assertFalse(kpis["MT-06"]["is_na"])
+        self.assertEqual(kpis["MT-06"]["sample_size"], 10)
+        self.assertFalse(kpis["MT-07"]["is_na"])
+        self.assertEqual(kpis["MT-07"]["denominator"], 10)
         self.assertFalse(kpis["MT-08"]["is_na"])
+        self.assertEqual(kpis["MT-08"]["denominator"], 10)
         self.assertGreater(kpis["MT-08"]["numerator"], 0)
 
     @patch(
@@ -489,18 +512,25 @@ class TestEndToEndIntegration(TransactionCase):
         elif outcome == "gps_gap":
             is_gap = True
 
+        if outcome == "indeterminate":
+            # Zero valid positions - no verified actual times or distance
+            trip.write({
+                "scheduled_distance_m": 4200.0,
+                "actual_distance_m": 0.0,
+                "state": "completed",
+            })
+            self.eval_service.evaluate_trip(trip)
+            return trip
+
         trip.write({
             "actual_start_utc": act_start,
             "actual_end_utc": act_end,
             "manual_start_utc": act_start,
             "manual_end_utc": act_end,
+            "scheduled_distance_m": 4200.0,
+            "actual_distance_m": 4220.0,
             "state": "completed",
         })
-
-        if outcome == "indeterminate":
-            # Zero valid positions
-            self.eval_service.evaluate_trip(trip)
-            return trip
 
         # Generate GPS positions at checkpoints
         ver = route.current_version_id

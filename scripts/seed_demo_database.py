@@ -34,17 +34,17 @@ def run_seed():
             user_driver = env["res.users"].create({
                 "name": "Carlos Morales (Conductor)",
                 "login": "conductor",
-                "password": "conductor",
+                "password": "GeoRutex#Conductor2026!",
                 "partner_id": partner_carlos.id,
                 "groups_id": [(6, 0, [group_driver.id, env.ref("base.group_user").id])],
             })
         else:
             user_driver.write({
-                "password": "conductor",
+                "password": "GeoRutex#Conductor2026!",
                 "partner_id": partner_carlos.id,
                 "groups_id": [(6, 0, [group_driver.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Conductor: {user_driver.login} (ID {user_driver.id})")
+        print(f"Usuario Conductor: {user_driver.login} (ID {user_driver.id}) [Clave: GeoRutex#Conductor2026!]")
 
         # Gestor / Analista de Transporte
         user_analyst = env["res.users"].search([("login", "=", "analista")])
@@ -52,41 +52,41 @@ def run_seed():
             user_analyst = env["res.users"].create({
                 "name": "Lic. Ana Gómez (Analista de Rutas)",
                 "login": "analista",
-                "password": "analista",
+                "password": "GeoRutex#Analista2026!",
                 "email": "analista@uta.edu.ec",
                 "groups_id": [(6, 0, [group_analyst.id, env.ref("base.group_user").id])],
             })
         else:
             user_analyst.write({
-                "password": "analista",
+                "password": "GeoRutex#Analista2026!",
                 "groups_id": [(6, 0, [group_analyst.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Analista: {user_analyst.login} (ID {user_analyst.id})")
+        print(f"Usuario Analista: {user_analyst.login} (ID {user_analyst.id}) [Clave: GeoRutex#Analista2026!]")
 
         user_manager = env["res.users"].search([("login", "=", "gestor")])
         if not user_manager:
             user_manager = env["res.users"].create({
                 "name": "Ing. Patricio Silva (Gestor de Rutas)",
                 "login": "gestor",
-                "password": "gestor",
+                "password": "GeoRutex#Gestor2026!",
                 "email": "gestor@uta.edu.ec",
                 "groups_id": [(6, 0, [group_manager.id, env.ref("base.group_user").id])],
             })
         else:
             user_manager.write({
-                "password": "gestor",
+                "password": "GeoRutex#Gestor2026!",
                 "groups_id": [(6, 0, [group_manager.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Gestor: {user_manager.login} (ID {user_manager.id})")
+        print(f"Usuario Gestor: {user_manager.login} (ID {user_manager.id}) [Clave: GeoRutex#Gestor2026!]")
 
         # Administrador (Mitchell Admin)
         user_admin = env["res.users"].search([("login", "=", "admin")])
         if user_admin:
             user_admin.write({
-                "password": "admin",
+                "password": "GeoRutex#Admin2026!",
                 "groups_id": [(4, group_manager.id)],
             })
-            print(f"Usuario Admin: {user_admin.login} (ID {user_admin.id})")
+            print(f"Usuario Admin: {user_admin.login} (ID {user_admin.id}) [Clave: GeoRutex#Admin2026!]")
 
         # 2. Vehículos y Rutas Demo
         v_real = env.ref("uta_transport_monitor.demo_vehicle_01_real")
@@ -102,13 +102,13 @@ def run_seed():
         inc_model = env["transport.incident"]
         eval_service = env["transport.trip.evaluation.service"]
 
-        # Limpiar recorridos anteriores de demo si existen
-        existing_demo_trips = trip_model.search([("name", "=like", "REC-DEMO-%")])
+        # Limpiar todos los recorridos anteriores en la base demo para garantizar aislamiento exacto
+        existing_demo_trips = trip_model.search([])
         if existing_demo_trips:
-            print(f"Eliminando {len(existing_demo_trips)} recorridos demo anteriores...")
+            print(f"Eliminando {len(existing_demo_trips)} recorridos anteriores...")
             existing_demo_trips.unlink()
 
-        # 3. Definición de los 10 Recorridos de Demostración + 1 Cancelado
+        # 3. Definición de los 10 Recorridos de Demostración con telemetría + 1 Indeterminado + 1 Cancelado
         base_t = datetime(2026, 11, 15, 7, 0, 0)
         trips_spec = [
             ("REC-DEMO-01-COMPLIANT-TBA1001", v_real, r1, 0, "compliant"),
@@ -121,6 +121,7 @@ def run_seed():
             ("REC-DEMO-08-INDETERMINATE-TBA1002", v_sim, r2, 7, "indeterminate"),
             ("REC-DEMO-09-JUSTIFIED-TBA1001", v_real, r3, 8, "justified"),
             ("REC-DEMO-10-COMPLIANT-RET-TBA1002", v_sim, r1, 9, "compliant"),
+            ("REC-DEMO-12-INTERCAMPUS-TBA1001", v_real, r2, 10, "compliant"),
         ]
 
         created_trips = []
@@ -157,15 +158,29 @@ def run_seed():
                 act_end = end_dt + timedelta(minutes=15)
 
             act_dist = (ver.estimated_distance_m or 4200.0) + (150.0 if outcome != "compliant" else 20.0)
-            trip.write({
-                "actual_start_utc": act_start,
-                "actual_end_utc": act_end,
-                "manual_start_utc": act_start,
-                "manual_end_utc": act_end,
-                "scheduled_distance_m": ver.estimated_distance_m or 4200.0,
-                "actual_distance_m": act_dist,
-                "state": "completed",
-            })
+
+            if outcome == "indeterminate":
+                # Recorrido sin datos GPS: no tiene tiempos verificados ni odómetro real
+                trip.write({
+                    "actual_start_utc": False,
+                    "actual_end_utc": False,
+                    "manual_start_utc": False,
+                    "manual_end_utc": False,
+                    "first_gps_fix_utc": False,
+                    "scheduled_distance_m": ver.estimated_distance_m or 4200.0,
+                    "actual_distance_m": 0.0,
+                    "state": "completed",
+                })
+            else:
+                trip.write({
+                    "actual_start_utc": act_start,
+                    "actual_end_utc": act_end,
+                    "manual_start_utc": act_start,
+                    "manual_end_utc": act_end,
+                    "scheduled_distance_m": ver.estimated_distance_m or 4200.0,
+                    "actual_distance_m": act_dist,
+                    "state": "completed",
+                })
 
             if outcome != "indeterminate":
                 for s_idx in range(len(stops)):
@@ -281,15 +296,15 @@ def run_seed():
             "route_id": r2.id,
             "route_version_id": r2.current_version_id.id,
             "driver_id": partner_carlos.id,
-            "scheduled_start_utc": base_t + timedelta(hours=10),
-            "scheduled_end_utc": base_t + timedelta(hours=10, minutes=30),
+            "scheduled_start_utc": base_t + timedelta(hours=11),
+            "scheduled_end_utc": base_t + timedelta(hours=11, minutes=30),
             "source_type": "simulated",
             "state": "cancelled",
         })
         print(f"Recorrido cancelado creado: {t_cancel.name} (Estado: {t_cancel.state})")
 
         cr.commit()
-        print("=== SEEDING COMPLETADO EXITOSAMENTE CON 10 RECORRIDOS EJECUTADOS + 1 CANCELADO ===")
+        print("=== SEEDING COMPLETADO EXITOSAMENTE: 10 RECORRIDOS EJECUTADOS CON TELEMETRÍA + 1 INDETERMINADO + 1 CANCELADO (TOTAL 12) ===")
 
 if __name__ == "__main__":
     run_seed()

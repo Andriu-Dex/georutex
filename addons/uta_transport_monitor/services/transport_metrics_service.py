@@ -166,6 +166,7 @@ class TransportMetricsService(models.AbstractModel):
         executed_count = sum(
             1 for t in trips_eval_data
             if t["state"] in ("completed", "in_progress")
+            and t.get("integrity_status") != "insufficient_data"
         )
 
         # 4. Compute MT-01 through MT-08 pure metrics

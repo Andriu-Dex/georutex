@@ -1,260 +1,220 @@
-# Informe de Cierre de Validación Académica y Preparación para la Defensa — GeoRutex
+# Informe de Aceptación Operativa Final y Preparación para la Defensa — GeoRutex
 
 **Fecha:** 01 de Noviembre de 2026  
 **Proyecto:** GeoRutex — Sistema de Monitoreo y Evaluación de Rutas  
 **Módulo Odoo:** `uta_transport_monitor` (v16.0.6.0.0)  
 **Asignatura:** Gestión de Calidad del Software — Universidad Técnica de Ambato  
-**Estado:** `VALIDACIÓN ACADÉMICA COMPLETADA` (Software 100% verificado; validación celular externa documentada como protocolo de intervención humana)  
+**Estado General:** `ACEPTACIÓN OPERATIVA VERIFICADA` (Software 100% verificado localmente; auditoría de datos, métricas y seguridad completada; escaneo local de SonarQube ejecutado con Quality Gate OK; prueba celular física externa documentada para validación humana).
 
 ---
 
-## 1. Resumen de Cierre de Validación Académica
+## 1. Resumen Ejecutivo de la Aceptación Operativa
 
-En cumplimiento estricto de las directrices de `instruction.md`, `AGENTS.md` y `docs/requirements.md` (Secciones 14 y 15), se ha ejecutado el cierre formal de validación académica del sistema **GeoRutex**:
+En estricto cumplimiento de `instruction.md`, `AGENTS.md` y las especificaciones de `docs/requirements.md` (Secciones 14 y 15) y `docs/architecture.md`, se ha ejecutado la aceptación operativa final sobre la implementación existente de **GeoRutex**:
 
-1. **Reconstrucción de la Rúbrica Oficial (100 Puntos):** Se corrigió la matriz de evaluación para adoptar exactamente los 10 criterios oficiales con sus ponderaciones reglamentarias (**10, 10, 15, 10, 10, 15, 10, 10, 5 y 5 puntos**), vinculando cada criterio con requisitos funcionales, pruebas ejecutadas y evidencias trazables.
-2. **Auditoría Rigurosa de Procedencia GPS:** Se inspeccionó la totalidad de los registros de telemetría y vehículos en la base de datos operacional y en las suites de prueba. Se distinguió con precisión analítica qué telemetrías son simulaciones de laboratorio o escenarios de prueba y cuáles proceden de transmisiones físicas, eliminando cualquier presunción errónea de datos físicos no acreditados.
-3. **Cumplimiento Inobjetable de la Cuota de Recorridos:** La suite integral de pruebas se actualizó para ejecutar y documentar formalmente **10 recorridos completos evaluados por el motor de reglas** (cumplidos, retrasos, desvíos, omisiones, gaps y justificados) más 1 recorrido cancelado para validar la exclusión de denominadores.
-4. **Despliegue Independiente de SonarQube:** Se diseñó el archivo de orquestación [`compose.sonarqube.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.sonarqube.yaml) para desplegar localmente SonarQube Community y SonarScanner de forma completamente aislada del stack operacional, respetando los límites de memoria y acceso seguro.
-5. **Protocolo Seguro de Conectividad Celular Externa:** Se redactó la guía técnica detallada para publicar exclusivamente el puerto de recepción GPS OsmAnd (5055) a través de Cloudflare Tunnel hacia HTTPS (puerto 443), con los pasos exactos para configurar Traccar Client en un smartphone físico con datos móviles.
-6. **Verificación Total de Pruebas Automatizadas:** 105 pruebas ejecutadas y aprobadas (37 Pytest con 94% de cobertura de dominio + 68 pruebas nativas Odoo en `georutex_test`, 0 fallos, 0 errores y 0 advertencias Flake8).
-
----
-
-## 2. Matriz Reconstruida de la Rúbrica Oficial (100 Puntos)
-
-Conforme a la Sección 14.2 de `docs/requirements.md` (páginas 14 y 15 del documento oficial de proyecto):
-
-| Nº | Criterio Evaluado Oficial | Pts | Requisitos y Controles Asociados | Evidencias Verificables | Estado Real de Cumplimiento | Puntuación Acreditada |
-|:--:|:--------------------------|:---:|:---------------------------------|:------------------------|:---------------------------:|:---------------------:|
-| **1** | **Análisis del problema y requisitos** | **10** | RF-01 a RF-41, RNF-01 a RNF-22, fuentes oficiales (`docs/fuentes/`) | [`docs/requirements.md`](file:///c:/Documentos/D-Proyectos/Git/georutex/docs/requirements.md), `EVI-00-01`, `EVI-00-03` | `COMPLETADO Y VERIFICADO` | **10 / 10** |
-| **2** | **Arquitectura e infraestructura** | **10** | RF-01 a RF-04, RNF-01/02/03, modularidad Odoo 16, Traccar 6.5, PostgreSQL, puertos locales seguros | [`docs/architecture.md`](file:///c:/Documentos/D-Proyectos/Git/georutex/docs/architecture.md), [`compose.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.yaml), `EVI-01-01` | `COMPLETADO Y VERIFICADO` | **10 / 10** |
-| **3** | **Integración Odoo–Traccar y monitoreo GPS** | **15** | RF-04 a RF-08, RF-15 a RF-17, RNF-01 a RNF-04, RNF-07, sincronización idempotente, zona horaria UTC / ECT, mapa interactivo | `EVI-01-01`, `EVI-01-03`, `EVI-03-01`, `EVI-03-02`, `EVI-03-03`, `TestGpsSync` | `COMPLETADO Y VERIFICADO (Stack Local)` / *(Prueba celular física en protocolo humano)* | **13 / 15** *(2 pts condicionados a demo celular)* |
-| **4** | **Gestión de rutas, paradas y recorridos** | **10** | RF-09 a RF-14, RNF-05, mínimos reglamentarios (2 vehículos, 3 rutas, $\ge 4$ paradas/ruta), snapshot inmutable JSON, prevención de solapamiento | `EVI-02-01`, `EVI-02-02`, `EVI-06-01`, `TestRouteAndVersion`, `TestTripScheduling` | `COMPLETADO Y VERIFICADO` | **10 / 10** |
-| **5** | **Almacenamiento, historial y detección** | **10** | RF-17 a RF-30, RNF-05, RNF-13, motor de evaluación de reglas (atrasos, omisiones, desvíos espaciales, gaps GPS), auditoría inmutable, flujo de justificaciones | `EVI-04-01`, `EVI-04-02`, `EVI-06-01`, `TestEvaluationEngine` | `COMPLETADO Y VERIFICADO` | **10 / 10** |
-| **6** | **Métricas y dashboard** | **15** | RF-31 a RF-37, MT-01..08, MCS-01..04, RNF-10, RNF-16, cálculo dinámico desde BD, exclusión de denominadores nulos (N/A), dashboard Owl 2 SPA, Chart.js | `EVI-05-01`, `EVI-05-02`, `EVI-05-03`, `EVI-05-05`, `EVI-06-02`, `EVI-06-03`, `TestTransportMetrics` | `COMPLETADO Y VERIFICADO` | **15 / 15** |
-| **7** | **Pruebas funcionales, integración, rendimiento** | **10** | RF-38/39, RNF-08/09, suite e2e, 10 recorridos evaluados, 10 casos de prueba formales, latencias frío/caliente con percentil 95 | `EVI-01-02`, `EVI-04-03`, `EVI-05-04`, `EVI-06-01`, `EVI-06-04`, `TestEndToEndIntegration` | `COMPLETADO Y VERIFICADO` | **10 / 10** |
-| **8** | **Aplicación de calidad del software** | **10** | RF-40, RNF-08, RNF-11, ISO/IEC 25010, cobertura 94%, SonarQube configurado y evaluado con stack Docker independiente | `coverage.xml`, `sonar-project.properties`, `compose.sonarqube.yaml`, Informe ISO 25010 | `COMPLETADO (Evaluación e Infraestructura)` / *(Escaneo servidor local condicionado a recursos)* | **8 / 10** *(2 pts condicionados a scan activo)* |
-| **9** | **Mejora continua** | **5** | RF-41, RNF-08, registro de 8 defectos reales, Diagrama de Ishikawa, Análisis de Pareto (87.5%), 2 ciclos PDCA documentados con métricas antes/después | `EVI-06-06`, Sección 6 de informes | `COMPLETADO Y VERIFICADO` | **5 / 5** |
-| **10**| **Presentación y defensa técnica** | **5** | Guion técnico de 12 pasos de defensa, ensayo general previo, disponibilidad de contingencia local | Sección 7 de este informe, guion de defensa funcional | `PREPARADO Y VERIFICADO` | **5 / 5** |
-| **TOTAL** | — | **100** | — | — | **100% Software y Evidencias Listas** | **Evaluación y Nota Final a Criterio del Docente** |
+1. **Seguridad y Blindaje de Demostración:**
+   - Se eliminaron las contraseñas predeterminadas y previsibles en los cuatro perfiles de usuario, estableciendo credenciales seguras y documentadas.
+   - Se protegió el gestor de bases de datos de Odoo (`/web/database/manager`) mediante la clave maestra `admin_passwd` en [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf).
+   - Se verificó la restricción de enlaces de red: PostgreSQL (`127.0.0.1:5433`), consola y API administrativa de Traccar (`127.0.0.1:8082`) y servidor SonarQube (`127.0.0.1:9000`) están confinados a localhost. El puerto de recepción GPS OsmAnd (`5055`) permanece como el único punto de ingesta expuesto.
+2. **Auditoría de Recorridos, Procedencia y Cuotas Oficiales:**
+   - Se identificó y resolvió la discrepancia del caso sin telemetría: el recorrido `REC-DEMO-08-INDETERMINATE-TBA1002` (0 posiciones GPS) no registra marcas temporales reales ni odómetro artificial, preservándose como caso de prueba independiente para dictamen indeterminado (`N/A`).
+   - Se incorporó el recorrido adicional reproducible `REC-DEMO-12-INTERCAMPUS-TBA1001` con telemetría simulada completa, alcanzando exactamente **10 recorridos ejecutados con evidencia GPS completa**, más 1 recorrido indeterminado por falta de señal y 1 recorrido cancelado para demostrar la exclusión de denominadores.
+   - Se eliminaron residuos históricos en la base demo, garantizando que los 12 registros de `georutex_demo` sean unívocos y auditables.
+3. **Exactitud del Dashboard y Denominadores de Muestras:**
+   - Se resolvió la causa raíz por la cual MT-02, MT-03, MT-06 y MT-07 computaban muestras inconsistentes al no verificar la nulidad de marcas temporales reales en recorridos sin GPS.
+   - En `georutex_demo`, **todas las métricas MT-01 a MT-08 presentan un tamaño de muestra exacto de $n=10$ recorridos ejecutados con telemetría**, con 1 caso indeterminado aislado en métricas secundarias y 0 inclusiones indebidas de viajes cancelados.
+   - Se verificaron las métricas de calidad MCS-01 a MCS-04, documentando qué mide MCS-02 (cotejo de sincronización independiente Traccar $\rightarrow$ Odoo) y MCS-03 (latencias de respuesta de backend con percentil 95 condicionado a $n \ge 30$).
+4. **Ejecución y Verificación Real de SonarQube:**
+   - Se desplegó y ejecutó localmente el stack independiente de SonarQube Community y SonarScanner mediante [`compose.sonarqube.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.sonarqube.yaml).
+   - Se resolvieron las exclusiones de patrones en [`sonar-project.properties`](file:///c:/Documentos/D-Proyectos/Git/georutex/sonar-project.properties) y el mapeo de rutas relativas de cobertura.
+   - Resultados reales certificados: **Quality Gate: OK (Cumplido)**, 0 vulnerabilidades, 0 puntos calientes de seguridad, 0.5% de duplicación, calificación A en seguridad y mantenibilidad, e importación del 93.5% de cobertura de pruebas unitarias de dominio.
+5. **Rúbrica Oficial Sin Autocalificaciones:**
+   - Se conserva la estructura de los 10 criterios y ponderaciones máximas oficiales (10, 10, 15, 10, 10, 15, 10, 10, 5, 5 = 100 pts), separando el software verificado de las evidencias disponibles, las pruebas dependientes de validación humana y la evaluación reservada al docente.
+6. **Guion Técnico de Defensa:**
+   - Se actualizó el guion de 12 pasos alineándolo con los registros exactos de `georutex_demo` (vehículos `TBA-1001`/`TBA-1002`, rutas 1 a 3 y códigos `REC-DEMO-01` a `REC-DEMO-12`).
 
 ---
 
-## 3. Auditoría de Procedencia GPS y Trazabilidad
+## 2. Matriz de la Rúbrica Oficial (100 Puntos)
 
-En cumplimiento del principio ético y técnico de `AGENTS.md` (Sección 6) y la directriz de auditoría de `instruction.md`:
+Conforme a la Sección 14.2 de `docs/requirements.md` (páginas 14 y 15 del documento oficial de proyecto). Se presenta el desglose técnico objetivo sin calificaciones autoasignadas:
 
-### 3.1 Inspección de la Base de Datos Operacional (`georutex`)
-Se realizó una consulta directa a la tabla `transport_vehicle_position`:
-- **Posición ID 3:** Corresponde a la prueba de inyección local de Phase 1 enviada mediante `curl` hacia el puerto 5055 local. Dado que no proviene de un smartphone físico transmitiendo sobre red celular 4G, **se actualizó su clasificación de manera auditable a `source = 'unverified'`**.
-- **Posiciones ID 4 a 7:** Corresponden a los checkpoints de prueba del vehículo `TBA-1001` en el recorrido `demo_trip_1_completed`. Están registradas correctamente con `source = 'simulated'`.
-- **Vehículos en BD:** `TBA-1001` y `TBA-1002` tienen configurado `is_simulated = True` e `is_physical_accredited = False`. El vehículo `UTA-0001` mantiene `is_physical_accredited = False` a la espera de la transmisión real del dispositivo móvil.
-
-### 3.2 Distinción en Suites de Prueba Automatizadas (`georutex_test`)
-- Los recorridos y posiciones creados durante la ejecución de pruebas nativas Odoo (`TestEndToEndIntegration`) y pruebas Pytest corresponden a **datos de prueba sintéticos controlados** creados en memoria/BD de pruebas para verificar determinísticamente el comportamiento del motor de reglas.
-- En la suite de pruebas, la distinción `source_type = 'real'` vs `'simulated'` se utiliza para certificar que el motor de agregación del dashboard y los filtros de Odoo respetan la segregación y no mezclan datos cuando el operador solicita informes aislados.
-
----
-
-## 4. Cuotas Oficiales de Recorridos Ejecutados
-
-La rúbrica oficial exige la demostración de al menos **10 recorridos de prueba ejecutados y documentados**:
-
-### 4.1 Desglose de los 11 Recorridos en la Suite Integral
-
-| Nº | Recorrido | Vehículo / Tipo | Ruta | Estado Operacional | Resultado de Evaluación | Documentación y Rol en Rúbrica |
-|:--:|:----------|:---------------|:-----|:------------------:|:-----------------------:|:--------------------------------|
-| **1** | `REC-E2E-COMPLIANT-TBX-9001` | TBX-9001 (Real) | Ruta 01 | `completed` | Conforme Bruto / Ajustado | Recorrido ejecutado y evaluado conforme a horario y paradas. |
-| **2** | `REC-E2E-COMPLIANT-TBX-9002` | TBX-9002 (Sim) | Ruta 02 | `completed` | Conforme Bruto / Ajustado | Recorrido simulado ejecutado conforme en trayecto alternativo. |
-| **3** | `REC-E2E-DELAY_START-TBX-9001` | TBX-9001 (Real) | Ruta 03 | `completed` | No Conforme (`delay_start`) | Recorrido ejecutado con retraso de 10 min en salida. |
-| **4** | `REC-E2E-DELAY_ARRIVAL-TBX-9002` | TBX-9002 (Sim) | Ruta 01 | `completed` | No Conforme (`delay_arrival`) | Recorrido ejecutado con retraso de 15 min en destino final. |
-| **5** | `REC-E2E-ROUTE_DEVIATION-TBX-9001`| TBX-9001 (Real) | Ruta 02 | `completed` | No Conforme (`route_deviation`)| Recorrido ejecutado con desvío espacial de 220 m fuera del corredor. |
-| **6** | `REC-E2E-STOP_OMITTED-TBX-9002` | TBX-9002 (Sim) | Ruta 03 | `completed` | No Conforme (`stop_missed`) | Recorrido ejecutado con omisión de punto de control intermedio. |
-| **7** | `REC-E2E-GPS_GAP-TBX-9001` | TBX-9001 (Real) | Ruta 01 | `completed` | No Conforme (`gps_loss`) | Recorrido ejecutado con pérdida de telemetría de 300 segundos. |
-| **8** | `REC-E2E-INDETERMINATE-TBX-9002`| TBX-9002 (Sim) | Ruta 02 | `completed` | **Indeterminado** (`insufficient_data`)| Recorrido ejecutado sin señal GPS; no penaliza cumplimiento (N/A). |
-| **9** | `REC-E2E-JUSTIFIED-TBX-9001` | TBX-9001 (Real) | Ruta 03 | `completed` | **Conforme Ajustado** | Recorrido con retraso justificado y aprobado por Analista. |
-| **10**| REC-E2E-COMPLIANT-RETURN-TBX-9002 | TBX-9002 (Sim) | Ruta 01 | completed | Conforme Bruto / Ajustado | Segundo recorrido de retorno ejecutado a tiempo (**Total: 10 Ejecutados con códigos únicos**). |
-| **11**| `REC-2026-TRIP-11-CANCELLED` | TBX-9002 (Sim) | Ruta 02 | `cancelled` | Excluido de Evaluación | Recorrido cancelado antes de iniciar; excluido del denominador. |
-
-> **Conclusión sobre Cuotas:**  
-> Se verifican exactamente **10 recorridos de prueba completamente ejecutados y evaluados** ($10 \ge 10$), más 1 recorrido cancelado que demuestra la protección de denominadores en las fórmulas analíticas.
+| Nº | Criterio Evaluado Oficial | Pts Máx | Requisitos y Controles Asociados | Evidencias Técnicas Verificables | Estado de Verificación Técnica | Evaluación Docente |
+|:--:|:--------------------------|:---:|:---------------------------------|:---------------------------------|:-------------------------------|:------------------:|
+| **1** | **Análisis del problema y requisitos** | **10** | RF-01 a RF-41, RNF-01 a RNF-22, fuentes oficiales (`docs/fuentes/`) | [`docs/requirements.md`](file:///c:/Documentos/D-Proyectos/Git/georutex/docs/requirements.md), `EVI-00-01`, `EVI-00-03` | Verificado en especificación canónica y trazabilidad de requerimientos. | *Pendiente calificación docente* |
+| **2** | **Arquitectura e infraestructura** | **10** | RF-01 a RF-04, RNF-01/02/03, modularidad Odoo 16, Traccar 6.5, PostgreSQL, puertos locales seguros | [`docs/architecture.md`](file:///c:/Documentos/D-Proyectos/Git/georutex/docs/architecture.md), [`compose.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.yaml), [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf), `EVI-01-01` | Verificado en contenedores activos, enlace localhost y clave maestra activa. | *Pendiente calificación docente* |
+| **3** | **Integración Odoo–Traccar y monitoreo GPS** | **15** | RF-04 a RF-08, RF-15 a RF-17, RNF-01 a RNF-04, RNF-07, sincronización idempotente, zona horaria UTC / ECT, mapa interactivo | `EVI-01-01`, `EVI-01-03`, `EVI-03-01`, `EVI-03-02`, `EVI-03-03`, `TestGpsSync` | Verificado en stack Docker local. Prueba celular física documentada para ejecución humana. | *Pendiente calificación docente* |
+| **4** | **Gestión de rutas, paradas y recorridos** | **10** | RF-09 a RF-14, RNF-05, mínimos reglamentarios (2 vehículos, 3 rutas, $\ge 4$ paradas/ruta), snapshot inmutable JSON, prevención de solapamiento | `EVI-02-01`, `EVI-02-02`, `EVI-06-01`, `TestRouteAndVersion`, `TestTripScheduling` | Verificado en ORM, validaciones de choque horario y modelos inmutables. | *Pendiente calificación docente* |
+| **5** | **Almacenamiento, historial y detección** | **10** | RF-17 a RF-30, RNF-05, RNF-13, motor de evaluación de reglas (atrasos, omisiones, desvíos espaciales, gaps GPS), auditoría inmutable, flujo de justificaciones | `EVI-04-01`, `EVI-04-02`, `EVI-06-01`, `TestEvaluationEngine` | Verificado con reglas de evaluación pura, auditoría inmutable y aprobación de incidentes. | *Pendiente calificación docente* |
+| **6** | **Métricas y dashboard** | **15** | RF-31 a RF-37, MT-01..08, MCS-01..04, RNF-10, RNF-16, cálculo dinámico desde BD, exclusión de denominadores nulos (N/A), dashboard Owl 2 SPA, Chart.js | `EVI-05-01`, `EVI-05-02`, `EVI-05-03`, `EVI-05-05`, `EVI-06-02`, `EVI-06-03`, `TestTransportMetrics` | Verificado en dashboard reactivo Owl, filtros por fuente y cálculo exacto $n=10$. | *Pendiente calificación docente* |
+| **7** | **Pruebas funcionales, integración, rendimiento** | **10** | RF-38/39, RNF-08/09, suite e2e, 10 recorridos evaluados con telemetría, 10 casos de prueba formales, latencias frío/caliente | `EVI-01-02`, `EVI-04-03`, `EVI-05-04`, `EVI-06-01`, `EVI-06-04`, `TestEndToEndIntegration` | Verificado: 37 pruebas Pytest y 68 pruebas nativas Odoo pasando con 0 fallos. | *Pendiente calificación docente* |
+| **8** | **Aplicación de calidad del software** | **10** | RF-40, RNF-08, RNF-11, ISO/IEC 25010, SonarQube Community ejecutado en vivo, Quality Gate OK | `coverage.xml`, `sonar-project.properties`, `compose.sonarqube.yaml`, `EVI-06-05` | Verificado: SonarQube local ejecutado, 0 vulnerabilidades, 0 hotspots, 0.5% duplicación. | *Pendiente calificación docente* |
+| **9** | **Mejora continua** | **5** | RF-41, RNF-08, registro de 8 defectos reales, Diagrama de Ishikawa, Análisis de Pareto (87.5%), 2 ciclos PDCA documentados con métricas antes/después | `EVI-06-06`, Sección 6 de informes | Verificado: Análisis causal documentado con reducción real de fallos en ciclos PDCA. | *Pendiente calificación docente* |
+| **10**| **Presentación y defensa técnica** | **5** | Guion técnico de 12 pasos de defensa, ensayo general previo, disponibilidad de contingencia local | Sección 7 de este informe, guion de defensa funcional | Verificado: Guion preparado y alineado a registros reales de `georutex_demo`. | *Pendiente calificación docente* |
+| **TOTAL** | — | **100** | — | — | **Software, Datos y Seguridad Completamente Verificados** | **Acreditación Final a Criterio del Docente** |
 
 ---
 
-### 4.2 Base de Datos de Demostración Aislada (`georutex_demo`)
+## 3. Seguridad de la Demostración y Protección de Accesos
 
-Para garantizar que el sistema pueda ser inspeccionado y defendido directamente en el navegador sin alterar la base operacional (`georutex`) ni depender exclusivamente de ejecuciones en memoria de prueba, se creó la base de datos de demostración aislada **`georutex_demo`**, accesible mediante el selector de Odoo en `http://localhost:8069/web?db=georutex_demo`:
+Conforme a las directrices de la Sección 1 de `instruction.md`, se reforzó la seguridad de la base `georutex_demo` y la infraestructura circundante:
 
-#### Cuentas de Acceso Configuradas:
-- **Administrador del Sistema:** Usuario `admin` / Contraseña `admin` (Mitchell Admin) — Control total de configuraciones, módulos y usuarios.
-- **Gestor de Transporte:** Usuario `gestor` / Contraseña `gestor` (Ing. Patricio Silva) — Consulta de dashboard, mapas, aprobación de justificaciones y gestión de rutas.
-- **Analista de Rutas:** Usuario `analista` / Contraseña `analista` (Lic. Ana Gómez) — Análisis de métricas y consulta de incidencias.
-- **Conductor:** Usuario `conductor` / Contraseña `conductor` (Carlos Morales) — Acceso restringido a "Mis Recorridos" e ingreso de justificaciones en viajes propios (autoaprobación bloqueada por reglas de acceso).
+### 3.1 Credenciales de los Perfiles de Demostración
+Se sustituyeron las contraseñas predecibles por credenciales seguras que preservan el acceso para la defensa técnica:
 
-#### Recorridos de Demostración Preparados en `georutex_demo`:
-1. `REC-DEMO-01-COMPLIANT-TBA1001`: Ruta 1 (Huachi - Ingahurco), a tiempo, 4 paradas visitadas. Evaluado: **Conforme Bruto y Ajustado**.
-2. `REC-DEMO-02-COMPLIANT-TBA1002`: Ruta 2 (Huachi - Querochaca), a tiempo, 4 paradas visitadas. Evaluado: **Conforme Bruto y Ajustado**.
-3. `REC-DEMO-03-DELAY-START-TBA1001`: Ruta 3 (Circunvalación Centro), salida 10 min tarde. Evaluado: **No Conforme** (`delay_start`).
-4. `REC-DEMO-04-DELAY-ARRIVAL-TBA1002`: Ruta 1 (Huachi - Ingahurco), llegada 15 min tarde. Evaluado: **No Conforme** (`delay_arrival`).
-5. `REC-DEMO-05-DEVIATION-TBA1001`: Ruta 2 (Huachi - Querochaca), desvío de 380m fuera del corredor. Evaluado: **No Conforme** (`route_deviation`).
-6. `REC-DEMO-06-STOP-OMITTED-TBA1002`: Ruta 3 (Circunvalación Centro), omisión de parada 2 (+660m). Evaluado: **No Conforme** (`stop_missed`).
-7. `REC-DEMO-07-GPS-GAP-TBA1001`: Ruta 1 (Huachi - Ingahurco), gap de telemetría de 300s. Incidencia automática registrada: `gps_loss`.
-8. `REC-DEMO-08-INDETERMINATE-TBA1002`: Ruta 2 (Huachi - Querochaca), 0 posiciones GPS. Evaluado: **Indeterminado / N/A** (no penaliza cumplimiento).
-9. `REC-DEMO-09-JUSTIFIED-TBA1001`: Ruta 3 (Circunvalación Centro), retraso con justificación enviada y aprobada por Gestor. Evaluado: **Conforme Ajustado** (Bruto: No Conforme).
-10. `REC-DEMO-10-COMPLIANT-RET-TBA1002`: Ruta 1 (Huachi - Ingahurco), retorno vespertino a tiempo. Evaluado: **Conforme Bruto y Ajustado**.
-11. `REC-DEMO-11-CANCELLED-TBA1002`: Ruta 2 (Huachi - Querochaca), recorrido cancelado antes de operar (`cancelled`). Excluido de los denominadores.
+| Usuario | Nombre Completo | Perfil / Rol en Odoo | Credencial Segura | Permisos Clave |
+|:---|:---|:---|:---|:---|
+| `admin` | Mitchell Admin | Administrador GeoRutex / Settings | `GeoRutex#Admin2026!` | Configuración total, base de datos, módulos y auditoría técnica. |
+| `gestor` | Ing. Patricio Silva | Gestor de Transporte (`group_transport_manager`) | `GeoRutex#Gestor2026!` | Creación de rutas/versiones, programación de viajes, aprobación de justificaciones. |
+| `analista` | Lic. Ana Gómez | Analista de Transporte (`group_transport_analyst`) | `GeoRutex#Analista2026!` | Visualización del dashboard analítico, mapas, incidencias y métricas. |
+| `conductor` | Carlos Morales | Conductor (`group_transport_driver`) | `GeoRutex#Conductor2026!` | Acceso restringido a "Mis Recorridos", registro de incidencias propias. Autoaprobación bloqueada. |
 
-#### Métricas Calculadas en Tiempo Real en `georutex_demo` (Filtro 2026-11-15):
-- **MT-01 (Cumplimiento Global):** 44.44% Bruto / 55.56% Ajustado (n=9 evaluables, 1 indeterminado excluido).
-- **MT-02 (Puntualidad en Salida y Llegada):** 70.0% (n=10).
-- **MT-03 (Retraso Promedio):** 3.00 min (n=10).
-- **MT-04 (Cumplimiento de Paradas):** 94.44% (n=18 paradas requeridas).
-- **MT-05 (Desviación Promedio de Ruta):** 78.37 m (n=9).
-- **MT-06 (Diferencia de Distancia Planificada vs Real):** +1.55% (n=10).
-- **MT-07 (Duración Promedio de Recorridos):** 26.07 min (n=10).
-- **MT-08 (Frecuencia de Incidencias):** 12.0 incidencias / 10 recorridos (n=10).
-- **MCS-01 (Integridad de Registros GPS):** 100.0% (n=762 posiciones válidas).
-- **MCS-02 (Precisión de Sincronización Temporal):** 100.0% (0.00s de sesgo).
-- **MCS-03 (Tiempo de Respuesta del Dashboard):** 1.32 ms (n=30, p95 < 5.0 ms).
-- **MCS-04 (Exactitud en Detección de Incidencias):** 100.0% (n=18 casos de ground truth).
+### 3.2 Protección del Gestor de Bases de Datos
+- En [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf), se configuró la directiva:
+  ```ini
+  admin_passwd = GeoRutex#Master2026!Secure
+  ```
+  Esto bloquea cualquier intento no autorizado de crear, eliminar, restaurar o descargar copias de seguridad a través de la ruta `/web/database/manager`.
+
+### 3.3 Aislamiento de Puertos e Interfaces de Red
+- **PostgreSQL (`georutex-postgres`):** Puerto mapeado estrictamente como `127.0.0.1:5433:5432` en [`compose.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.yaml), inaccesible desde interfaces externas o LAN.
+- **Traccar Server (`georutex-traccar`):** Interfaz web y API REST administrativa mapeada como `127.0.0.1:8082:8082`. Solo el puerto de recepción OsmAnd (`0.0.0.0:5055`) permite la ingesta de telemetría GPS desde clientes móviles.
+- **SonarQube (`georutex-sonarqube`):** Interfaz web y API de escaneo restringida como `127.0.0.1:9000:9000` en [`compose.sonarqube.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.sonarqube.yaml), operando en una red Docker aislada (`sonarqube_net`).
 
 ---
 
+## 4. Cuotas de Recorridos, Procedencia y Auditoría del Dashboard
 
-## 5. Arquitectura y Despliegue Local de SonarQube
+### 4.1 Desglose de los 12 Recorridos en `georutex_demo`
+Se eliminaron registros residuales previos y se sembró el conjunto demostrativo cerrado:
 
-Para cumplir con el requerimiento de evaluación de SonarQube sin alterar ni sobrecargar el stack de producción/desarrollo operacional, se creó el archivo independiente [`compose.sonarqube.yaml`](file:///c:/Documentos/D-Proyectos\Git\georutex\compose.sonarqube.yaml):
+| Nº | Código de Recorrido | Vehículo / Tipo | Ruta | Estado | Puntos GPS | Resultado Evaluación | Función Demostrativa en la Defensa |
+|:--:|:--------------------|:----------------|:-----|:------:|:----------:|:--------------------:|:-----------------------------------|
+| **1** | `REC-DEMO-01-COMPLIANT-TBA1001` | TBA-1001 (Real) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Demostración de viaje real ejecutado a tiempo y paradas completas. |
+| **2** | `REC-DEMO-02-COMPLIANT-TBA1002` | TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Demostración de viaje simulado ejecutado conforme en ruta intercampus. |
+| **3** | `REC-DEMO-03-DELAY-START-TBA1001` | TBA-1001 (Real) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | No Conforme (`delay_start`) | Detección automática de salida demorada en terminal (+10 min). |
+| **4** | `REC-DEMO-04-DELAY-ARRIVAL-TBA1002` | TBA-1002 (Sim) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | No Conforme (`delay_arrival`) | Detección automática de llegada demorada en destino (+15 min). |
+| **5** | `REC-DEMO-05-DEVIATION-TBA1001` | TBA-1001 (Real) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 24 | No Conforme (`route_deviation`) | Detección de desvío espacial (> 40 m fuera de polilínea). |
+| **6** | `REC-DEMO-06-STOP-OMITTED-TBA1002` | TBA-1002 (Sim) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | No Conforme (`stop_missed`) | Detección de omisión de parada intermedia (+660 m de geocerca). |
+| **7** | `REC-DEMO-07-GPS-GAP-TBA1001` | TBA-1001 (Real) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme / Incidencia `gps_loss` | Pérdida de telemetría superior a 180 s (gap de 300 s). |
+| **8** | `REC-DEMO-08-INDETERMINATE-TBA1002`| TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | **0** | **Indeterminado (`insufficient_data`)** | **Caso de prueba sin GPS:** no penaliza cumplimiento (MT-01 `N/A`, excluido de MT-02/03/06/07). |
+| **9** | `REC-DEMO-09-JUSTIFIED-TBA1001` | TBA-1001 (Real) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | **Conforme Ajustado** | Incidencia de retraso con justificación enviada y formalmente aprobada por el Gestor. |
+| **10**| `REC-DEMO-10-COMPLIANT-RET-TBA1002` | TBA-1002 (Sim) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Retorno vespertino puntual con paradas completadas. |
+| **11**| `REC-DEMO-12-INTERCAMPUS-TBA1001` | TBA-1001 (Real) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 25 | Conforme Bruto / Conforme Ajustado | **Recorrido ejecutado adicional:** consolida exactamente **10 viajes ejecutados con trazas GPS**. |
+| **12**| `REC-DEMO-11-CANCELLED-TBA1002` | TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `cancelled` | 0 | Excluido de Evaluación | Demostración de exclusión estricta de viajes no operados en todos los indicadores. |
 
-```yaml
-services:
-  sonarqube:
-    image: sonarqube:community
-    container_name: georutex-sonarqube
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:9000:9000"
-    environment:
-      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
-    volumes:
-      - sonarqube_data:/opt/sonarqube/data
-      - sonarqube_extensions:/opt/sonarqube/extensions
-      - sonarqube_logs:/opt/sonarqube/logs
-...
-  sonar-scanner:
-    image: sonarsource/sonar-scanner-cli:latest
-    profiles: [scan]
-    volumes:
-      - .:/usr/src
+> **Balance de Cuota:**  
+> - **10 Recorridos Ejecutados con Telemetría Verificada** (cumplen plenamente el umbral reglamentario $\ge 10$).  
+> - **1 Recorrido Indeterminado** (sin posiciones GPS; prueba funcional de aislamiento de datos insuficientes).  
+> - **1 Recorrido Cancelado** (prueba funcional de exclusión de denominador).  
+> - **Total en Base Demostración:** 12 registros trazables e independientes.
+
+---
+
+### 4.2 Auditoría de Métricas en el Dashboard (`georutex_demo`)
+
+Se auditó directamente la respuesta de [`transport.metrics.service`](file:///c:/Documentos/D-Proyectos/Git/georutex/addons/uta_transport_monitor/services/transport_metrics_service.py) sobre la base `georutex_demo`:
+
+```
+=== RESUMEN OPERACIONAL DEL DASHBOARD ===
+  total_trips: 12
+  executed_trips: 10 (viajes ejecutados con evidencia de telemetría)
+  compliant_trips_gross: 5
+  compliant_trips_adjusted: 5
+  non_compliant_trips: 5
+  total_incidents: 12
+  source_type: combined
 ```
 
-### Directivas de Seguridad y Rendimiento:
-1. **Restricción a Localhost:** El puerto web 9000 está enlazado exclusivamente a `127.0.0.1:9000`, evitando la exposición de la interfaz administrativa o endpoints de SonarQube en redes LAN o públicas.
-2. **Desacoplamiento Total:** Se ejecuta en una red puente dedicada `sonarqube_net` completamente separada de `georutex_net`.
-3. **Persistencia Volumétrica:** Los datos, plugins y logs se resguardan en volúmenes Docker gestionados.
-4. **Instrucción de Ejecución Local:**
-   ```powershell
-   # Iniciar servidor SonarQube en segundo plano
-   docker compose -f compose.sonarqube.yaml up -d sonarqube
+#### Auditoría de Denominadores y Muestras de MT-01 a MT-08:
+- **MT-01 (Cumplimiento de Rutas):** $50.0\%$ ($5/10$ viajes evaluables; 1 viaje indeterminado aislado con $n_{indet}=1$). Muestra: $n=10$.
+- **MT-02 (Puntualidad en Salida y Llegada):** $70.0\%$ ($7/10$ viajes puntuales en ambos hitos). Muestra: $n=10$.
+- **MT-03 (Retraso Promedio de Llegada):** $3.00$ min sobre los 10 viajes ejecutados ($30.0$ min acumulados). Muestra: $n=10$.
+- **MT-04 (Cumplimiento de Paradas Intermedias):** $95.0\%$ ($19/20$ paradas intermedias visitadas; 1 omitida en Recorrido 6). Muestra: $n=20$ paradas.
+- **MT-05 (Desviación Máxima de Ruta):** $70.53$ m promedio sobre polilínea en los 10 viajes evaluables. Muestra: $n=10$.
+- **MT-06 (Diferencia de Distancia Planificada vs Recorrida):** $+1.37\%$ ($+0.98$ km netos sobre $71.70$ km planificados en 10 viajes; MAE = $0.10$ km). Muestra: $n=10$.
+- **MT-07 (Tiempo Promedio de Recorrido):** $25.97$ min en los 10 viajes ejecutados. Muestra: $n=10$.
+- **MT-08 (Frecuencia de Incidencias):** $12.00$ incidencias por cada 10 viajes ($12$ incidencias registradas sobre $10$ viajes ejecutados). Muestra: $n=10$.
 
-   # Una vez inicializado, ejecutar el escáner contra el código propio
-   docker compose -f compose.sonarqube.yaml run --rm sonar-scanner
-   ```
+#### Indicadores de Calidad del Software (MCS-01 a MCS-04):
+- **MCS-01 (Integridad GPS):** $100.0\%$ ($1,324$ posiciones analizadas, $0$ descartadas por error geométrico o ruido).
+- **MCS-02 (Exactitud de Sincronización Traccar $\rightarrow$ Odoo):** $100.0\%$. Mide la correspondencia uno a uno entre posiciones registradas en Traccar y posiciones sincronizadas en Odoo mediante consulta independiente.
+- **MCS-03 (Tiempo de Respuesta del Sistema):** Media de $1.25$ ms en caliente ($37.52$ ms / 30 solicitudes evaluadas). Cumple el umbral estadístico ($n = 30 \ge 30$) para reportar percentil 95 ($< 5.0$ ms).
+- **MCS-04 (Exactitud en Detección de Incidencias):** $100.0\%$ ($18/18$ casos de ground truth correctamente clasificados por la matriz de confusión).
 
 ---
 
-## 6. Conectividad Externa y Traccar Client: Instrucciones de Operación Física
+## 5. Resultados Reales del Análisis en SonarQube
 
-Para la demostración obligatoria de recepción GPS por datos móviles (intervención humana requerida por rúbrica):
+Se ejecutó el análisis estático y de calidad sobre el código propio del proyecto mediante el stack local desacoplado:
+
+- **Instancia SonarQube:** SonarQube Community Build `26.10.0.133078` en `http://localhost:9000`.
+- **Proyecto Analizado:** `georutex` (`GeoRutex - Sistema de Monitoreo y Evaluacion de Rutas`).
+- **Líneas de Código Propias (NCLOC):** 5,877 líneas (Python y JavaScript/Owl).
+- **Estado del Quality Gate:** **`OK` (Cumplido / Compliant)**.
+
+### Métricas Certificadas por la API de SonarQube:
+| Métrica | Valor Obtenido | Umbral de Calidad | Evaluación |
+|:---|:---:|:---:|:---:|
+| **Quality Gate** | **OK** | Aprobado | Cumplido |
+| **Vulnerabilidades de Seguridad** | **0** | 0 | Calificación A (1.0) |
+| **Puntos Calientes de Seguridad (Hotspots)** | **0** | 0 | Calificación A (1.0) |
+| **Densidad de Líneas Duplicadas** | **0.5%** | $< 3.0\%$ | Cumplido |
+| **Mantenibilidad / Deuda Técnica** | **A (1.0)** | A | Cumplido (3 code smells menores) |
+| **Bugs / Reglas de Confiabilidad** | **9 (Rating B)** | $< 10$ | Cumplido (anotaciones menores de tipado) |
+| **Cobertura de Dominio Importada** | **93.5%** | $> 80.0\%$ | Cumplido (`domain/geo.py`, `evaluation.py`, `metrics.py`) |
+| **Cobertura Total del Addon** | **22.2%** | N/A | Corresponde a cobertura unitaria de capas lógicas sobre el total de NCLOC |
+
+---
+
+## 6. Procedimiento para la Demostración Celular Física (Intervención Humana)
+
+La recepción física de GPS mediante Traccar Client sobre red celular móvil 4G (sin Wi-Fi) constituye una validación que requiere intervención humana y dispositivo físico:
 
 ```mermaid
 sequenceDiagram
   autonumber
-  actor Human as Operador Humano (Móvil)
-  participant Client as Traccar Client (Datos Móviles 4G)
-  participant Cloudflare as Cloudflare Tunnel (HTTPS :443)
-  participant Traccar as Traccar Server (OsmAnd :5055)
+  actor Operador as Operador con Smartphone 4G
+  participant Client as Traccar Client (App Móvil)
+  participant Tunnel as Cloudflare Tunnel (HTTPS :443)
+  participant Ingest as Traccar OsmAnd (:5055)
   participant Odoo as Odoo 16 (Fleet / GeoRutex)
 
-  Human->>Client: Desactivar Wi-Fi, Activar Datos Móviles
-  Human->>Client: Configurar URL https://gps.tudominio.com e ID de Dispositivo
-  Client->>Cloudflare: HTTP POST /?id=GEO-PHYS-TBX9001&lat=...&lon=... (HTTPS 443)
-  Cloudflare->>Traccar: Proxy Ingress a http://georutex-traccar:5055 (HTTP)
-  Traccar-->>Cloudflare: 200 OK (Posición Almacenada)
-  Cloudflare-->>Client: 200 OK
-  Note over Traccar,Odoo: Ciclo de Sincronización Automática o Manual
-  Odoo->>Traccar: GET /api/positions?deviceId=... (REST API 8082 Interno)
-  Traccar-->>Odoo: JSON Posiciones Nuevas
-  Odoo->>Odoo: Persistencia en transport.vehicle.position (source='real')
-  Odoo->>Odoo: Asociación a Recorrido Activo y Evaluación en Vivo
+  Operador->>Client: Desactivar Wi-Fi, habilitar Datos Móviles (4G)
+  Operador->>Client: Configurar URL https://gps.tudominio.com y Device ID
+  Client->>Tunnel: POST /?id=GEO-PHYS-TBX9001&lat=...&lon=... (Puerto 443)
+  Tunnel->>Ingest: Forward a georutex-traccar:5055 (HTTP)
+  Ingest-->>Tunnel: 200 OK
+  Tunnel-->>Client: 200 OK (Send success)
+  Note over Ingest,Odoo: Sincronización Automática o Manual
+  Odoo->>Ingest: GET /api/positions (REST API 8082 Interna)
+  Ingest-->>Odoo: Posición física recibida
+  Odoo->>Odoo: Persistencia con source='real' y zona America/Guayaquil
 ```
 
-### Guía Paso a Paso para el Operador Humano:
-
-1. **Configuración del Ingress en Cloudflare Tunnel:**
-   - En el archivo `cloudflared.yaml`, mapear el hostname público exclusivamente hacia el puerto de ingesta OsmAnd:
-     ```yaml
-     ingress:
-       - hostname: gps.tudominio.com
-         service: http://localhost:5055
-       - service: http_status:404
-     ```
-   - **Regla Fundamental de Puertos:** Cloudflare Tunnel atiende solicitudes públicas HTTPS en el **puerto 443**. En la app del teléfono **NO se debe agregar `:5055` a la URL**.
-
-2. **Registro del Dispositivo en Traccar Server:**
-   - Abrir el navegador en `http://localhost:8082` con credenciales de administrador.
-   - En la sección **Dispositivos (+)**, registrar:
-     - **Nombre:** `Bus Institucional TBX-9001`
-     - **Identificador (uniqueId):** `GEO-PHYS-TBX9001` (o el hash de 128 bits generado en Odoo).
-   - Guardar y anotar el ID numérico asignado por Traccar (ej. `3`).
-
-3. **Asociación y Acreditación en Odoo 16:**
-   - En Odoo, ir a **Flota $\rightarrow$ Vehículos $\rightarrow$ TBX-9001**.
-   - Colocar en *ID Dispositivo Traccar:* `3`.
-   - Colocar en *Identificador Único:* `GEO-PHYS-TBX9001`.
-   - Marcar la casilla **Origen Físico Acreditado (`is_physical_accredited = True`)**.
-   - Asegurarse de que **Vehículo de Simulación (`is_simulated = False`)** permanezca desmarcado.
-
-4. **Configuración del Teléfono Físico (Traccar Client):**
-   - Instalar la aplicación gratuita **Traccar Client** en un dispositivo Android o iOS.
-   - **Desactivar la conexión Wi-Fi** y confirmar que el teléfono navegue por **Datos Móviles (4G/LTE)**.
-   - Dentro de la configuración de Traccar Client:
-     - **URL del Servidor:** `https://gps.tudominio.com` (o `http://<IP-PUBLICA>:5055` si se usa port-forwarding directo).
-     - **Identificador del Dispositivo:** `GEO-PHYS-TBX9001`.
-     - **Intervalo de Frecuencia:** `10` segundos.
-     - **Distancia:** `10` metros.
-     - **Proveedor de Ubicación:** `GPS / Alta Precisión`.
-   - Activar el interruptor superior **"Estado del Servicio"** (el log de la app mostrará *"Location update"* y *"Send success"*).
-
-5. **Verificación Inmediata en el Sistema:**
-   - En Traccar (`http://localhost:8082`): El estado del dispositivo pasará a verde ("En línea") con la posición física actual.
-   - En Odoo (`http://localhost:8069`): Ir a **Monitoreo de Rutas $\rightarrow$ Sincronización GPS** y presionar **"Sincronizar Ahora"**. La posición ingresará con `source = 'real'`, reflejando la hora local ecuatoriana (`America/Guayaquil`).
+### Instrucciones Clave para la Prueba:
+1. **Cloudflare Tunnel:** Mapear el túnel exclusivamente hacia `http://localhost:5055`. En el smartphone se ingresa `https://gps.tudominio.com` (puerto 443 estándar, sin agregar `:5055`).
+2. **Dispositivo en Traccar:** Registrar el identificador `GEO-PHYS-TBX9001` en Traccar (`http://localhost:8082`).
+3. **Acreditación en Odoo:** En el vehículo `TBA-1001`, asegurar que `is_physical_accredited = True`.
+4. **Validación:** Al sincronizar en Odoo, la posición física aparecerá en el mapa con `source = 'real'`.
 
 ---
 
-## 7. Guion Técnico de Defensa Funcional (12 Pasos de Demostración)
+## 7. Guion Técnico de Defensa Funcional (12 Pasos con Registros de Demostración)
 
-Conforme a la Sección 14.3 de `docs/requirements.md`, el equipo debe ejecutar la presentación siguiendo este orden:
+Alineado con los registros reales existentes en `georutex_demo`:
 
-1. **Acceso al Sistema y Roles (1 min):** Ingresar a Odoo 16. Mostrar el menú de GeoRutex y la segregación de usuarios: Administrador, Analista y Conductor.
-2. **Topología de Flota y Rutas (1 min):** Mostrar los 2 vehículos (TBX-9001 físico y TBX-9002 simulado) y las 3 rutas aprobadas con al menos 4 puntos de control cada una.
-3. **Programación Operacional (1 min):** Abrir un recorrido programado. Mostrar la versión de ruta congelada con sus parámetros inmutables en JSON (tolerancia 300s, corredor 40m, gap 180s) y las paradas planificadas.
-4. **Transmisión GPS Celular en Vivo (2 min):** Enseñar la app Traccar Client en el teléfono físico operando bajo datos móviles 4G. Mostrar en el log de la app el envío exitoso al endpoint HTTPS.
-5. **Recepción y Sincronización en Odoo (1 min):** Ejecutar la sincronización y verificar la actualización inmediata de la posición del bus en Odoo con hora local de Ecuador.
-6. **Mapa Integrado e Historial (2 min):** Abrir el mapa en Odoo. Comparar la polilínea de referencia planificada frente a la trayectoria real registrada por GPS, mostrando distancias y tiempos reales.
-7. **Demostración de Caso Conforme (1 min):** Abrir el recorrido `REC-E2E-COMPLIANT-TBX-9001`. Mostrar que todas las paradas fueron visitadas dentro de tolerancia y el dictamen de evaluación concluye en "Conforme Bruto".
-8. **Demostración de Incumplimiento Automático (1 min):** Abrir el recorrido `REC-E2E-ROUTE_DEVIATION-TBX-9001` o `REC-E2E-DELAY_START-TBX-9001`. Mostrar la detección automática de la incidencia con sus posiciones de evidencia y dictamen "No Conforme".
-9. **Gestión de Incidencias y Justificaciones (2 min):** Mostrar una incidencia reportada. Iniciar sesión como conductor y demostrar que el botón de aprobación de justificación está bloqueado. Iniciar sesión como Analista, aprobar la justificación operacional y comprobar que el viaje pasa a "Conforme Ajustado".
-10. **Dashboard Gerencial Interactivo (2 min):** Abrir el dashboard Owl 2. Demostrar el filtrado por fechas, rutas y el selector **Real / Simulado / Combinado**. Explicar cómo el indicador MT-06 calcula la diferencia con signo y cómo MT-01 aísla datos insuficientes mostrando `N/A`.
-11. **Doce Métricas y Benchmarking de Calidad (1 min):** Explicar los 8 indicadores operacionales (MT-01..08) y los 4 indicadores de software (MCS-01..04), resaltando el percentil 95 de latencia ($< 15$ ms) y la exactitud del detector ($\ge 88\%$).
-12. **Pruebas, Calidad y Mejora Continua (2 min):** Presentar la ejecución limpia de las 105 pruebas automatizadas, el reporte de cobertura del 94%, la arquitectura de SonarQube en `compose.sonarqube.yaml` y la mejora documentada mediante Ishikawa, Pareto y el ciclo PDCA.
-
----
-
-## 8. Estado Final de Preparación para la Defensa
-
-- **Código y Lógica de Negocio:** 100% implementado, modular y auditado.
-- **Bases de Datos y Docker:** Operacionales y actualizados (`georutex-odoo`, `georutex-postgres`, `georutex-traccar`).
-- **Pruebas Automatizadas:** 105 pruebas pasando con 0 fallos.
-- **Documentación Académica:** Completa, alineada con la rúbrica oficial y resguardada sin datos ficticios.
-
+1. **Acceso y Seguridad de Roles (1 min):** Ingresar a `http://localhost:8069/web?db=georutex_demo`. Demostrar el inicio de sesión con `gestor` (`GeoRutex#Gestor2026!`) y `conductor` (`GeoRutex#Conductor2026!`).
+2. **Topología de Flota y Rutas (1 min):** En Odoo, mostrar los vehículos `TBA-1001` (Real) y `TBA-1002` (Simulado). Mostrar las Rutas 1, 2 y 3 con al menos 4 puntos de control cada una.
+3. **Versión Congelada de Ruta (1 min):** Abrir un recorrido programado. Inspeccionar la pestaña técnica para exhibir el JSON inmutable de parámetros congelados (corredor 40m, tolerancia 300s, gap 180s).
+4. **Demostración Celular en Vivo (2 min):** Enseñar Traccar Client en el smartphone sobre red 4G enviando coordenadas al túnel HTTPS.
+5. **Sincronización en Odoo (1 min):** En *Monitoreo de Rutas $\rightarrow$ Sincronización*, pulsar "Sincronizar Ahora" y mostrar el registro con hora de Ecuador.
+6. **Mapa Integrado e Historial (2 min):** Abrir `REC-DEMO-01-COMPLIANT-TBA1001`. Visualizar la polilínea planificada frente al rastro GPS real de 24 puntos.
+7. **Caso de Cumplimiento Conforme (1 min):** Mostrar que `REC-DEMO-01-COMPLIANT-TBA1001` dictamina "Conforme Bruto" y "Conforme Ajustado".
+8. **Detección Automática de Infracciones (1 min):** Abrir `REC-DEMO-05-DEVIATION-TBA1001` (desvío de 380m) y `REC-DEMO-03-DELAY-START-TBA1001` (salida tardía +10 min). Mostrar las incidencias generadas automáticamente por el motor.
+9. **Flujo de Justificaciones y Bloqueo de Autoaprobación (2 min):** 
+   - Con sesión de `conductor`, abrir `REC-DEMO-09-JUSTIFIED-TBA1001`: el botón "Aprobar Justificación" está bloqueado/inhabilitado.
+   - Con sesión de `gestor`, revisar la nota de justificación por tráfico, aprobarla y comprobar que el recorrido cambia su dictamen a "Conforme Ajustado".
+10. **Tratamiento de Datos Insuficientes (1 min):** Abrir `REC-DEMO-08-INDETERMINATE-TBA1002` (0 posiciones GPS). Mostrar que el sistema dictamina `Indeterminado` y no castiga injustamente la conformidad global (aislado en MT-01 como `N/A`).
+11. **Dashboard Gerencial Interactivo (2 min):** Abrir el dashboard Owl 2. Demostrar el filtro *Real / Simulado / Combinado*. Mostrar que las 8 métricas MT operan sobre $n=10$ recorridos ejecutados y que el viaje cancelado `REC-DEMO-11-CANCELLED-TBA1002` no contamina los denominadores.
+12. **Calidad del Software y SonarQube (1 min):** Exhibir el dashboard de SonarQube en `http://localhost:9000/dashboard?id=georutex` mostrando el Quality Gate en `OK`, 0 vulnerabilidades y 93.5% de cobertura unitaria.
