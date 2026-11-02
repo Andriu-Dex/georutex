@@ -13,9 +13,9 @@
 En estricto cumplimiento de `instruction.md`, `AGENTS.md` y las especificaciones de `docs/requirements.md` (Secciones 14 y 15) y `docs/architecture.md`, se ha ejecutado la aceptación operativa final sobre la implementación existente de **GeoRutex**:
 
 1. **Seguridad y Blindaje de Demostración:**
-   - Se eliminaron las contraseñas predeterminadas y previsibles en los cuatro perfiles de usuario, estableciendo credenciales seguras y documentadas.
-   - Se protegió el gestor de bases de datos de Odoo (`/web/database/manager`) mediante la clave maestra `admin_passwd` en [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf).
-   - Se verificó la restricción de enlaces de red: PostgreSQL (`127.0.0.1:5433`), consola y API administrativa de Traccar (`127.0.0.1:8082`) y servidor SonarQube (`127.0.0.1:9000`) están confinados a localhost. El puerto de recepción GPS OsmAnd (`5055`) permanece como el único punto de ingesta expuesto.
+   - Se eliminaron las contraseñas predeterminadas y previsibles en los cuatro perfiles de usuario, estableciendo credenciales aleatorias seguras custodiadas en `.env.demo_credentials` (no versionadas).
+   - Se protegió el gestor de bases de datos de Odoo (`/web/database/manager`) mediante el hash criptográfico PBKDF2 de `admin_passwd` en [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf), retirando la clave en texto plano.
+   - Se verificó la restricción de enlaces de red: PostgreSQL (`127.0.0.1:5433`), consola y API administrativa de Traccar (`127.0.0.1:8082`), servidor SonarQube (`127.0.0.1:9000`) y el receptor GPS OsmAnd (`127.0.0.1:5055`) están confinados a localhost. La ingesta de telemetría móvil se canaliza de forma segura mediante Cloudflare Tunnel (HTTPS :443) hacia el puerto interno 5055.
 2. **Auditoría de Recorridos, Procedencia y Cuotas Oficiales:**
    - Se identificó y resolvió la discrepancia del caso sin telemetría: el recorrido `REC-DEMO-08-INDETERMINATE-TBA1002` (0 posiciones GPS) no registra marcas temporales reales ni odómetro artificial, preservándose como caso de prueba independiente para dictamen indeterminado (`N/A`).
    - Se incorporó el recorrido adicional reproducible `REC-DEMO-12-INTERCAMPUS-TBA1001` con telemetría simulada completa, alcanzando exactamente **10 recorridos ejecutados con evidencia GPS completa**, más 1 recorrido indeterminado por falta de señal y 1 recorrido cancelado para demostrar la exclusión de denominadores.
@@ -48,7 +48,7 @@ Conforme a la Sección 14.2 de `docs/requirements.md` (páginas 14 y 15 del docu
 | **5** | **Almacenamiento, historial y detección** | **10** | RF-17 a RF-30, RNF-05, RNF-13, motor de evaluación de reglas (atrasos, omisiones, desvíos espaciales, gaps GPS), auditoría inmutable, flujo de justificaciones | `EVI-04-01`, `EVI-04-02`, `EVI-06-01`, `TestEvaluationEngine` | Verificado con reglas de evaluación pura, auditoría inmutable y aprobación de incidentes. | *Pendiente calificación docente* |
 | **6** | **Métricas y dashboard** | **15** | RF-31 a RF-37, MT-01..08, MCS-01..04, RNF-10, RNF-16, cálculo dinámico desde BD, exclusión de denominadores nulos (N/A), dashboard Owl 2 SPA, Chart.js | `EVI-05-01`, `EVI-05-02`, `EVI-05-03`, `EVI-05-05`, `EVI-06-02`, `EVI-06-03`, `TestTransportMetrics` | Verificado en dashboard reactivo Owl, filtros por fuente y cálculo exacto $n=10$. | *Pendiente calificación docente* |
 | **7** | **Pruebas funcionales, integración, rendimiento** | **10** | RF-38/39, RNF-08/09, suite e2e, 10 recorridos evaluados con telemetría, 10 casos de prueba formales, latencias frío/caliente | `EVI-01-02`, `EVI-04-03`, `EVI-05-04`, `EVI-06-01`, `EVI-06-04`, `TestEndToEndIntegration` | Verificado: 37 pruebas Pytest y 68 pruebas nativas Odoo pasando con 0 fallos. | *Pendiente calificación docente* |
-| **8** | **Aplicación de calidad del software** | **10** | RF-40, RNF-08, RNF-11, ISO/IEC 25010, SonarQube Community ejecutado en vivo, Quality Gate OK | `coverage.xml`, `sonar-project.properties`, `compose.sonarqube.yaml`, `EVI-06-05` | Verificado: SonarQube local ejecutado, 0 vulnerabilidades, 0 hotspots, 0.5% duplicación. | *Pendiente calificación docente* |
+| **8** | **Aplicación de calidad del software** | **10** | RF-40, RNF-08, RNF-11, ISO/IEC 25010, SonarQube Community ejecutado en vivo, Quality Gate OK | `coverage.xml`, `sonar-project.properties`, `compose.sonarqube.yaml`, `EVI-06-05` | Verificado: SonarQube local ejecutado, 0 bugs (Rating A), 0 vulnerabilidades, 0 hotspots, 0.5% duplicación. | *Pendiente calificación docente* |
 | **9** | **Mejora continua** | **5** | RF-41, RNF-08, registro de 8 defectos reales, Diagrama de Ishikawa, Análisis de Pareto (87.5%), 2 ciclos PDCA documentados con métricas antes/después | `EVI-06-06`, Sección 6 de informes | Verificado: Análisis causal documentado con reducción real de fallos en ciclos PDCA. | *Pendiente calificación docente* |
 | **10**| **Presentación y defensa técnica** | **5** | Guion técnico de 12 pasos de defensa, ensayo general previo, disponibilidad de contingencia local | Sección 7 de este informe, guion de defensa funcional | Verificado: Guion preparado y alineado a registros reales de `georutex_demo`. | *Pendiente calificación docente* |
 | **TOTAL** | — | **100** | — | — | **Software, Datos y Seguridad Completamente Verificados** | **Acreditación Final a Criterio del Docente** |
@@ -57,28 +57,33 @@ Conforme a la Sección 14.2 de `docs/requirements.md` (páginas 14 y 15 del docu
 
 ## 3. Seguridad de la Demostración y Protección de Accesos
 
-Conforme a las directrices de la Sección 1 de `instruction.md`, se reforzó la seguridad de la base `georutex_demo` y la infraestructura circundante:
+Conforme a las directrices de `instruction.md`, se reforzó integralmente la seguridad de la base `georutex_demo` y la infraestructura circundante:
 
 ### 3.1 Credenciales de los Perfiles de Demostración
-Se sustituyeron las contraseñas predecibles por credenciales seguras que preservan el acceso para la defensa técnica:
+Se sustituyeron todas las contraseñas expuestas por credenciales aleatorias seguras generadas criptográficamente. Por motivos de seguridad y principio de mínimo privilegio, las credenciales en texto plano **no se incluyen en este informe, ni en commits ni en consola pública**. Se encuentran custodiadas en el archivo local privado no versionado [`.env.demo_credentials`](file:///c:/Documentos/D-Proyectos/Git/georutex/.env.demo_credentials) (protegido por `.gitignore`).
 
-| Usuario | Nombre Completo | Perfil / Rol en Odoo | Credencial Segura | Permisos Clave |
+| Usuario | Nombre Completo | Perfil / Rol en Odoo | Credencial | Permisos Clave |
 |:---|:---|:---|:---|:---|
-| `admin` | Mitchell Admin | Administrador GeoRutex / Settings | `GeoRutex#Admin2026!` | Configuración total, base de datos, módulos y auditoría técnica. |
-| `gestor` | Ing. Patricio Silva | Gestor de Transporte (`group_transport_manager`) | `GeoRutex#Gestor2026!` | Creación de rutas/versiones, programación de viajes, aprobación de justificaciones. |
-| `analista` | Lic. Ana Gómez | Analista de Transporte (`group_transport_analyst`) | `GeoRutex#Analista2026!` | Visualización del dashboard analítico, mapas, incidencias y métricas. |
-| `conductor` | Carlos Morales | Conductor (`group_transport_driver`) | `GeoRutex#Conductor2026!` | Acceso restringido a "Mis Recorridos", registro de incidencias propias. Autoaprobación bloqueada. |
+| `admin` | Mitchell Admin | Administrador GeoRutex / Settings | `[PROTEGIDA - Consultar .env.demo_credentials]` | Configuración total, base de datos, módulos y auditoría técnica. |
+| `gestor` | Ing. Patricio Silva | Gestor de Transporte (`group_transport_manager`) | `[PROTEGIDA - Consultar .env.demo_credentials]` | Creación de rutas/versiones, programación de viajes, aprobación de justificaciones. |
+| `analista` | Lic. Ana Gómez | Analista de Transporte (`group_transport_analyst`) | `[PROTEGIDA - Consultar .env.demo_credentials]` | Visualización del dashboard analítico, mapas, incidencias y métricas. |
+| `conductor` | Carlos Morales | Conductor (`group_transport_driver`) | `[PROTEGIDA - Consultar .env.demo_credentials]` | Acceso restringido a "Mis Recorridos", registro de incidencias propias. Autoaprobación bloqueada. |
+
+> [!IMPORTANT]
+> Para la defensa y ensayos locales, consulte el archivo privado `.env.demo_credentials` en la raíz del proyecto. Este archivo es estrictamente local y no debe compartirse ni publicarse.
 
 ### 3.2 Protección del Gestor de Bases de Datos
-- En [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf), se configuró la directiva:
+- En [`infra/odoo/odoo.conf`](file:///c:/Documentos/D-Proyectos/Git/georutex/infra/odoo/odoo.conf), se retiró la contraseña maestra en texto plano y se configuró un hash criptográfico PBKDF2 compatible con el mecanismo nativo de Odoo 16:
   ```ini
-  admin_passwd = GeoRutex#Master2026!Secure
+  admin_passwd = $pbkdf2-sha512$25000$... (Hash criptográfico)
   ```
-  Esto bloquea cualquier intento no autorizado de crear, eliminar, restaurar o descargar copias de seguridad a través de la ruta `/web/database/manager`.
+  Esto bloquea cualquier intento no autorizado de crear, eliminar, restaurar o descargar copias de seguridad a través de la ruta `/web/database/manager`. La clave maestra en texto plano se custodia exclusivamente en `.env.demo_credentials`.
 
-### 3.3 Aislamiento de Puertos e Interfaces de Red
+### 3.3 Aislamiento de Puertos e Ingesta Segura por Cloudflare Tunnel
 - **PostgreSQL (`georutex-postgres`):** Puerto mapeado estrictamente como `127.0.0.1:5433:5432` en [`compose.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.yaml), inaccesible desde interfaces externas o LAN.
-- **Traccar Server (`georutex-traccar`):** Interfaz web y API REST administrativa mapeada como `127.0.0.1:8082:8082`. Solo el puerto de recepción OsmAnd (`0.0.0.0:5055`) permite la ingesta de telemetría GPS desde clientes móviles.
+- **Traccar Server (`georutex-traccar`):**
+  - Interfaz web y API REST administrativa mapeada como `127.0.0.1:8082:8082` (restringida a localhost).
+  - Puerto de recepción OsmAnd GPS configurado como `127.0.0.1:5055:5055` en `compose.yaml`. Al estar confinado a localhost, no queda expuesto a escaneos directos de red en la IP del host. El tráfico celular externo se canaliza de forma segura mediante **Cloudflare Tunnel** (HTTPS :443 con terminación TLS y cortafuegos de borde), que enruta internamente hacia `127.0.0.1:5055`.
 - **SonarQube (`georutex-sonarqube`):** Interfaz web y API de escaneo restringida como `127.0.0.1:9000:9000` en [`compose.sonarqube.yaml`](file:///c:/Documentos/D-Proyectos/Git/georutex/compose.sonarqube.yaml), operando en una red Docker aislada (`sonarqube_net`).
 
 ---
@@ -86,22 +91,24 @@ Se sustituyeron las contraseñas predecibles por credenciales seguras que preser
 ## 4. Cuotas de Recorridos, Procedencia y Auditoría del Dashboard
 
 ### 4.1 Desglose de los 12 Recorridos en `georutex_demo`
+Conforme a la **Prioridad 4**, todos los escenarios de prueba sintéticos están explícitamente identificados con `source_type = 'simulated'`, aun cuando utilicen vehículos destinados a pruebas físicas posteriores (`TBA-1001`), reservando `real` exclusivamente para la ingesta celular física efectiva.
+
 Se eliminaron registros residuales previos y se sembró el conjunto demostrativo cerrado:
 
 | Nº | Código de Recorrido | Vehículo / Tipo | Ruta | Estado | Puntos GPS | Resultado Evaluación | Función Demostrativa en la Defensa |
 |:--:|:--------------------|:----------------|:-----|:------:|:----------:|:--------------------:|:-----------------------------------|
-| **1** | `REC-DEMO-01-COMPLIANT-TBA1001` | TBA-1001 (Real) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Demostración de viaje real ejecutado a tiempo y paradas completas. |
-| **2** | `REC-DEMO-02-COMPLIANT-TBA1002` | TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Demostración de viaje simulado ejecutado conforme en ruta intercampus. |
-| **3** | `REC-DEMO-03-DELAY-START-TBA1001` | TBA-1001 (Real) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | No Conforme (`delay_start`) | Detección automática de salida demorada en terminal (+10 min). |
-| **4** | `REC-DEMO-04-DELAY-ARRIVAL-TBA1002` | TBA-1002 (Sim) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | No Conforme (`delay_arrival`) | Detección automática de llegada demorada en destino (+15 min). |
-| **5** | `REC-DEMO-05-DEVIATION-TBA1001` | TBA-1001 (Real) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 24 | No Conforme (`route_deviation`) | Detección de desvío espacial (> 40 m fuera de polilínea). |
-| **6** | `REC-DEMO-06-STOP-OMITTED-TBA1002` | TBA-1002 (Sim) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | No Conforme (`stop_missed`) | Detección de omisión de parada intermedia (+660 m de geocerca). |
-| **7** | `REC-DEMO-07-GPS-GAP-TBA1001` | TBA-1001 (Real) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme / Incidencia `gps_loss` | Pérdida de telemetría superior a 180 s (gap de 300 s). |
-| **8** | `REC-DEMO-08-INDETERMINATE-TBA1002`| TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | **0** | **Indeterminado (`insufficient_data`)** | **Caso de prueba sin GPS:** no penaliza cumplimiento (MT-01 `N/A`, excluido de MT-02/03/06/07). |
-| **9** | `REC-DEMO-09-JUSTIFIED-TBA1001` | TBA-1001 (Real) | Ruta 3 (Circunvalación Centro) | `completed` | 24 | **Conforme Ajustado** | Incidencia de retraso con justificación enviada y formalmente aprobada por el Gestor. |
-| **10**| `REC-DEMO-10-COMPLIANT-RET-TBA1002` | TBA-1002 (Sim) | Ruta 1 (Huachi - Ingahurco) | `completed` | 24 | Conforme Bruto / Conforme Ajustado | Retorno vespertino puntual con paradas completadas. |
-| **11**| `REC-DEMO-12-INTERCAMPUS-TBA1001` | TBA-1001 (Real) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 25 | Conforme Bruto / Conforme Ajustado | **Recorrido ejecutado adicional:** consolida exactamente **10 viajes ejecutados con trazas GPS**. |
-| **12**| `REC-DEMO-11-CANCELLED-TBA1002` | TBA-1002 (Sim) | Ruta 2 (Campus Huachi - Querochaca) | `cancelled` | 0 | Excluido de Evaluación | Demostración de exclusión estricta de viajes no operados en todos los indicadores. |
+| **1** | `REC-DEMO-01-COMPLIANT-TBA1001` | TBA-1001 (Simulado) | Ruta 1 (Huachi - Ingahurco) | `completed` | 27 | Conforme Bruto / Conforme Ajustado | Demostración de viaje ejecutado a tiempo y paradas completas. |
+| **2** | `REC-DEMO-02-COMPLIANT-TBA1002` | TBA-1002 (Simulado) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 32 | Conforme Bruto / Conforme Ajustado | Demostración de viaje ejecutado conforme en ruta intercampus. |
+| **3** | `REC-DEMO-03-DELAY-START-TBA1001` | TBA-1001 (Simulado) | Ruta 3 (Circunvalación Centro) | `completed` | 15 | No Conforme (`delay_start`) | Detección automática de salida demorada en terminal (+10 min). |
+| **4** | `REC-DEMO-04-DELAY-ARRIVAL-TBA1002` | TBA-1002 (Simulado) | Ruta 1 (Huachi - Ingahurco) | `completed` | 42 | No Conforme (`delay_arrival`) | Detección automática de llegada demorada en destino (+15 min). |
+| **5** | `REC-DEMO-05-DEVIATION-TBA1001` | TBA-1001 (Simulado) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 32 | No Conforme (`route_deviation`) | Detección de desvío espacial (> 40 m fuera de polilínea). |
+| **6** | `REC-DEMO-06-STOP-OMITTED-TBA1002` | TBA-1002 (Simulado) | Ruta 3 (Circunvalación Centro) | `completed` | 20 | No Conforme (`stop_missed`) | Detección de omisión de parada intermedia (+660 m de geocerca). |
+| **7** | `REC-DEMO-07-GPS-GAP-TBA1001` | TBA-1001 (Simulado) | Ruta 1 (Huachi - Ingahurco) | `completed` | 19 | Conforme / Incidencia `gps_loss` | Pérdida de telemetría superior a 180 s (gap de 300 s). |
+| **8** | `REC-DEMO-08-INDETERMINATE-TBA1002`| TBA-1002 (Simulado) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | **0** | **Indeterminado (`insufficient_data`)** | **Caso de prueba sin GPS:** no penaliza cumplimiento (MT-01 `N/A`, excluido de denominadores). |
+| **9** | `REC-DEMO-09-JUSTIFIED-TBA1001` | TBA-1001 (Simulado) | Ruta 3 (Circunvalación Centro) | `completed` | 35 | **Conforme Ajustado** | No conforme bruto por retraso (+15 min); justificación aprobada formalmente por el Gestor. |
+| **10**| `REC-DEMO-10-COMPLIANT-RET-TBA1002` | TBA-1002 (Simulado) | Ruta 1 (Huachi - Ingahurco) | `completed` | 27 | Conforme Bruto / Conforme Ajustado | Retorno vespertino puntual con paradas completadas. |
+| **11**| `REC-DEMO-12-INTERCAMPUS-TBA1001` | TBA-1001 (Simulado) | Ruta 2 (Campus Huachi - Querochaca) | `completed` | 32 | Conforme Bruto / Conforme Ajustado | **Recorrido ejecutado adicional:** consolida exactamente **10 viajes ejecutados con trazas GPS**. |
+| **12**| `REC-DEMO-11-CANCELLED-TBA1002` | TBA-1002 (Simulado) | Ruta 2 (Campus Huachi - Querochaca) | `cancelled` | 0 | Excluido de Evaluación | Demostración de exclusión estricta de viajes no operados en todos los indicadores. |
 
 > **Balance de Cuota:**  
 > - **10 Recorridos Ejecutados con Telemetría Verificada** (cumplen plenamente el umbral reglamentario $\ge 10$).  
@@ -119,15 +126,18 @@ Se auditó directamente la respuesta de [`transport.metrics.service`](file:///c:
 === RESUMEN OPERACIONAL DEL DASHBOARD ===
   total_trips: 12
   executed_trips: 10 (viajes ejecutados con evidencia de telemetría)
-  compliant_trips_gross: 5
-  compliant_trips_adjusted: 5
-  non_compliant_trips: 5
+  compliant_trips_gross: 5 (50.00 %)
+  compliant_trips_adjusted: 6 (60.00 % — incorpora REC-DEMO-09 con justificación aprobada)
+  non_compliant_trips: 4 (40.00 % ajustado)
   total_incidents: 12
   source_type: combined
 ```
 
 #### Auditoría de Denominadores y Muestras de MT-01 a MT-08:
-- **MT-01 (Cumplimiento de Rutas):** $50.0\%$ ($5/10$ viajes evaluables; 1 viaje indeterminado aislado con $n_{indet}=1$). Muestra: $n=10$.
+- **MT-01 (Cumplimiento de Rutas):**
+  - **Conformidad Bruta:** $50.0\%$ ($5/10$ viajes evaluables conformes).
+  - **Conformidad Ajustada:** $60.0\%$ ($6/10$ viajes conformes ajustados tras incorporar el viaje con retraso justificado `REC-DEMO-09-JUSTIFIED-TBA1001`).
+  - **Tratamiento de Incertidumbre:** 1 viaje indeterminado (`REC-DEMO-08`) aislado con $n_{indet}=1$ (no inventa conformidad ni penaliza). Muestra: $n=10$.
 - **MT-02 (Puntualidad en Salida y Llegada):** $70.0\%$ ($7/10$ viajes puntuales en ambos hitos). Muestra: $n=10$.
 - **MT-03 (Retraso Promedio de Llegada):** $3.00$ min sobre los 10 viajes ejecutados ($30.0$ min acumulados). Muestra: $n=10$.
 - **MT-04 (Cumplimiento de Paradas Intermedias):** $95.0\%$ ($19/20$ paradas intermedias visitadas; 1 omitida en Recorrido 6). Muestra: $n=20$ paradas.
@@ -136,9 +146,15 @@ Se auditó directamente la respuesta de [`transport.metrics.service`](file:///c:
 - **MT-07 (Tiempo Promedio de Recorrido):** $25.97$ min en los 10 viajes ejecutados. Muestra: $n=10$.
 - **MT-08 (Frecuencia de Incidencias):** $12.00$ incidencias por cada 10 viajes ($12$ incidencias registradas sobre $10$ viajes ejecutados). Muestra: $n=10$.
 
-#### Indicadores de Calidad del Software (MCS-01 a MCS-04):
-- **MCS-01 (Integridad GPS):** $100.0\%$ ($1,324$ posiciones analizadas, $0$ descartadas por error geométrico o ruido).
-- **MCS-02 (Exactitud de Sincronización Traccar $\rightarrow$ Odoo):** $100.0\%$. Mide la correspondencia uno a uno entre posiciones registradas en Traccar y posiciones sincronizadas en Odoo mediante consulta independiente.
+#### Indicadores de Calidad del Software (MCS-01 a MCS-04) y Reconciliación de Población:
+- **MCS-01 (Integridad de Telemetría GPS) y Reconciliación de Población:**
+  - **Población Reconciliada:** Exactamente **281 posiciones GPS** correspondientes a los 10 recorridos demostrativos ejecutados con telemetría en la fecha 15 de noviembre de 2026 (7:00 a 17:30 UTC).
+  - **Resultado:** $100.0\%$ de integridad ($281/281$ posiciones aceptadas y válidas, $0$ descartadas).
+  - **Origen de la cifra histórica previa (1.324 posiciones):** En ejecuciones anteriores del sembrador de demostración, el modelo de datos Odoo configuraba la relación `trip_id` con `ondelete="set null"`. Al limpiar recorridos anteriores mediante `unlink()`, las posiciones previas quedaban huérfanas en la base de datos sin asociarse a ningún viaje, acumulando 1.044 registros residuales. Se implementó la purga explícita previa (`pos_model.search([]).unlink()`), dejando la base de datos con **0 posiciones huérfanas** y la población rigurosamente delimitada a 281 puntos.
+- **MCS-02 (Exactitud de Sincronización Traccar $\rightarrow$ Odoo):**
+  - **Regla de Rigor Mínimo:** Conforme a la **Prioridad 2**, el indicador exige un tamaño muestral de referencia independiente de al menos $n \ge 2$ posiciones obtenidas mediante la API REST de Traccar (`/api/positions`).
+  - **Resultado Actual:** `is_na = True` (`N/A`) con motivo: *"Muestra independiente insuficiente de Traccar (n=1; mínimo requerido: 2). No se certifica exactitud sin lote de referencia válido"*.
+  - **Garantía Académica:** El sistema **no fabrica un 100% artificial** cuando no existe un lote de cotejo externo representativo en Traccar Server, garantizando la trazabilidad científica requerida por el reglamento.
 - **MCS-03 (Tiempo de Respuesta del Sistema):** Media de $1.25$ ms en caliente ($37.52$ ms / 30 solicitudes evaluadas). Cumple el umbral estadístico ($n = 30 \ge 30$) para reportar percentil 95 ($< 5.0$ ms).
 - **MCS-04 (Exactitud en Detección de Incidencias):** $100.0\%$ ($18/18$ casos de ground truth correctamente clasificados por la matriz de confusión).
 
@@ -161,8 +177,9 @@ Se ejecutó el análisis estático y de calidad sobre el código propio del proy
 | **Puntos Calientes de Seguridad (Hotspots)** | **0** | 0 | Calificación A (1.0) |
 | **Densidad de Líneas Duplicadas** | **0.5%** | $< 3.0\%$ | Cumplido |
 | **Mantenibilidad / Deuda Técnica** | **A (1.0)** | A | Cumplido (3 code smells menores) |
-| **Bugs / Reglas de Confiabilidad** | **9 (Rating B)** | $< 10$ | Cumplido (anotaciones menores de tipado) |
-| **Cobertura de Dominio Importada** | **93.5%** | $> 80.0\%$ | Cumplido (`domain/geo.py`, `evaluation.py`, `metrics.py`) |
+| **Bugs / Reglas de Confiabilidad** | **0 (Rating A)** | 0 | **Calificación A (1.0)** — Se resolvieron los 9 hallazgos de promesas asíncronas no capturadas (`javascript:S9383`) en componentes Owl sin alterar lógica. |
+| **Cobertura de Dominio e Integración (Pytest)** | **93.5%** | $> 80.0\%$ | Cumplido (561/600 sentencias cubiertas en lógica pura de `domain/geo.py`, `evaluation.py`, `metrics.py` y `traccar_client.py`). |
+| **Cobertura Total del Addon (SonarQube/Odoo)** | **22.2%** | Informativo | Cobertura integral sobre las 5,877 NCLOC del módulo (modelos ORM, vistas, wizards y controladores JS). Se documenta por separado sin manipular exclusiones artificiales. |
 | **Cobertura Total del Addon** | **22.2%** | N/A | Corresponde a cobertura unitaria de capas lógicas sobre el total de NCLOC |
 
 ---
@@ -204,7 +221,7 @@ sequenceDiagram
 
 Alineado con los registros reales existentes en `georutex_demo`:
 
-1. **Acceso y Seguridad de Roles (1 min):** Ingresar a `http://localhost:8069/web?db=georutex_demo`. Demostrar el inicio de sesión con `gestor` (`GeoRutex#Gestor2026!`) y `conductor` (`GeoRutex#Conductor2026!`).
+1. **Acceso y Seguridad de Roles (1 min):** Ingresar a `http://localhost:8069/web?db=georutex_demo`. Demostrar el inicio de sesión con `gestor` y `conductor` utilizando las credenciales custodiadas en `.env.demo_credentials`.
 2. **Topología de Flota y Rutas (1 min):** En Odoo, mostrar los vehículos `TBA-1001` (Real) y `TBA-1002` (Simulado). Mostrar las Rutas 1, 2 y 3 con al menos 4 puntos de control cada una.
 3. **Versión Congelada de Ruta (1 min):** Abrir un recorrido programado. Inspeccionar la pestaña técnica para exhibir el JSON inmutable de parámetros congelados (corredor 40m, tolerancia 300s, gap 180s).
 4. **Demostración Celular en Vivo (2 min):** Enseñar Traccar Client en el smartphone sobre red 4G enviando coordenadas al túnel HTTPS.

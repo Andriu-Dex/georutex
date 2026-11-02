@@ -3,9 +3,61 @@ Seed isolated demonstration database (georutex_demo) with 10 executed trips,
 1 cancelled trip, 3 role users, and fully evaluated metrics and incidents.
 """
 from datetime import datetime, timedelta
+import os
+import secrets
 import odoo
 from odoo import api, SUPERUSER_ID
 from odoo.tools import config
+
+
+def load_demo_credentials():
+    """Load credentials from private unversioned file or generate random ones."""
+    possible_paths = [
+        "/tmp/.env.demo_credentials",
+        os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            ".env.demo_credentials",
+        ),
+        os.path.join(os.getcwd(), ".env.demo_credentials"),
+    ]
+    cred_file = None
+    for p in possible_paths:
+        if os.path.exists(p):
+            cred_file = p
+            break
+    if not cred_file:
+        cred_file = possible_paths[1]
+    creds = {}
+    if os.path.exists(cred_file):
+        with open(cred_file, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    creds[k.strip()] = v.strip()
+
+    required_keys = [
+        "DEMO_CONDUCTOR_PASSWORD",
+        "DEMO_ANALISTA_PASSWORD",
+        "DEMO_GESTOR_PASSWORD",
+        "DEMO_ADMIN_PASSWORD",
+    ]
+    updated = False
+    for k in required_keys:
+        if k not in creds:
+            creds[k] = secrets.token_urlsafe(16)
+            updated = True
+
+    if updated:
+        with open(cred_file, "w", encoding="utf-8") as f:
+            f.write("# GeoRutex - Private Demo & Master Credentials\n")
+            f.write("# This file is unversioned and strictly ignored by Git.\n")
+            f.write("# Never commit, print, or share these credentials.\n\n")
+            for k, v in creds.items():
+                f.write(f"{k}={v}\n")
+
+    return creds
+
 
 def run_seed():
     db_name = "georutex_demo"
@@ -22,7 +74,8 @@ def run_seed():
 
         print("=== INICIANDO SEEDING DE BASE DEMO: georutex_demo ===")
 
-        # 1. Configurar Roles y Usuarios
+        # 1. Configurar Roles y Usuarios con credenciales privadas
+        creds = load_demo_credentials()
         group_driver = env.ref("uta_transport_monitor.group_transport_driver")
         group_analyst = env.ref("uta_transport_monitor.group_transport_analyst")
         group_manager = env.ref("uta_transport_monitor.group_transport_manager")
@@ -34,17 +87,17 @@ def run_seed():
             user_driver = env["res.users"].create({
                 "name": "Carlos Morales (Conductor)",
                 "login": "conductor",
-                "password": "GeoRutex#Conductor2026!",
+                "password": creds["DEMO_CONDUCTOR_PASSWORD"],
                 "partner_id": partner_carlos.id,
                 "groups_id": [(6, 0, [group_driver.id, env.ref("base.group_user").id])],
             })
         else:
             user_driver.write({
-                "password": "GeoRutex#Conductor2026!",
+                "password": creds["DEMO_CONDUCTOR_PASSWORD"],
                 "partner_id": partner_carlos.id,
                 "groups_id": [(6, 0, [group_driver.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Conductor: {user_driver.login} (ID {user_driver.id}) [Clave: GeoRutex#Conductor2026!]")
+        print(f"Usuario Conductor: {user_driver.login} (ID {user_driver.id}) [Credencial protegida]")
 
         # Gestor / Analista de Transporte
         user_analyst = env["res.users"].search([("login", "=", "analista")])
@@ -52,41 +105,41 @@ def run_seed():
             user_analyst = env["res.users"].create({
                 "name": "Lic. Ana Gómez (Analista de Rutas)",
                 "login": "analista",
-                "password": "GeoRutex#Analista2026!",
+                "password": creds["DEMO_ANALISTA_PASSWORD"],
                 "email": "analista@uta.edu.ec",
                 "groups_id": [(6, 0, [group_analyst.id, env.ref("base.group_user").id])],
             })
         else:
             user_analyst.write({
-                "password": "GeoRutex#Analista2026!",
+                "password": creds["DEMO_ANALISTA_PASSWORD"],
                 "groups_id": [(6, 0, [group_analyst.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Analista: {user_analyst.login} (ID {user_analyst.id}) [Clave: GeoRutex#Analista2026!]")
+        print(f"Usuario Analista: {user_analyst.login} (ID {user_analyst.id}) [Credencial protegida]")
 
         user_manager = env["res.users"].search([("login", "=", "gestor")])
         if not user_manager:
             user_manager = env["res.users"].create({
                 "name": "Ing. Patricio Silva (Gestor de Rutas)",
                 "login": "gestor",
-                "password": "GeoRutex#Gestor2026!",
+                "password": creds["DEMO_GESTOR_PASSWORD"],
                 "email": "gestor@uta.edu.ec",
                 "groups_id": [(6, 0, [group_manager.id, env.ref("base.group_user").id])],
             })
         else:
             user_manager.write({
-                "password": "GeoRutex#Gestor2026!",
+                "password": creds["DEMO_GESTOR_PASSWORD"],
                 "groups_id": [(6, 0, [group_manager.id, env.ref("base.group_user").id])],
             })
-        print(f"Usuario Gestor: {user_manager.login} (ID {user_manager.id}) [Clave: GeoRutex#Gestor2026!]")
+        print(f"Usuario Gestor: {user_manager.login} (ID {user_manager.id}) [Credencial protegida]")
 
         # Administrador (Mitchell Admin)
         user_admin = env["res.users"].search([("login", "=", "admin")])
         if user_admin:
             user_admin.write({
-                "password": "GeoRutex#Admin2026!",
+                "password": creds["DEMO_ADMIN_PASSWORD"],
                 "groups_id": [(4, group_manager.id)],
             })
-            print(f"Usuario Admin: {user_admin.login} (ID {user_admin.id}) [Clave: GeoRutex#Admin2026!]")
+            print(f"Usuario Admin: {user_admin.login} (ID {user_admin.id}) [Credencial protegida]")
 
         # 2. Vehículos y Rutas Demo
         v_real = env.ref("uta_transport_monitor.demo_vehicle_01_real")
@@ -102,13 +155,15 @@ def run_seed():
         inc_model = env["transport.incident"]
         eval_service = env["transport.trip.evaluation.service"]
 
-        # Limpiar todos los recorridos anteriores en la base demo para garantizar aislamiento exacto
+        # Limpiar datos previos en la base demo para garantizar aislamiento exacto y reconciliación de población
+        pos_model.search([]).unlink()
+        inc_model.search([]).unlink()
         existing_demo_trips = trip_model.search([])
         if existing_demo_trips:
             print(f"Eliminando {len(existing_demo_trips)} recorridos anteriores...")
             existing_demo_trips.unlink()
 
-        # 3. Definición de los 10 Recorridos de Demostración con telemetría + 1 Indeterminado + 1 Cancelado
+        # 3. Definición de los 10 Recorridos de Demostración con telemetría + 1 Cancelado
         base_t = datetime(2026, 11, 15, 7, 0, 0)
         trips_spec = [
             ("REC-DEMO-01-COMPLIANT-TBA1001", v_real, r1, 0, "compliant"),
@@ -133,7 +188,8 @@ def run_seed():
 
             start_dt = base_t + timedelta(hours=h_offset)
             end_dt = start_dt + timedelta(seconds=dur_s)
-            source = "simulated" if veh.is_simulated else "real"
+            # All synthetic demo runs are flagged simulated in accordance with Priority 4
+            source = "simulated"
 
             trip = trip_model.create({
                 "name": code,
@@ -248,25 +304,24 @@ def run_seed():
                             })
                             continue
 
-                        n_inter = max(1, interval_s // 60)
-                        step_time = interval_s / float(n_inter)
-                        for step_i in range(1, n_inter):
-                            frac = step_i / float(n_inter)
-                            i_lat = lat + frac * (st_next.latitude - lat)
-                            i_lon = lon + frac * (st_next.longitude - lon)
-                            i_time = t_curr + timedelta(seconds=int(step_i * step_time))
+                        # Pasos normales cada ~60 segundos
+                        steps = max(1, interval_s // 60)
+                        for step_i in range(1, steps):
+                            frac = step_i / float(steps)
+                            p_lat = lat + frac * (st_next.latitude - lat)
+                            p_lon = lon + frac * (st_next.longitude - lon)
+                            p_time = t_curr + timedelta(seconds=step_i * 60)
 
-                            # En caso de desvío de ruta, desviar 3 puntos consecutivos fuera del corredor
-                            if outcome == "route_deviation" and s_idx == 1:
-                                i_lat += 0.0035  # ~380m fuera del corredor
+                            if outcome == "route_deviation" and s_idx == 1 and step_i in (2, 3, 4):
+                                p_lat += 0.0025  # Desviación de ~280 metros de la polilínea
 
                             pos_model.create({
                                 "trip_id": trip.id,
                                 "vehicle_id": veh.id,
-                                "latitude": i_lat,
-                                "longitude": i_lon,
-                                "speed": 40.0,
-                                "fix_time": i_time,
+                                "latitude": p_lat,
+                                "longitude": p_lon,
+                                "speed": 38.0,
+                                "fix_time": p_time,
                                 "source": source,
                                 "is_valid": True,
                             })
@@ -305,6 +360,7 @@ def run_seed():
 
         cr.commit()
         print("=== SEEDING COMPLETADO EXITOSAMENTE: 10 RECORRIDOS EJECUTADOS CON TELEMETRÍA + 1 INDETERMINADO + 1 CANCELADO (TOTAL 12) ===")
+
 
 if __name__ == "__main__":
     run_seed()
