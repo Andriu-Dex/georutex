@@ -51,9 +51,9 @@ def cleanup_demo_dataset(env: Any, db_name: str) -> Dict[str, int]:
     1. Strict database authorization (refuses 'georutex' or production).
     2. Strict record scoping:
        - Trips: ONLY trips with name matching 'REC-DEMO-%'.
-       - Positions: ONLY positions linked to demo trips, OR simulated
-         telemetry on designated demo vehicles. Real GPS fixes and operational
-         trips are never touched.
+       - Positions: ONLY positions with source='simulated' linked to demo trips
+         OR designated demo vehicles. Real GPS fixes (source='real') are NEVER
+         touched under any circumstances, even if linked to a demo trip.
        - Incidents: ONLY incidents explicitly linked to demo trips.
 
     :param env: Odoo Environment.
@@ -73,9 +73,9 @@ def cleanup_demo_dataset(env: Any, db_name: str) -> Dict[str, int]:
     demo_trip_ids = demo_trips.ids
 
     # 2. Scope demo positions:
-    # Strictly linked to demo trips OR simulated telemetry on demo vehicles.
-    # GUARD: Never delete real telemetry (source='real') or positions from
-    # other vehicles/trips.
+    # Strictly require source='simulated' AND (linked to demo trips OR demo vehicles).
+    # GUARD: Under NO circumstances delete real telemetry (source='real'),
+    # even if accidentally linked to a demo trip prefix.
     v_real = env.ref(
         "uta_transport_monitor.demo_vehicle_01_real",
         raise_if_not_found=False,
@@ -89,18 +89,21 @@ def cleanup_demo_dataset(env: Any, db_name: str) -> Dict[str, int]:
     pos_domain = []
     if demo_trip_ids and demo_veh_ids:
         pos_domain = [
+            "&",
+            ("source", "=", "simulated"),
             "|",
             ("trip_id", "in", demo_trip_ids),
-            "&",
             ("vehicle_id", "in", demo_veh_ids),
-            ("source", "=", "simulated"),
         ]
     elif demo_trip_ids:
-        pos_domain = [("trip_id", "in", demo_trip_ids)]
+        pos_domain = [
+            ("source", "=", "simulated"),
+            ("trip_id", "in", demo_trip_ids),
+        ]
     elif demo_veh_ids:
         pos_domain = [
-            ("vehicle_id", "in", demo_veh_ids),
             ("source", "=", "simulated"),
+            ("vehicle_id", "in", demo_veh_ids),
         ]
     else:
         # If neither exists, do not touch any positions

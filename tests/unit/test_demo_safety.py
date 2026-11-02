@@ -111,9 +111,10 @@ def test_cleanup_demo_dataset_scoped_search_domains():
     trip_search_call = mock_trip_model.search.call_args[0][0]
     assert trip_search_call == [("name", "=like", f"{DEMO_TRIP_PREFIX}%")]
 
-    # 2. Verify position search domain was scoped, NOT an empty []
+    # 2. Verify position search domain was scoped and strictly requires simulated
     pos_search_call = mock_pos_model.search.call_args[0][0]
     assert pos_search_call != []
+    assert ("source", "=", "simulated") in pos_search_call
     assert ("trip_id", "in", [501]) in pos_search_call or any(
         isinstance(item, tuple) and item[0] == "trip_id"
         for item in pos_search_call
@@ -127,3 +128,55 @@ def test_cleanup_demo_dataset_scoped_search_domains():
     assert result["positions_deleted"] == 1
     assert result["incidents_deleted"] == 1
     assert result["trips_deleted"] == 1
+
+
+@pytest.mark.parametrize(
+    "has_trips,has_vehicles",
+    [
+        (True, True),
+        (True, False),
+        (False, True),
+    ],
+)
+def test_cleanup_demo_dataset_strictly_enforces_simulated_source(
+    has_trips, has_vehicles
+):
+    """Ensure source='simulated' is enforced across all branch conditions.
+
+    Even if a position is linked to a demo trip (REC-DEMO-), real telemetry
+    (source='real') must NEVER be included in the deletion domain.
+    """
+    mock_env = MagicMock()
+    mock_trip_model = MagicMock()
+    mock_pos_model = MagicMock()
+    mock_inc_model = MagicMock()
+
+    mock_env.__getitem__.side_effect = lambda name: {
+        "transport.trip": mock_trip_model,
+        "transport.vehicle.position": mock_pos_model,
+        "transport.incident": mock_inc_model,
+    }.get(name, MagicMock())
+
+    if has_vehicles:
+        mock_env.ref.side_effect = lambda x, **kw: (
+            MagicMock(id=101) if "real" in x else MagicMock(id=102)
+        )
+    else:
+        mock_env.ref.return_value = None
+
+    mock_demo_trips = MagicMock()
+    if has_trips:
+        mock_demo_trips.ids = [501]
+        mock_demo_trips.__len__.return_value = 1
+    else:
+        mock_demo_trips.ids = []
+        mock_demo_trips.__len__.return_value = 0
+    mock_trip_model.search.return_value = mock_demo_trips
+
+    mock_pos_model.search.return_value = MagicMock(__len__=lambda s: 0)
+    mock_inc_model.search.return_value = MagicMock(__len__=lambda s: 0)
+
+    cleanup_demo_dataset(mock_env, db_name="georutex_demo")
+
+    pos_domain = mock_pos_model.search.call_args[0][0]
+    assert ("source", "=", "simulated") in pos_domain

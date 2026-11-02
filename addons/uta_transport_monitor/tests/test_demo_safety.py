@@ -117,6 +117,17 @@ class TestDemoSafety(common.TransactionCase):
             "source": "simulated",
             "is_valid": True,
         })
+        # Telemetry with source='real' attached to the demo trip (edge case)
+        demo_pos_real = self.pos_model.create({
+            "trip_id": demo_trip.id,
+            "vehicle_id": self.vehicle_real.id,
+            "latitude": -1.2685,
+            "longitude": -78.6265,
+            "speed": 28.0,
+            "fix_time": now,
+            "source": "real",
+            "is_valid": True,
+        })
 
         # 3. Execute scoped cleanup for demo database
         res = cleanup_demo_dataset(self.env, db_name="georutex_demo")
@@ -124,11 +135,18 @@ class TestDemoSafety(common.TransactionCase):
         self.assertGreaterEqual(res["trips_deleted"], 1)
         self.assertGreaterEqual(res["positions_deleted"], 1)
 
-        # 4. Assert demo trip and demo pos are unlinked
+        # 4. Assert demo trip and simulated demo pos are unlinked
         self.assertFalse(demo_trip.exists())
         self.assertFalse(demo_pos.exists())
 
-        # 5. Assert operational trip and real telemetry are STRICTLY PRESERVED
+        # 5. Assert real telemetry linked to demo trip is STRICTLY PRESERVED
+        self.assertTrue(
+            demo_pos_real.exists(),
+            "La telemetría real (source='real') vinculada a un recorrido demo "
+            "no debe ser eliminada por la limpieza.",
+        )
+
+        # 6. Assert operational trip and operational telemetry are PRESERVED
         self.assertTrue(
             ops_trip.exists(),
             "El viaje operacional no debe ser eliminado por la limpieza demo.",
