@@ -249,7 +249,7 @@ class TestEndToEndIntegration(TransactionCase):
             route=self.routes[0],
             start_dt=base_t + timedelta(hours=9),
             duration_min=30,
-            outcome="compliant",
+            outcome="compliant_return",
         )
         trips.append(t10)
 
@@ -460,8 +460,9 @@ class TestEndToEndIntegration(TransactionCase):
         end_dt = start_dt + timedelta(minutes=duration_min)
         source = "simulated" if vehicle.is_simulated else "real"
 
+        code_str = outcome.upper().replace("_", "-")
         trip = self.trip_model.create({
-            "name": f"REC-E2E-{outcome.upper()}-{vehicle.license_plate}",
+            "name": f"REC-E2E-{code_str}-{vehicle.license_plate}",
             "vehicle_id": vehicle.id,
             "route_id": route.id,
             "route_version_id": route.current_version_id.id,
