@@ -197,23 +197,23 @@ export class TransportDashboardAction extends Component {
         }
     }
 
-    onSourceTypeChange(type) {
+    async onSourceTypeChange(type) {
         this.state.filters.source_type = type;
-        this.loadDashboardData();
+        await this.loadDashboardData();
     }
 
-    onFilterSubmit(e) {
+    async onFilterSubmit(e) {
         if (e) e.preventDefault();
-        this.loadDashboardData();
+        await this.loadDashboardData();
     }
 
-    onResetFilters() {
+    async onResetFilters() {
         this.state.filters.date_from = "";
         this.state.filters.date_to = "";
         this.state.filters.route_id = "";
         this.state.filters.vehicle_id = "";
         this.state.filters.source_type = "combined";
-        this.loadDashboardData();
+        await this.loadDashboardData();
     }
 
     async onRunQualityBenchmarks() {

@@ -819,31 +819,54 @@ def calculate_mcs02_sync_accuracy(
     source_type: str = "combined",
     period: str = "Muestra independiente",
     rule_version: str = "v1.0",
+    min_sample_size: int = 2,
 ) -> Dict[str, Any]:
-    """Calculate MCS-02 synchronization accuracy against independent query."""
-    if expected_count <= 0:
+    """Calculate MCS-02 synchronization accuracy against independent query.
+
+    Requires at least min_sample_size independent reference points from
+    Traccar to avoid fabricating 100% certainty on absent or trivial samples.
+    """
+    if expected_count < min_sample_size:
         return _format_metric_result(
             metric_id="MCS-02",
             name="Exactitud de Sincronización Traccar → Odoo",
             formula="100 * posiciones_emparejadas / posiciones_esperadas",
             unit="%",
             value=None,
-            numerator=0,
-            denominator=0,
-            sample_size=0,
+            numerator=matched_count,
+            denominator=expected_count,
+            sample_size=expected_count,
             source_type=source_type,
             period=period,
             rule_version=rule_version,
-            interpretation="Sin muestra independiente disponible para cotejo.",
+            interpretation=(
+                f"Muestra independiente insuficiente "
+                f"(n={expected_count} < {min_sample_size}). "
+                f"Requiere lote de referencia representativo de Traccar."
+            ),
             is_na=True,
-            na_reason="Muestra independiente vacía o no ejecutada.",
+            na_reason=(
+                f"Muestra independiente insuficiente de Traccar "
+                f"(n={expected_count}; mínimo requerido: {min_sample_size}). "
+                f"No se certifica exactitud sin lote de referencia válido."
+                if expected_count > 0
+                else "Muestra independiente vacía o no ejecutada."
+            ),
+            secondary={
+                "matched_count": matched_count,
+                "missing_count": max(0, expected_count - matched_count),
+                "discrepancies": discrepancy_details or {},
+                "provenance": "Traccar REST API (/api/positions)",
+                "min_sample_size": min_sample_size,
+            },
         )
 
     pct = (matched_count / expected_count) * 100.0
     missing = expected_count - matched_count
     interp = (
         f"Exactitud de sincronización del {pct:.2f}% ({matched_count} de "
-        f"{expected_count} posiciones verificadas idénticas)."
+        f"{expected_count} posiciones verificadas idénticas procedentes de "
+        f"Traccar API)."
     )
 
     return _format_metric_result(
@@ -863,6 +886,8 @@ def calculate_mcs02_sync_accuracy(
             "matched_count": matched_count,
             "missing_count": missing,
             "discrepancies": discrepancy_details or {},
+            "provenance": "Traccar REST API (/api/positions)",
+            "min_sample_size": min_sample_size,
         },
     )
 

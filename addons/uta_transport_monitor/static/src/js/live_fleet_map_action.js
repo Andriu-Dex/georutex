@@ -26,7 +26,7 @@ export class LiveFleetMapAction extends Component {
 
         onMounted(() => {
             this.initMap();
-            this.loadFleetData();
+            void this.loadFleetData();
             if (this.state.autoRefresh) {
                 this.startAutoRefresh();
             }
@@ -60,7 +60,7 @@ export class LiveFleetMapAction extends Component {
         this.stopAutoRefresh();
         this.refreshTimer = setInterval(() => {
             if (this.state.autoRefresh) {
-                this.loadFleetData(false);
+                void this.loadFleetData(false);
             }
         }, 30000); // 30 seconds interval
     }

@@ -36,7 +36,7 @@ export class TripMapWidget extends Component {
         useEffect(
             () => {
                 if (this.map && this.props.record && this.props.record.resId) {
-                    this.loadTripData(this.props.record.resId);
+                    void this.loadTripData(this.props.record.resId);
                 }
             },
             () => [
@@ -61,7 +61,7 @@ export class TripMapWidget extends Component {
         }).addTo(this.map);
 
         if (this.props.record && this.props.record.resId) {
-            this.loadTripData(this.props.record.resId);
+            void this.loadTripData(this.props.record.resId);
         }
     }
 
@@ -248,7 +248,7 @@ export class VehicleMapWidget extends Component {
         useEffect(
             () => {
                 if (this.map && this.props.record && this.props.record.resId) {
-                    this.loadVehicleData(this.props.record.resId);
+                    void this.loadVehicleData(this.props.record.resId);
                 }
             },
             () => [
@@ -269,7 +269,7 @@ export class VehicleMapWidget extends Component {
         }).addTo(this.map);
 
         if (this.props.record && this.props.record.resId) {
-            this.loadVehicleData(this.props.record.resId);
+            void this.loadVehicleData(this.props.record.resId);
         }
     }
 

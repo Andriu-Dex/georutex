@@ -212,11 +212,11 @@ class TransportMetricsService(models.AbstractModel):
         charts = self._build_chart_data(trips, incidents_recs)
 
         # 7. Summary cards
-        gross_compliant = mt01.get("secondary", {}).get(
-            "gross_compliant_count", mt01.get("numerator", 0)
+        gross_compliant = mt01.get("numerator", 0)
+        adj_compliant = mt01.get("secondary", {}).get(
+            "adjusted_numerator", mt01.get("numerator", 0)
         )
-        adj_compliant = mt01.get("numerator", 0)
-        non_compliant = max(0, mt01.get("denominator", 0) - adj_compliant)
+        non_compliant = max(0, mt01.get("denominator", 0) - gross_compliant)
         summary = {
             "total_trips": len(trips),
             "executed_trips": executed_count,
