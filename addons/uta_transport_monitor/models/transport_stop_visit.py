@@ -57,13 +57,16 @@ class TransportStopVisit(models.Model):
         default=30.0,
     )
     scheduled_at_utc = fields.Datetime(
-        string="Hora Prevista de Paso (UTC)",
+        string="Hora Prevista de Paso",
+        help="Hora programada de paso por este punto (almacenada en UTC, mostrada en hora local).",
     )
     first_arrival_utc = fields.Datetime(
-        string="Primer Arribo Validado (UTC)",
+        string="Primer Arribo Validado",
+        help="Primer instante verificado de llegada dentro del radio de geocerca.",
     )
     departure_utc = fields.Datetime(
-        string="Salida Validada (UTC)",
+        string="Salida Validada",
+        help="Instante verificado de salida del radio de geocerca.",
     )
     status = fields.Selection(
         selection=[

@@ -10,6 +10,20 @@ from ..services.routing_service import RoutingService
 _logger = logging.getLogger(__name__)
 
 
+def format_duration_spanish(seconds):
+    """Format duration in seconds to human-readable Spanish string."""
+    if not seconds or seconds < 0:
+        return "0 s"
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    rem = seconds % 60
+    if hours > 0:
+        return f"{hours} h {minutes:02d} min {rem:02d} s" if rem else f"{hours} h {minutes} min"
+    if minutes > 0:
+        return f"{minutes} min {rem:02d} s" if rem else f"{minutes} min"
+    return f"{rem} s"
+
+
 class TransportRouteVersion(models.Model):
     """Frozen geometric layout and operational tolerances for route."""
 
@@ -53,6 +67,17 @@ class TransportRouteVersion(models.Model):
         string="Distancia Programada (m)",
         digits=(10, 2),
         help="Distancia geométrica estimada del recorrido en metros.",
+    )
+    planned_duration_s = fields.Integer(
+        string="Duración Programada (s)",
+        compute="_compute_planned_duration",
+        store=True,
+        help="Tiempo estimado de recorrido al punto de destino en segundos.",
+    )
+    planned_duration_display = fields.Char(
+        string="Duración Programada",
+        compute="_compute_planned_duration",
+        help="Tiempo estimado de recorrido en formato legible (ej. '30 min 00 s').",
     )
 
     # Canonical evaluation parameters (docs/requirements.md Section 7.1)
@@ -152,6 +177,19 @@ class TransportRouteVersion(models.Model):
         for ver in self:
             ver.stop_count = len(ver.stop_ids)
             ver.trip_count = len(ver.trip_ids)
+
+    @api.depends("stop_ids.planned_offset_seconds", "stop_ids.stop_type")
+    def _compute_planned_duration(self):
+        for ver in self:
+            dest = ver.stop_ids.filtered(lambda s: s.stop_type == "destination")
+            if dest and dest[0].planned_offset_seconds:
+                dur = dest[0].planned_offset_seconds
+            elif ver.stop_ids:
+                dur = max(ver.stop_ids.mapped("planned_offset_seconds"), default=0)
+            else:
+                dur = 0
+            ver.planned_duration_s = dur
+            ver.planned_duration_display = format_duration_spanish(dur)
 
     @api.constrains(
         "stop_radius_m",
@@ -426,7 +464,22 @@ class TransportRouteVersion(models.Model):
                 f"Verifique los siguientes puntos: {names}."
             )
 
-        # 5. Geometry validation and auto-generation if missing
+        # 5. Progressive non-negative planned_offset_seconds validation
+        prev_offset = -1
+        for s in stops:
+            if s.planned_offset_seconds < 0:
+                raise ValidationError(
+                    f"El tiempo programado de '{s.name}' no puede ser negativo."
+                )
+            if s.planned_offset_seconds < prev_offset:
+                raise ValidationError(
+                    f"Tiempos no progresivos: El tiempo programado de '{s.name}' "
+                    f"({s.planned_offset_seconds} s) no puede ser menor al del "
+                    f"punto anterior ({prev_offset} s). Ordene los tiempos progresivamente."
+                )
+            prev_offset = s.planned_offset_seconds
+
+        # 6. Geometry validation and auto-generation if missing
         if not self.reference_polyline:
             self.action_calculate_road_route()
 
@@ -534,6 +587,8 @@ class TransportRouteVersion(models.Model):
             "is_draft": self.state == "draft",
             "stop_count": len(stops),
             "estimated_distance_m": self.estimated_distance_m or 0.0,
+            "planned_duration_s": self.planned_duration_s or 0,
+            "planned_duration_display": self.planned_duration_display or "0 s",
             "stop_radius_m": self.stop_radius_m,
             "route_corridor_m": self.route_corridor_m,
             "lateness_tolerance_s": self.lateness_tolerance_s,

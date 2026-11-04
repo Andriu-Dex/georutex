@@ -7,8 +7,9 @@
         <field name="arch" type="xml">
             <tree string="Recorridos Operacionales" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'">
                 <field name="name"/>
-                <field name="scheduled_start_utc"/>
-                <field name="scheduled_end_utc"/>
+                <field name="scheduled_start_utc" string="Inicio Programado"/>
+                <field name="scheduled_end_utc" string="Fin Previsto"/>
+                <field name="scheduled_duration_display" string="Duración Prog."/>
                 <field name="vehicle_id"/>
                 <field name="driver_id"/>
                 <field name="route_id"/>
@@ -144,19 +145,25 @@
                         </group>
                     </group>
                     <group>
-                        <group string="Programación Horaria (UTC / Planificada)">
-                            <field name="scheduled_start_utc" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="scheduled_end_utc" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        <group string="Programación Horaria (Hora Local de Ecuador)">
+                            <field name="scheduled_start_utc" string="Inicio Programado" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="scheduled_duration_display" string="Duración Programada de Ruta" readonly="1"/>
+                            <field name="road_estimated_duration_display" string="Estimación Red Vial" readonly="1"/>
+                            <field name="scheduled_end_utc" string="Fin Previsto / Llegada" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('is_manual_duration_override', '=', False)]}"/>
+                            <field name="is_manual_duration_override" groups="uta_transport_monitor.group_transport_manager" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="manual_duration_override_reason" attrs="{'invisible': [('is_manual_duration_override', '=', False)], 'required': [('is_manual_duration_override', '=', True)], 'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="manual_duration_override_user_id" attrs="{'invisible': [('is_manual_duration_override', '=', False)]}" readonly="1"/>
                         </group>
-                        <group string="Ejecución Real Observada (RF-20)">
-                            <field name="manual_start_utc"/>
-                            <field name="first_gps_fix_utc"/>
-                            <field name="actual_start_utc"/>
+                        <group string="Ejecución Real y Comparativa (RF-20)">
+                            <field name="actual_duration_display" string="Duración Real Observada" readonly="1"/>
+                            <field name="actual_start_utc" string="Salida Real"/>
                             <field name="actual_start_evidence"/>
-                            <field name="manual_end_utc"/>
-                            <field name="actual_end_utc"/>
+                            <field name="actual_end_utc" string="Llegada Real"/>
                             <field name="actual_end_evidence"/>
                             <field name="actual_distance_m"/>
+                            <field name="first_gps_fix_utc" string="Primer Fix GPS"/>
+                            <field name="manual_start_utc" string="Inicio Manual" groups="uta_transport_monitor.group_transport_manager"/>
+                            <field name="manual_end_utc" string="Fin Manual" groups="uta_transport_monitor.group_transport_manager"/>
                         </group>
                     </group>
                     <notebook>
@@ -170,8 +177,8 @@
                                     <field name="stop_name"/>
                                     <field name="stop_type" widget="badge" decoration-info="stop_type == 'checkpoint'" decoration-primary="stop_type == 'origin'" decoration-success="stop_type == 'destination'"/>
                                     <field name="required" widget="boolean_toggle"/>
-                                    <field name="scheduled_at_utc"/>
-                                    <field name="first_arrival_utc"/>
+                                    <field name="scheduled_at_utc" string="Hora Prevista"/>
+                                    <field name="first_arrival_utc" string="Arribo Validado"/>
                                     <field name="delay_s"/>
                                     <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
                                 </tree>

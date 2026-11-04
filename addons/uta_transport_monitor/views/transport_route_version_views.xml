@@ -12,6 +12,7 @@
                 <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'archived'"/>
                 <field name="stop_count"/>
                 <field name="estimated_distance_m"/>
+                <field name="planned_duration_display"/>
                 <field name="lateness_tolerance_s"/>
                 <field name="route_corridor_m"/>
                 <field name="active_for_new_trips" widget="boolean_toggle"/>
@@ -64,6 +65,7 @@
                         </group>
                         <group string="Métricas de Geometría y Operación">
                             <field name="estimated_distance_m"/>
+                            <field name="planned_duration_display" readonly="1"/>
                             <field name="minimum_consecutive_deviation_points" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="minimum_deviation_duration_s" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="geo_accuracy_max_m" attrs="{'readonly': [('state', '!=', 'draft')]}"/>

@@ -1,9 +1,10 @@
 """Operational trip scheduling and lifecycle management model for GeoRutex."""
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 import json
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
+from .transport_route_version import format_duration_spanish
 
 
 class TransportTrip(models.Model):
@@ -81,45 +82,91 @@ class TransportTrip(models.Model):
         index=True,
     )
 
-    # Scheduled timestamps and distance (stored in UTC)
+    # Scheduled timestamps and distance (stored in UTC, displayed in local time)
     scheduled_start_utc = fields.Datetime(
-        string="Inicio Programado (UTC)",
+        string="Inicio Programado",
         required=True,
         index=True,
+        help="Fecha y hora planificada de salida del recorrido (almacenada en UTC, mostrada en hora local).",
     )
     scheduled_end_utc = fields.Datetime(
-        string="Fin Programado (UTC)",
+        string="Fin Previsto / Llegada",
         required=True,
         index=True,
+        help="Fecha y hora planificada de llegada calculada automáticamente según los tiempos de la ruta (almacenada en UTC, mostrada en hora local).",
     )
     scheduled_distance_m = fields.Float(
         string="Distancia Programada (m)",
         digits=(10, 2),
+        help="Distancia geométrica planificada del recorrido en metros.",
+    )
+    scheduled_duration_s = fields.Integer(
+        string="Duración Programada (s)",
+        compute="_compute_durations",
+        store=True,
+        help="Tiempo estimado de viaje según los puntos de control de la versión de ruta.",
+    )
+    scheduled_duration_display = fields.Char(
+        string="Duración Programada",
+        compute="_compute_durations",
+        store=True,
+        help="Tiempo programado de viaje en formato legible (ej. '30 min 00 s').",
+    )
+    road_estimated_duration_s = fields.Integer(
+        string="Estimación Red Vial (s)",
+        compute="_compute_durations",
+        store=True,
+        help="Tiempo estimado por enrutamiento vial OSRM sin considerar congestión.",
+    )
+    road_estimated_duration_display = fields.Char(
+        string="Estimación Red Vial",
+        compute="_compute_durations",
+        store=True,
+        help="Estimación vial en formato legible (no es predicción de tráfico en vivo).",
+    )
+
+    # Exceptional manual duration override (Section 4)
+    is_manual_duration_override = fields.Boolean(
+        string="Ajuste Excepcional de Horario",
+        default=False,
+        tracking=True,
+        help="Habilita a un gestor autorizado a modificar la hora final independientemente de la duración estándar de la ruta.",
+    )
+    manual_duration_override_reason = fields.Text(
+        string="Justificación del Ajuste Excepcional",
+        tracking=True,
+        help="Justificación operativa obligatoria para el ajuste manual del horario.",
+    )
+    manual_duration_override_user_id = fields.Many2one(
+        comodel_name="res.users",
+        string="Ajuste Autorizado Por",
+        readonly=True,
+        tracking=True,
     )
 
     # Actual observed timestamps and distance
     manual_start_utc = fields.Datetime(
-        string="Inicio Manual (UTC)",
+        string="Inicio Manual",
         readonly=True,
         help="Instante de inicio manual por operador o conductor.",
     )
     manual_end_utc = fields.Datetime(
-        string="Fin Manual (UTC)",
+        string="Fin Manual",
         readonly=True,
         help="Instante de finalización manual por operador o conductor.",
     )
     first_gps_fix_utc = fields.Datetime(
-        string="Primer Fix GPS (UTC)",
+        string="Primer Fix GPS",
         readonly=True,
         help="Primer registro de telemetría GPS asociado al recorrido.",
     )
     actual_start_utc = fields.Datetime(
-        string="Salida Real de Origen (UTC)",
+        string="Salida Real Verificada",
         readonly=True,
         help="Primer instante verificado de salida de origen (RF-20).",
     )
     actual_end_utc = fields.Datetime(
-        string="Llegada Real a Destino (UTC)",
+        string="Llegada Real Verificada",
         readonly=True,
         help="Primer instante verificado de llegada a destino (RF-20).",
     )
@@ -137,6 +184,18 @@ class TransportTrip(models.Model):
         string="Distancia Real Recorrida (m)",
         digits=(10, 2),
         readonly=True,
+    )
+    actual_duration_s = fields.Integer(
+        string="Duración Real Observada (s)",
+        compute="_compute_durations",
+        store=True,
+        help="Tiempo transcurrido observado entre la salida verificada y la llegada a destino.",
+    )
+    actual_duration_display = fields.Char(
+        string="Duración Real Observada",
+        compute="_compute_durations",
+        store=True,
+        help="Duración real observada en formato legible.",
     )
     is_schedule_overdue = fields.Boolean(
         string="Horario Programado Vencido",
@@ -247,23 +306,149 @@ class TransportTrip(models.Model):
                 and trip.scheduled_end_utc < now
             )
 
+    @api.depends(
+        "route_version_id",
+        "route_version_id.planned_duration_s",
+        "scheduled_start_utc",
+        "scheduled_end_utc",
+        "scheduled_distance_m",
+        "actual_start_utc",
+        "actual_end_utc",
+        "first_gps_fix_utc",
+        "state",
+        "is_manual_duration_override",
+    )
+    def _compute_durations(self):
+        for trip in self:
+            # 1. Scheduled duration from version or start/end difference
+            ver_dur = trip.route_version_id.planned_duration_s if trip.route_version_id else 0
+            if ver_dur > 0 and not trip.is_manual_duration_override:
+                trip.scheduled_duration_s = ver_dur
+            elif trip.scheduled_start_utc and trip.scheduled_end_utc:
+                trip.scheduled_duration_s = max(
+                    0, int((trip.scheduled_end_utc - trip.scheduled_start_utc).total_seconds())
+                )
+            else:
+                trip.scheduled_duration_s = 0
+            trip.scheduled_duration_display = format_duration_spanish(trip.scheduled_duration_s)
+
+            # 2. Road estimated duration (~30 km/h = 8.33 m/s urban baseline reference)
+            dist_m = trip.scheduled_distance_m or (
+                trip.route_version_id.estimated_distance_m if trip.route_version_id else 0.0
+            )
+            if dist_m > 0:
+                road_secs = int(dist_m / 8.33)
+                trip.road_estimated_duration_s = road_secs
+                trip.road_estimated_duration_display = format_duration_spanish(road_secs)
+            else:
+                trip.road_estimated_duration_s = 0
+                trip.road_estimated_duration_display = "No disponible"
+
+            # 3. Actual observed duration from GPS telemetry
+            if trip.actual_start_utc and trip.actual_end_utc:
+                act_secs = max(
+                    0, int((trip.actual_end_utc - trip.actual_start_utc).total_seconds())
+                )
+                trip.actual_duration_s = act_secs
+                trip.actual_duration_display = format_duration_spanish(act_secs)
+            elif trip.first_gps_fix_utc and trip.actual_end_utc:
+                act_secs = max(
+                    0, int((trip.actual_end_utc - trip.first_gps_fix_utc).total_seconds())
+                )
+                trip.actual_duration_s = act_secs
+                trip.actual_duration_display = format_duration_spanish(act_secs)
+            else:
+                trip.actual_duration_s = 0
+                if trip.state == "in_progress":
+                    trip.actual_duration_display = "En curso"
+                elif trip.state == "completed":
+                    trip.actual_duration_display = "Sin telemetría suficiente"
+                else:
+                    trip.actual_duration_display = "Pendiente de ejecución"
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if (
-                not vals.get("scheduled_distance_m")
-                and vals.get("route_version_id")
-            ):
-                ver = self.env["transport.route.version"].browse(
-                    vals["route_version_id"]
-                )
-                if ver and ver.estimated_distance_m:
+            v_id = vals.get("route_version_id")
+            start = vals.get("scheduled_start_utc")
+            end = vals.get("scheduled_end_utc")
+            override = vals.get("is_manual_duration_override")
+
+            if v_id:
+                ver = self.env["transport.route.version"].browse(v_id)
+                if not vals.get("scheduled_distance_m") and ver and ver.estimated_distance_m:
                     vals["scheduled_distance_m"] = ver.estimated_distance_m
+
+                dur = ver.planned_duration_s if ver else 0
+                # If start is provided and end is NOT provided, auto-calculate end
+                if start and not end and dur > 0 and not override:
+                    start_dt = fields.Datetime.from_string(start) if isinstance(start, str) else start
+                    vals["scheduled_end_utc"] = start_dt + timedelta(seconds=dur)
+                elif start and end and dur > 0:
+                    start_dt = fields.Datetime.from_string(start) if isinstance(start, str) else start
+                    end_dt = fields.Datetime.from_string(end) if isinstance(end, str) else end
+                    actual_diff = int((end_dt - start_dt).total_seconds())
+                    if actual_diff != dur and not override:
+                        vals["is_manual_duration_override"] = True
+                        if not vals.get("manual_duration_override_reason"):
+                            vals["manual_duration_override_reason"] = (
+                                "Ajuste manual de horario ingresado en creación."
+                            )
+
             if not vals.get("source_type") and vals.get("vehicle_id"):
                 v = self.env["fleet.vehicle"].browse(vals["vehicle_id"])
                 if v and v.is_simulated:
                     vals["source_type"] = "simulated"
+
         return super().create(vals_list)
+
+    def write(self, vals):
+        for trip in self:
+            if trip.state == "draft":
+                override = vals.get(
+                    "is_manual_duration_override", trip.is_manual_duration_override
+                )
+                start = vals.get("scheduled_start_utc", trip.scheduled_start_utc)
+                ver_id = vals.get("route_version_id", trip.route_version_id.id)
+                ver = (
+                    self.env["transport.route.version"].browse(ver_id)
+                    if ver_id
+                    else False
+                )
+                dur = ver.planned_duration_s if ver else 0
+
+                # Recalculate scheduled_end_utc on start/version change when not overridden
+                if (
+                    ("scheduled_start_utc" in vals or "route_version_id" in vals)
+                    and "scheduled_end_utc" not in vals
+                    and not override
+                    and start
+                    and dur > 0
+                ):
+                    start_dt = (
+                        fields.Datetime.from_string(start)
+                        if isinstance(start, str)
+                        else start
+                    )
+                    vals["scheduled_end_utc"] = start_dt + timedelta(seconds=dur)
+
+        res = super().write(vals)
+
+        # Synchronize existing stop visits times if scheduled_start_utc or scheduled_end_utc changed
+        if "scheduled_start_utc" in vals or "scheduled_end_utc" in vals:
+            for trip in self:
+                if trip.stop_visit_ids and trip.scheduled_start_utc:
+                    for visit in trip.stop_visit_ids:
+                        if visit.route_stop_id.stop_type == "origin":
+                            visit.scheduled_at_utc = trip.scheduled_start_utc
+                        elif visit.route_stop_id.stop_type == "destination":
+                            visit.scheduled_at_utc = trip.scheduled_end_utc
+                        elif visit.route_stop_id.planned_offset_seconds:
+                            visit.scheduled_at_utc = trip.scheduled_start_utc + timedelta(
+                                seconds=visit.route_stop_id.planned_offset_seconds
+                            )
+
+        return res
 
     def _compute_position_count(self):
         for trip in self:
@@ -334,8 +519,31 @@ class TransportTrip(models.Model):
             self.scheduled_distance_m = (
                 self.route_version_id.estimated_distance_m or 0.0
             )
+            dur = self.route_version_id.planned_duration_s
+            if self.scheduled_start_utc and dur > 0 and not self.is_manual_duration_override:
+                self.scheduled_end_utc = self.scheduled_start_utc + timedelta(seconds=dur)
 
-    @api.constrains("scheduled_start_utc", "scheduled_end_utc")
+    @api.onchange("scheduled_start_utc")
+    def _onchange_scheduled_start_utc(self):
+        if self.scheduled_start_utc and self.route_version_id:
+            dur = self.route_version_id.planned_duration_s
+            if dur > 0 and not self.is_manual_duration_override:
+                self.scheduled_end_utc = self.scheduled_start_utc + timedelta(seconds=dur)
+
+    @api.onchange("is_manual_duration_override")
+    def _onchange_is_manual_duration_override(self):
+        if not self.is_manual_duration_override and self.scheduled_start_utc and self.route_version_id:
+            dur = self.route_version_id.planned_duration_s
+            if dur > 0:
+                self.scheduled_end_utc = self.scheduled_start_utc + timedelta(seconds=dur)
+            self.manual_duration_override_reason = False
+
+    @api.constrains(
+        "scheduled_start_utc",
+        "scheduled_end_utc",
+        "is_manual_duration_override",
+        "manual_duration_override_reason",
+    )
     def _check_scheduled_times(self):
         for trip in self:
             if trip.scheduled_start_utc and trip.scheduled_end_utc:
@@ -343,6 +551,12 @@ class TransportTrip(models.Model):
                     raise ValidationError(
                         "El inicio programado debe ser estrictamente "
                         "anterior al fin programado."
+                    )
+            if trip.is_manual_duration_override and trip.state != "draft":
+                if not trip.manual_duration_override_reason:
+                    raise ValidationError(
+                        "Debe especificar una justificación obligatoria para "
+                        "el ajuste excepcional de horario."
                     )
 
     @api.constrains("route_id", "route_version_id")
@@ -471,16 +685,16 @@ class TransportTrip(models.Model):
         self.stop_visit_ids.filtered(lambda v: v.status == "pending").unlink()
 
         visits_to_create = []
-        for stop in self.route_version_id.stop_ids:
+        for stop in self.route_version_id.stop_ids.sorted("sequence"):
             sched_time = False
-            if self.scheduled_start_utc and stop.planned_offset_seconds:
+            if stop.stop_type == "origin":
+                sched_time = self.scheduled_start_utc
+            elif stop.stop_type == "destination":
+                sched_time = self.scheduled_end_utc
+            elif self.scheduled_start_utc and stop.planned_offset_seconds:
                 sched_time = self.scheduled_start_utc + timedelta(
                     seconds=stop.planned_offset_seconds
                 )
-            elif self.scheduled_start_utc and stop.stop_type == "origin":
-                sched_time = self.scheduled_start_utc
-            elif self.scheduled_end_utc and stop.stop_type == "destination":
-                sched_time = self.scheduled_end_utc
 
             rad = stop.radius_m or self.route_version_id.stop_radius_m
             visits_to_create.append({
@@ -543,6 +757,32 @@ class TransportTrip(models.Model):
                 raise UserError(
                     "La versión de ruta asignada debe estar aprobada."
                 )
+
+            # Manual override validation and auditing (Section 4)
+            if trip.is_manual_duration_override:
+                is_manager = self.env.user.has_group(
+                    "uta_transport_monitor.group_transport_manager"
+                ) or self.env.is_admin()
+                if not is_manager:
+                    raise UserError(
+                        "Solo los usuarios con rol de Gestor de Transporte "
+                        "pueden autorizar ajustes excepcionales de horario."
+                    )
+                if not trip.manual_duration_override_reason:
+                    raise ValidationError(
+                        "Debe especificar una justificación obligatoria para "
+                        "el ajuste excepcional de horario."
+                    )
+                trip.manual_duration_override_user_id = self.env.user.id
+            else:
+                # Ensure scheduled_end_utc matches scheduled_start_utc + duration
+                if trip.scheduled_duration_s > 0 and trip.scheduled_start_utc:
+                    expected_end = trip.scheduled_start_utc + timedelta(
+                        seconds=trip.scheduled_duration_s
+                    )
+                    if trip.scheduled_end_utc != expected_end:
+                        trip.scheduled_end_utc = expected_end
+
             if (
                 not trip.scheduled_distance_m
                 and trip.route_version_id.estimated_distance_m
