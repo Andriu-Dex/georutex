@@ -129,19 +129,16 @@ class TransportTrip(models.Model):
     is_manual_duration_override = fields.Boolean(
         string="Ajuste Excepcional de Horario",
         default=False,
-        tracking=True,
         help="Habilita a un gestor autorizado a modificar la hora final independientemente de la duración estándar de la ruta.",
     )
     manual_duration_override_reason = fields.Text(
         string="Justificación del Ajuste Excepcional",
-        tracking=True,
         help="Justificación operativa obligatoria para el ajuste manual del horario.",
     )
     manual_duration_override_user_id = fields.Many2one(
         comodel_name="res.users",
         string="Ajuste Autorizado Por",
         readonly=True,
-        tracking=True,
     )
 
     # Actual observed timestamps and distance
@@ -500,6 +497,51 @@ class TransportTrip(models.Model):
             )
             if user:
                 self.driver_user_id = user
+
+    @api.onchange("vehicle_id", "driver_id", "scheduled_start_utc", "scheduled_end_utc")
+    def _onchange_check_availability(self):
+        if not (self.scheduled_start_utc and self.scheduled_end_utc):
+            return
+        if self.vehicle_id:
+            domain = [
+                ("vehicle_id", "=", self.vehicle_id.id),
+                ("state", "in", ["draft", "scheduled", "in_progress"]),
+                ("scheduled_start_utc", "<", self.scheduled_end_utc),
+                ("scheduled_end_utc", ">", self.scheduled_start_utc),
+            ]
+            if self._origin and self._origin.id:
+                domain.append(("id", "!=", self._origin.id))
+            conflict = self.search(domain, limit=1)
+            if conflict:
+                return {
+                    "warning": {
+                        "title": "Aviso de Disponibilidad de Vehículo",
+                        "message": (
+                            f"El vehículo '{self.vehicle_id.display_name}' ya tiene programado "
+                            f"el recorrido {conflict.name} ({conflict.scheduled_start_utc} a {conflict.scheduled_end_utc})."
+                        ),
+                    }
+                }
+        if self.driver_id:
+            domain = [
+                ("driver_id", "=", self.driver_id.id),
+                ("state", "in", ["draft", "scheduled", "in_progress"]),
+                ("scheduled_start_utc", "<", self.scheduled_end_utc),
+                ("scheduled_end_utc", ">", self.scheduled_start_utc),
+            ]
+            if self._origin and self._origin.id:
+                domain.append(("id", "!=", self._origin.id))
+            conflict = self.search(domain, limit=1)
+            if conflict:
+                return {
+                    "warning": {
+                        "title": "Aviso de Disponibilidad de Conductor",
+                        "message": (
+                            f"El conductor '{self.driver_id.name}' ya tiene programado "
+                            f"el recorrido {conflict.name} ({conflict.scheduled_start_utc} a {conflict.scheduled_end_utc})."
+                        ),
+                    }
+                }
 
     @api.onchange("route_id")
     def _onchange_route_id(self):

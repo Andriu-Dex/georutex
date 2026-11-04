@@ -21,9 +21,14 @@
                         Puntos capturados: <b t-esc="props.record and props.record.data.position_count or 0"/>
                     </span>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="onFitBounds" title="Ajustar encuadre del mapa">
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-sm btn-outline-secondary me-2" t-on-click="onFitBounds" title="Ajustar encuadre del mapa">
                         <i class="fa fa-crosshairs me-1"/>Enfocar Ruta
+                    </button>
+                    <button type="button" class="btn btn-sm" t-att-class="state.isLivePolling ? 'btn-success text-white' : 'btn-outline-primary'" t-on-click="toggleLivePolling" title="Auto-actualizar mapa en vivo cada 15 segundos">
+                        <i class="fa fa-refresh me-1" t-att-class="state.isLivePolling ? 'fa-spin' : ''"/>
+                        <t t-if="state.isLivePolling">En Vivo (15s)</t>
+                        <t t-else="">Activar En Vivo</t>
                     </button>
                 </div>
             </div>

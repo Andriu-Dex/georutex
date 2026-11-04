@@ -77,6 +77,7 @@ class TransportRouteVersion(models.Model):
     planned_duration_display = fields.Char(
         string="Duración Programada",
         compute="_compute_planned_duration",
+        store=True,
         help="Tiempo estimado de recorrido en formato legible (ej. '30 min 00 s').",
     )
 

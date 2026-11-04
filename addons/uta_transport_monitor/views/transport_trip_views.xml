@@ -150,7 +150,7 @@
                             <field name="scheduled_duration_display" string="Duración Programada de Ruta" readonly="1"/>
                             <field name="road_estimated_duration_display" string="Estimación Red Vial" readonly="1"/>
                             <field name="scheduled_end_utc" string="Fin Previsto / Llegada" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('is_manual_duration_override', '=', False)]}"/>
-                            <field name="is_manual_duration_override" groups="uta_transport_monitor.group_transport_manager" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="is_manual_duration_override" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="manual_duration_override_reason" attrs="{'invisible': [('is_manual_duration_override', '=', False)], 'required': [('is_manual_duration_override', '=', True)], 'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="manual_duration_override_user_id" attrs="{'invisible': [('is_manual_duration_override', '=', False)]}" readonly="1"/>
                         </group>
@@ -210,6 +210,12 @@
                                     <field name="severity" widget="badge"/>
                                     <field name="state" widget="badge"/>
                                     <field name="description"/>
+                                    <button name="action_open_justify_wizard"
+                                            string="Justificar"
+                                            type="object"
+                                            icon="fa-commenting-o"
+                                            class="btn-sm btn-outline-info"
+                                            attrs="{'invisible': [('state', 'in', ('justified', 'rejected'))]}"/>
                                 </tree>
                             </field>
                         </page>

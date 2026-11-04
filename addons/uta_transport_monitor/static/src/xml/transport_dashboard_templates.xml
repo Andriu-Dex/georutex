@@ -41,6 +41,21 @@
 
             <!-- Filter Controls Bar -->
             <div class="georutex-filters-bar bg-light p-3 border-bottom">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="small fw-bold text-muted me-1"><i class="fa fa-calendar me-1"/>Período Rápido:</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('today')">
+                        Hoy
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('week')">
+                        Esta Semana
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('month')">
+                        Este Mes
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" t-on-click="() => this.setDatePreset('all')">
+                        Todo el Historial
+                    </button>
+                </div>
                 <form class="row g-2 align-items-end" t-on-submit="onFilterSubmit">
                     <div class="col-12 col-sm-6 col-md-3">
                         <label class="form-label small fw-bold text-muted mb-1">Fecha Desde</label>

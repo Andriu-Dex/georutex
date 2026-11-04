@@ -221,7 +221,7 @@ export class RouteEditorWidget extends Component {
                     <strong>#${index + 1} - ${stop.name}</strong><br/>
                     <b>Tipo:</b> ${typeLabel}<br/>
                     <b>Coordenadas:</b> ${stop.latitude.toFixed(5)}, ${stop.longitude.toFixed(5)}<br/>
-                    <b>Radio:</b> ${stop.radius_m} m | <b>Tiempo:</b> ${stop.planned_offset_seconds} s<br/>
+                    <b>Radio:</b> ${stop.radius_m} m | <b>Tiempo:</b> ${Math.round((stop.planned_offset_seconds || 0) / 60)} min (${stop.planned_offset_seconds || 0} s)<br/>
                     ${this.state.isDraft ? '<small class="text-muted">Arrastre el marcador para mover la parada</small>' : ''}
                 </div>
             `);

@@ -23,6 +23,12 @@
                        decoration-success="state == 'justified'"
                        decoration-danger="state == 'rejected'"
                        decoration-warning="state == 'confirmed'"/>
+                <button name="action_open_justify_wizard"
+                        string="Justificar"
+                        type="object"
+                        icon="fa-commenting-o"
+                        class="btn-sm btn-outline-info"
+                        attrs="{'invisible': [('state', 'in', ('justified', 'rejected'))]}"/>
             </tree>
         </field>
     </record>
@@ -34,6 +40,12 @@
         <field name="arch" type="xml">
             <form string="Incidencia Operacional">
                 <header>
+                    <button name="action_open_justify_wizard"
+                            string="Justificar Incidencia"
+                            type="object"
+                            class="oe_highlight btn-info"
+                            icon="fa-commenting-o"
+                            attrs="{'invisible': [('state', 'in', ('justified', 'rejected'))]}"/>
                     <button name="action_submit_justification"
                             string="Enviar Justificación"
                             type="object"
@@ -155,6 +167,37 @@
             <p class="o_view_nocontent_smiling_face">
                 No hay incidencias operacionales registradas.
             </p>
+        </field>
+    </record>
+    <!-- Form View: Wizard Justificación Rápida -->
+    <record id="view_transport_incident_justify_wizard_form" model="ir.ui.view">
+        <field name="name">transport.incident.justify.wizard.form</field>
+        <field name="model">transport.incident.justify.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Justificación de Incidencia Operacional">
+                <sheet>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Descargo Operacional:</strong> Seleccione el motivo e ingrese los detalles que justifican el retraso, desvío u omisión ocurrida durante el recorrido.
+                    </div>
+                    <group>
+                        <group string="Datos del Evento">
+                            <field name="incident_id"/>
+                            <field name="trip_id"/>
+                            <field name="incident_type"/>
+                        </group>
+                        <group string="Motivo de Descargo">
+                            <field name="justification_category" widget="radio"/>
+                        </group>
+                    </group>
+                    <group string="Explicación Detallada">
+                        <field name="justification_notes" placeholder="Describa brevemente qué ocurrió (ej. Cierre vial por manifestación o desvío ordenado por agentes de tránsito)..." nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_confirm_justification" string="Registrar y Enviar Descargo" type="object" class="btn-primary" icon="fa-paper-plane"/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
         </field>
     </record>
 </odoo>

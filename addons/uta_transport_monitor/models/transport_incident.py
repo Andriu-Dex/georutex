@@ -186,6 +186,20 @@ class TransportIncident(models.Model):
             or "INC-NUEVO"
         )
 
+    def action_open_justify_wizard(self):
+        """Open quick modal wizard to submit justification."""
+        self.ensure_one()
+        return {
+            "name": f"Justificar Incidencia — {self.name}",
+            "type": "ir.actions.act_window",
+            "res_model": "transport.incident.justify.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_incident_id": self.id,
+            },
+        }
+
     def action_submit_justification(self):
         """Submit justification notes from driver or operator."""
         self.ensure_one()

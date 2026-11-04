@@ -89,9 +89,11 @@
                                     <field name="latitude"/>
                                     <field name="longitude"/>
                                     <field name="radius_m"/>
-                                    <field name="planned_offset_seconds"/>
+                                    <field name="planned_offset_minutes" string="Tiempo Previsto (min)"/>
+                                    <field name="planned_offset_display" string="Legible" optional="show"/>
+                                    <field name="planned_offset_seconds" string="Segundos" optional="hide"/>
                                     <field name="required" widget="boolean_toggle"/>
-                                    <field name="notes"/>
+                                    <field name="notes" optional="hide"/>
                                 </tree>
                             </field>
                         </page>

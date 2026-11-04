@@ -202,6 +202,36 @@ export class TransportDashboardAction extends Component {
         await this.loadDashboardData();
     }
 
+    async setDatePreset(preset) {
+        const now = new Date();
+        const formatDate = (d) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${day}`;
+        };
+
+        if (preset === "today") {
+            const todayStr = formatDate(now);
+            this.state.filters.date_from = todayStr;
+            this.state.filters.date_to = todayStr;
+        } else if (preset === "week") {
+            const dayOfWeek = now.getDay() || 7;
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - dayOfWeek + 1);
+            this.state.filters.date_from = formatDate(monday);
+            this.state.filters.date_to = formatDate(now);
+        } else if (preset === "month") {
+            const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            this.state.filters.date_from = formatDate(firstOfMonth);
+            this.state.filters.date_to = formatDate(now);
+        } else if (preset === "all") {
+            this.state.filters.date_from = "";
+            this.state.filters.date_to = "";
+        }
+        await this.loadDashboardData();
+    }
+
     async onFilterSubmit(e) {
         if (e) e.preventDefault();
         await this.loadDashboardData();

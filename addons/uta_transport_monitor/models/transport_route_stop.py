@@ -3,6 +3,7 @@
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from ..domain.geo import is_valid_coordinate
+from .transport_route_version import format_duration_spanish
 
 
 class TransportRouteStop(models.Model):
@@ -68,6 +69,20 @@ class TransportRouteStop(models.Model):
         default=0,
         help="Segundos estimados desde la salida del viaje hasta este punto.",
     )
+    planned_offset_minutes = fields.Float(
+        string="Tiempo Previsto (min)",
+        digits=(6, 2),
+        compute="_compute_offset_minutes",
+        inverse="_inverse_offset_minutes",
+        store=True,
+        help="Tiempo estimado desde la salida en minutos (se sincroniza bidireccionalmente con segundos).",
+    )
+    planned_offset_display = fields.Char(
+        string="Tiempo Previsto",
+        compute="_compute_offset_display",
+        store=True,
+        help="Tiempo estimado de paso en formato legible (ej. '18 min', '24 min 30 s').",
+    )
     notes = fields.Text(
         string="Notas / Referencias",
     )
@@ -101,6 +116,20 @@ class TransportRouteStop(models.Model):
                 raise ValidationError(
                     f"El tiempo programado de '{stop.name}' no puede ser < 0."
                 )
+
+    @api.depends("planned_offset_seconds")
+    def _compute_offset_minutes(self):
+        for stop in self:
+            stop.planned_offset_minutes = round((stop.planned_offset_seconds or 0) / 60.0, 2)
+
+    def _inverse_offset_minutes(self):
+        for stop in self:
+            stop.planned_offset_seconds = int(round((stop.planned_offset_minutes or 0) * 60))
+
+    @api.depends("planned_offset_seconds")
+    def _compute_offset_display(self):
+        for stop in self:
+            stop.planned_offset_display = format_duration_spanish(stop.planned_offset_seconds or 0)
 
     @api.model_create_multi
     def create(self, vals_list):

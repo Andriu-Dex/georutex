@@ -2,7 +2,7 @@
 
 import { registry } from "@web/core/registry";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
-import { Component, onMounted, onWillUnmount, useRef, useEffect } from "@odoo/owl";
+import { Component, onMounted, onWillUnmount, useRef, useEffect, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
 
 export class TripMapWidget extends Component {
@@ -21,12 +21,20 @@ export class TripMapWidget extends Component {
             trajectory: null,
             latest: null,
         };
+        this.state = useState({
+            isLivePolling: false,
+        });
+        this.pollTimer = null;
 
         onMounted(() => {
             this.initMap();
         });
 
         onWillUnmount(() => {
+            if (this.pollTimer) {
+                clearInterval(this.pollTimer);
+                this.pollTimer = null;
+            }
             if (this.map) {
                 this.map.remove();
                 this.map = null;
@@ -65,16 +73,16 @@ export class TripMapWidget extends Component {
         }
     }
 
-    async loadTripData(tripId) {
+    async loadTripData(tripId, isAutoRefresh = false) {
         try {
             const data = await this.orm.call("transport.trip", "get_map_data", [[tripId]]);
-            this.renderTripMap(data);
+            this.renderTripMap(data, isAutoRefresh);
         } catch (error) {
             console.error("Error loading trip map data:", error);
         }
     }
 
-    renderTripMap(data) {
+    renderTripMap(data, isAutoRefresh = false) {
         if (!this.map || !data) return;
 
         Object.keys(this.layers).forEach((key) => {
@@ -205,8 +213,27 @@ export class TripMapWidget extends Component {
             }
         }
 
-        if (bounds.length > 0) {
+        if (bounds.length > 0 && !isAutoRefresh) {
             this.map.fitBounds(bounds, { padding: [30, 30] });
+        }
+    }
+
+    toggleLivePolling() {
+        this.state.isLivePolling = !this.state.isLivePolling;
+        if (this.state.isLivePolling) {
+            if (this.props.record && this.props.record.resId) {
+                void this.loadTripData(this.props.record.resId, true);
+            }
+            this.pollTimer = setInterval(() => {
+                if (this.props.record && this.props.record.resId) {
+                    void this.loadTripData(this.props.record.resId, true);
+                }
+            }, 15000);
+        } else {
+            if (this.pollTimer) {
+                clearInterval(this.pollTimer);
+                this.pollTimer = null;
+            }
         }
     }
 
