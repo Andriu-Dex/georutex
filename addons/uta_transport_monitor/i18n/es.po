@@ -129,4 +129,14 @@ msgstr "Incidencias Operacionales"
 msgid "Evaluaciones de Recorridos"
 msgstr "Evaluaciones de Recorridos"
 
+#. module: uta_transport_monitor
+#: model:ir.model.fields,field_description:uta_transport_monitor.field_fleet_vehicle__operational_name
+msgid "Nombre Operativo / Unidad"
+msgstr "Nombre Operativo / Unidad"
+
+#. module: uta_transport_monitor
+#: model:ir.model.fields,help:uta_transport_monitor.field_fleet_vehicle__operational_name
+msgid "Nombre de servicio, alias o número de unidad comercial (ej. 'Bus 01 - UTA', 'Unidad 14')."
+msgstr "Nombre de servicio, alias o número de unidad comercial (ej. 'Bus 01 - UTA', 'Unidad 14')."
+
 

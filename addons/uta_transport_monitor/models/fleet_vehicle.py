@@ -11,7 +11,15 @@ class FleetVehicle(models.Model):
     """Extend fleet.vehicle with Traccar device bindings and telemetries."""
 
     _inherit = "fleet.vehicle"
+    _rec_names_search = ["name", "operational_name", "driver_id.name"]
 
+    operational_name = fields.Char(
+        string="Nombre Operativo / Unidad",
+        index=True,
+        tracking=True,
+        help="Nombre de servicio, alias o número de unidad comercial "
+             "(ej. 'Bus 01 - UTA', 'Unidad 14').",
+    )
     traccar_device_id = fields.Integer(
         string="ID Dispositivo Traccar",
         index=True,
@@ -189,6 +197,28 @@ class FleetVehicle(models.Model):
                 )
             else:
                 vehicle.last_gps_time_local = "Sin registro"
+
+    @api.depends(
+        "model_id.brand_id.name",
+        "model_id.name",
+        "license_plate",
+        "operational_name",
+    )
+    def _compute_vehicle_name(self):
+        """Enrich vehicle display name with operational unit alias when set."""
+        super()._compute_vehicle_name()
+        for record in self:
+            if record.operational_name:
+                plate = record.license_plate or ""
+                model = record.model_id.name or ""
+                if plate and model:
+                    record.name = (
+                        f"[{record.operational_name}] {plate} ({model})"
+                    )
+                elif plate:
+                    record.name = f"[{record.operational_name}] {plate}"
+                else:
+                    record.name = f"[{record.operational_name}]"
 
     def action_generate_secure_unique_id(self):
         """Generate non-predictable uniqueId with 128-bit entropy (RF-08)."""

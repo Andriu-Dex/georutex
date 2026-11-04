@@ -15,3 +15,4 @@ from . import test_transport_metrics  # noqa: F401
 from . import test_software_quality  # noqa: F401
 from . import test_end_to_end_integration  # noqa: F401
 from . import test_demo_safety  # noqa: F401
+from . import test_vehicle_operational_name  # noqa: F401

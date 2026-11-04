@@ -26,6 +26,7 @@
 
         <!-- 3. Vehículos Demo: Identificados como simulados (sin acreditación física no demostrada) -->
         <record id="demo_vehicle_01_real" model="fleet.vehicle">
+            <field name="operational_name">Bus 01 — UTA Huachi</field>
             <field name="model_id" ref="demo_vehicle_model_bus"/>
             <field name="license_plate">TBA-1001</field>
             <field name="driver_id" ref="demo_driver_carlos"/>
@@ -36,6 +37,7 @@
         </record>
 
         <record id="demo_vehicle_02_sim" model="fleet.vehicle">
+            <field name="operational_name">Bus 02 — UTA Querochaca</field>
             <field name="model_id" ref="demo_vehicle_model_bus"/>
             <field name="license_plate">TBA-1002</field>
             <field name="driver_id" ref="demo_driver_manuel"/>
