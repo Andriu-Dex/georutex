@@ -305,3 +305,132 @@
     }
 }
 
+/* ==============================================================================
+   GeoRutex - Visual Route & Checkpoint Editor (Owl Component)
+   ============================================================================== */
+
+.georutex-route-editor {
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    background-color: #ffffff;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.georutex-editor-toolbar {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+.georutex-editor-workspace {
+    min-height: 520px;
+    height: 580px;
+}
+
+.georutex-editor-map-wrapper {
+    min-height: 520px;
+    height: 100%;
+    background-color: #e9ecef;
+}
+
+.georutex-editor-map {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+.georutex-editor-sidebar {
+    width: 320px;
+    min-width: 280px;
+    max-width: 360px;
+    height: 100%;
+    z-index: 2;
+}
+
+.georutex-editor-loading-overlay {
+    background-color: rgba(255, 255, 255, 0.7);
+    z-index: 1050;
+}
+
+.georutex-stop-card {
+    transition: all 0.15s ease-in-out;
+}
+
+.georutex-stop-card:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.bg-success-light {
+    background-color: #e8f5e9;
+}
+
+.bg-danger-light {
+    background-color: #ffebee;
+}
+
+.bg-primary-light {
+    background-color: #e3f2fd;
+}
+
+.btn-xs {
+    padding: 0.15rem 0.35rem;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    border-radius: 0.2rem;
+}
+
+/* Leaflet Pin Styles for Visual Editor */
+.georutex-editor-stop-pin {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 700;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    cursor: grab;
+    transition: transform 0.15s ease;
+}
+
+.georutex-editor-stop-pin:active {
+    cursor: grabbing;
+    transform: scale(1.15);
+}
+
+.georutex-editor-stop-pin.georutex-stop-origin {
+    background-color: #2e7d32;
+}
+
+.georutex-editor-stop-pin.georutex-stop-destination {
+    background-color: #c62828;
+}
+
+.georutex-editor-stop-pin.georutex-stop-checkpoint {
+    background-color: #1976d2;
+}
+
+@media (max-width: 992px) {
+    .georutex-editor-workspace {
+        flex-direction: column-reverse;
+        height: auto;
+    }
+
+    .georutex-editor-sidebar {
+        width: 100%;
+        max-width: 100%;
+        height: 260px;
+        border-start: none !important;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .georutex-editor-map-wrapper {
+        height: 420px;
+    }
+}
+
+

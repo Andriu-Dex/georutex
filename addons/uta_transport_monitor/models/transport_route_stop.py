@@ -104,37 +104,90 @@ class TransportRouteStop(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        versions_to_classify = set()
+        is_install = (
+            self.env.context.get("install_mode")
+            or self.env.context.get("import_compat")
+        )
         for vals in vals_list:
             v_id = vals.get("route_version_id")
             if v_id:
                 version = self.env["transport.route.version"].browse(v_id)
-                if version.state == "approved" and version.trip_count > 0:
+                if (
+                    version.state == "approved"
+                    and (version.trip_count > 0 or version.approved_at)
+                    and not is_install
+                ):
                     raise UserError(
-                        "No se pueden agregar paradas a versión aprobada "
-                        "con viajes programados. Cree otra versión (RF-14)."
+                        "No se pueden agregar paradas a una versión aprobada. "
+                        "Cree una nueva versión (RF-14)."
                     )
-        return super().create(vals_list)
+                if version.state == "draft":
+                    versions_to_classify.add(version)
+
+        records = super().create(vals_list)
+
+        if not self.env.context.get("skip_auto_classify") and not is_install:
+            for ver in versions_to_classify:
+                ver.with_context(skip_auto_classify=True).auto_classify_stops()
+
+        return records
 
     def write(self, vals):
+        is_install = (
+            self.env.context.get("install_mode")
+            or self.env.context.get("import_compat")
+            or self.env.context.get("skip_auto_classify")
+        )
         for stop in self:
+            ver = stop.route_version_id
             if (
-                stop.route_version_id.state == "approved"
-                and stop.route_version_id.trip_count > 0
+                ver.state == "approved"
+                and (ver.trip_count > 0 or ver.approved_at)
+                and not is_install
             ):
                 raise UserError(
-                    "No se pueden modificar paradas de una versión aprobada "
-                    "con viajes programados. Cree una nueva versión (RF-14)."
+                    "No se pueden modificar paradas de una versión aprobada. "
+                    "Cree una nueva versión (RF-14)."
                 )
-        return super().write(vals)
+
+        res = super().write(vals)
+
+        # If sequence changed (reordered), auto-update stop classifications
+        if "sequence" in vals and not is_install:
+            versions = self.mapped("route_version_id").filtered(
+                lambda v: v.state == "draft"
+            )
+            for ver in versions:
+                ver.with_context(skip_auto_classify=True).auto_classify_stops()
+
+        return res
 
     def unlink(self):
+        is_install = (
+            self.env.context.get("install_mode")
+            or self.env.context.get("import_compat")
+        )
+        versions_to_classify = set()
         for stop in self:
+            ver = stop.route_version_id
             if (
-                stop.route_version_id.state == "approved"
-                and stop.route_version_id.trip_count > 0
+                ver.state == "approved"
+                and (ver.trip_count > 0 or ver.approved_at)
+                and not is_install
             ):
                 raise UserError(
-                    "No se pueden eliminar paradas de una versión aprobada "
-                    "con viajes programados. Cree una nueva versión (RF-14)."
+                    "No se pueden eliminar paradas de una versión aprobada. "
+                    "Cree una nueva versión (RF-14)."
                 )
-        return super().unlink()
+            if ver.state == "draft":
+                versions_to_classify.add(ver)
+
+        res = super().unlink()
+
+        if not self.env.context.get("skip_auto_classify") and not is_install:
+            for ver in versions_to_classify:
+                if ver.exists():
+                    ver.with_context(skip_auto_classify=True).auto_classify_stops()
+
+        return res

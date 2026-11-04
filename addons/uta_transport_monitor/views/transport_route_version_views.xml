@@ -27,7 +27,9 @@
             <form string="Versión de Ruta">
                 <header>
                     <button name="action_approve" string="Aprobar Versión" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_compute_distance_from_polyline" string="Calcular Distancia" type="object" class="btn-secondary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_calculate_road_route" string="Calcular Trazado Vial" type="object" class="btn-primary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_auto_classify_stops" string="Auto-clasificar Paradas" type="object" class="btn-secondary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_compute_distance_from_polyline" string="Recalcular Distancia" type="object" class="btn-secondary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_archive" string="Archivar" type="object" attrs="{'invisible': [('state', '!=', 'approved')]}"/>
                     <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', '!=', 'archived')]}"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,approved,archived"/>
@@ -68,13 +70,20 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Puntos de Control y Paradas (Mínimo 4)" name="stops_page">
+                        <page string="Editor Visual de Ruta" name="visual_editor_page">
+                            <field name="id" widget="route_editor_widget" nolabel="1"/>
+                        </page>
+                        <page string="Puntos de Control y Paradas" name="stops_page">
+                            <div class="mb-2" attrs="{'invisible': [('state', '!=', 'draft')]}">
+                                <button name="action_auto_classify_stops" string="Auto-clasificar Paradas" type="object" class="btn btn-sm btn-outline-primary me-2" icon="fa-magic"/>
+                                <button name="action_calculate_road_route" string="Calcular Trazado Vial" type="object" class="btn btn-sm btn-outline-info" icon="fa-road"/>
+                            </div>
                             <field name="stop_ids" attrs="{'readonly': [('state', '!=', 'draft')]}">
                                 <tree editable="bottom" string="Paradas y Puntos de Control">
                                     <field name="sequence" widget="handle"/>
                                     <field name="sequence"/>
                                     <field name="name"/>
-                                    <field name="stop_type" widget="badge" decoration-info="stop_type == 'checkpoint'" decoration-primary="stop_type == 'origin'" decoration-success="stop_type == 'destination'"/>
+                                    <field name="stop_type"/>
                                     <field name="latitude"/>
                                     <field name="longitude"/>
                                     <field name="radius_m"/>

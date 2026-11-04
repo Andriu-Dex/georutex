@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Visual Route and Checkpoint Editor Widget for transport.route.version -->
+    <t t-name="uta_transport_monitor.RouteEditorWidget" owl="1">
+        <div class="georutex-route-editor">
+            <!-- Toolbar -->
+            <div class="georutex-editor-toolbar d-flex flex-wrap justify-content-between align-items-center p-2 bg-light border-bottom">
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <span class="fw-bold text-dark me-2">
+                        <i class="fa fa-map-o me-1"/>Editor Visual de Ruta
+                    </span>
+
+                    <t t-if="state.isDraft">
+                        <span class="badge bg-primary">Modo Edición (Borrador)</span>
+                    </t>
+                    <t t-else="">
+                        <span class="badge bg-success">
+                            <i class="fa fa-lock me-1"/>Aprobada (Solo Lectura)
+                        </span>
+                    </t>
+
+                    <span t-attf-class="badge #{state.stops.length >= 4 ? 'bg-success' : 'bg-warning text-dark'}">
+                        <i class="fa fa-map-marker me-1"/>
+                        <t t-esc="state.stops.length"/> / 4 mín. paradas
+                    </span>
+
+                    <t t-if="state.estimatedDistance > 0">
+                        <span class="badge bg-info text-dark">
+                            <i class="fa fa-road me-1"/>
+                            <t t-esc="(state.estimatedDistance / 1000.0).toFixed(2)"/> km
+                        </span>
+                    </t>
+                </div>
+
+                <div class="d-flex align-items-center flex-wrap gap-2 mt-1 mt-md-0">
+                    <t t-if="state.isDraft">
+                        <button type="button"
+                                t-attf-class="btn btn-sm #{state.addMode ? 'btn-success' : 'btn-outline-primary'}"
+                                t-on-click="toggleAddMode"
+                                title="Haga clic en el mapa para añadir un nuevo punto de control">
+                            <i class="fa fa-plus-circle me-1"/>
+                            <t t-if="state.addMode">Clic en mapa para agregar</t>
+                            <t t-else="">Modo Agregar</t>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-info"
+                                t-on-click="onCalculateRoadRoute"
+                                t-att-disabled="state.stops.length lt 2 or state.loading"
+                                title="Calcular trazado vial entre las paradas mediante red vial">
+                            <i class="fa fa-car me-1"/>
+                            <t t-if="state.loading">Calculando...</t>
+                            <t t-else="">Trazar Red Vial</t>
+                        </button>
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-secondary"
+                                t-on-click="onAutoClassify"
+                                t-att-disabled="state.stops.length lt 2 or state.loading"
+                                title="Auto-clasificar primer punto como Origen, último como Destino e intermedios como Controles">
+                            <i class="fa fa-magic me-1"/>Auto-clasificar
+                        </button>
+                    </t>
+
+                    <div class="btn-group btn-group-sm">
+                        <button type="button"
+                                t-attf-class="btn #{state.showCorridor ? 'btn-secondary' : 'btn-outline-secondary'}"
+                                t-on-click="toggleCorridor"
+                                title="Mostrar / ocultar corredor de tolerancia">
+                            <i class="fa fa-shield me-1"/>Corredor (<t t-esc="state.corridorWidth"/>m)
+                        </button>
+                        <button type="button"
+                                t-attf-class="btn #{state.showGeofences ? 'btn-secondary' : 'btn-outline-secondary'}"
+                                t-on-click="toggleGeofences"
+                                title="Mostrar / ocultar radios de geocerca de paradas">
+                            <i class="fa fa-circle-o me-1"/>Geocercas
+                        </button>
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                t-on-click="onFitBounds"
+                                title="Centrar y encuadrar paradas">
+                            <i class="fa fa-crosshairs me-1"/>Encuadrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workspace: Sidebar stops list + Map -->
+            <div class="georutex-editor-workspace d-flex position-relative">
+                <!-- Map Container -->
+                <div class="georutex-editor-map-wrapper flex-grow-1 position-relative">
+                    <div t-ref="mapContainer" class="georutex-editor-map"/>
+
+                    <!-- Loading overlay -->
+                    <t t-if="state.loading">
+                        <div class="georutex-editor-loading-overlay position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </t>
+
+                    <!-- Add mode floating prompt banner -->
+                    <t t-if="state.addMode">
+                        <div class="alert alert-success py-1 px-3 position-absolute top-0 start-50 translate-middle-x mt-2 shadow-sm z-index-top" style="z-index: 1000;">
+                            <i class="fa fa-crosshairs me-1"/>Haga clic en cualquier punto del mapa para colocar una nueva parada.
+                        </div>
+                    </t>
+                </div>
+
+                <!-- Stops Sidebar Drawer -->
+                <div class="georutex-editor-sidebar border-start bg-white d-flex flex-column">
+                    <div class="p-2 border-bottom bg-light d-flex justify-content-between align-items-center">
+                        <span class="fw-bold small text-uppercase text-muted">
+                            Puntos de Control (<t t-esc="state.stops.length"/>)
+                        </span>
+                        <t t-if="state.isDraft">
+                            <button type="button"
+                                    class="btn btn-xs btn-outline-primary"
+                                    t-on-click="openNewStopModal"
+                                    title="Añadir punto manualmente con coordenadas">
+                                <i class="fa fa-plus me-1"/>Añadir
+                            </button>
+                        </t>
+                    </div>
+
+                    <div class="georutex-editor-stop-list flex-grow-1 overflow-auto p-2">
+                        <t t-if="state.stops.length === 0">
+                            <div class="text-center text-muted p-4">
+                                <i class="fa fa-map-marker fa-3x text-secondary mb-2"/><br/>
+                                <p class="small mb-1">No hay puntos de control en esta versión.</p>
+                                <t t-if="state.isDraft">
+                                    <small>Active el <b>Modo Agregar</b> y haga clic sobre el mapa para fijar el origen y sus paradas.</small>
+                                </t>
+                            </div>
+                        </t>
+
+                        <t t-foreach="state.stops" t-as="stop" t-key="stop.id">
+                            <div t-attf-class="card mb-2 georutex-stop-card #{stop.stop_type === 'origin' ? 'border-success' : (stop.stop_type === 'destination' ? 'border-danger' : 'border-primary')}">
+                                <div class="card-body p-2">
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="d-flex align-items-center gap-1">
+                                            <span t-attf-class="badge #{stop.stop_type === 'origin' ? 'bg-success' : (stop.stop_type === 'destination' ? 'bg-danger' : 'bg-primary')}">
+                                                #<t t-esc="stop_index + 1"/>
+                                            </span>
+                                            <b class="small text-truncate" style="max-width: 140px;" t-att-title="stop.name">
+                                                <t t-esc="stop.name"/>
+                                            </b>
+                                        </div>
+                                        <span t-attf-class="badge #{stop.stop_type === 'origin' ? 'bg-success-light text-success' : (stop.stop_type === 'destination' ? 'bg-danger-light text-danger' : 'bg-primary-light text-primary')} font-monospace" style="font-size: 10px;">
+                                            <t t-if="stop.stop_type === 'origin'">Origen</t>
+                                            <t t-elif="stop.stop_type === 'destination'">Destino</t>
+                                            <t t-else="">Control</t>
+                                        </span>
+                                    </div>
+
+                                    <div class="small text-muted mb-2 font-monospace" style="font-size: 11px;">
+                                        <i class="fa fa-globe me-1"/><t t-esc="stop.latitude.toFixed(5)"/>, <t t-esc="stop.longitude.toFixed(5)"/><br/>
+                                        <i class="fa fa-dot-circle-o me-1"/>Radio: <t t-esc="stop.radius_m"/>m | <i class="fa fa-clock-o me-1"/><t t-esc="stop.planned_offset_seconds"/>s
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                                        <div>
+                                            <button type="button"
+                                                    class="btn btn-xs btn-outline-secondary me-1"
+                                                    t-on-click="() => this.focusStop(stop)"
+                                                    title="Enfocar en mapa">
+                                                <i class="fa fa-crosshairs"/>
+                                            </button>
+                                        </div>
+
+                                        <t t-if="state.isDraft">
+                                            <div class="btn-group btn-group-xs">
+                                                <button type="button"
+                                                        class="btn btn-xs btn-outline-secondary"
+                                                        t-att-disabled="stop_index === 0"
+                                                        t-on-click="() => this.moveStopUp(stop_index)"
+                                                        title="Subir secuencia">
+                                                    <i class="fa fa-arrow-up"/>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-xs btn-outline-secondary"
+                                                        t-att-disabled="stop_index === state.stops.length - 1"
+                                                        t-on-click="() => this.moveStopDown(stop_index)"
+                                                        title="Bajar secuencia">
+                                                    <i class="fa fa-arrow-down"/>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-xs btn-outline-primary"
+                                                        t-on-click="() => this.editStopModal(stop)"
+                                                        title="Editar detalles">
+                                                    <i class="fa fa-pencil"/>
+                                                </button>
+                                                <button type="button"
+                                                        class="btn btn-xs btn-outline-danger"
+                                                        t-on-click="() => this.deleteStop(stop.id)"
+                                                        title="Eliminar punto">
+                                                    <i class="fa fa-trash"/>
+                                                </button>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for Editing / Creating Stop -->
+            <t t-if="state.modalOpen">
+                <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5); z-index: 2000;">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fa fa-map-marker me-1"/>
+                                    <t t-if="state.currentEditStop.id">Editar Punto de Control</t>
+                                    <t t-else="">Añadir Nuevo Punto de Control</t>
+                                </h5>
+                                <button type="button" class="btn-close" t-on-click="closeModal"/>
+                            </div>
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Nombre de Parada / Control</label>
+                                    <input type="text"
+                                           class="form-control form-control-sm"
+                                           t-model="state.currentEditStop.name"/>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold small">Tipo de Control</label>
+                                    <select class="form-select form-select-sm"
+                                            t-model="state.currentEditStop.stop_type">
+                                        <option value="origin">Punto de Origen / Salida</option>
+                                        <option value="checkpoint">Control Intermedio</option>
+                                        <option value="destination">Punto de Destino / Llegada</option>
+                                    </select>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label fw-bold small">Latitud</label>
+                                        <input type="number"
+                                               step="0.000001"
+                                               class="form-control form-control-sm"
+                                               t-model="state.currentEditStop.latitude"/>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label fw-bold small">Longitud</label>
+                                        <input type="number"
+                                               step="0.000001"
+                                               class="form-control form-control-sm"
+                                               t-model="state.currentEditStop.longitude"/>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label fw-bold small">Radio de Proximidad (m)</label>
+                                        <input type="number"
+                                               class="form-control form-control-sm"
+                                               t-model="state.currentEditStop.radius_m"/>
+                                    </div>
+                                    <div class="col-6 mb-3">
+                                        <label class="form-label fw-bold small">Tiempo Programado (s)</label>
+                                        <input type="number"
+                                               class="form-control form-control-sm"
+                                               t-model="state.currentEditStop.planned_offset_seconds"/>
+                                    </div>
+                                </div>
+
+                                <div class="form-check form-switch mb-2">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="stopRequiredCheck"
+                                           t-model="state.currentEditStop.required"/>
+                                    <label class="form-check-label small" for="stopRequiredCheck">
+                                        Control obligatorio de cumplimiento
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary btn-sm" t-on-click="closeModal">Cancelar</button>
+                                <button type="button" class="btn btn-primary btn-sm" t-on-click="saveStopFromModal">Guardar Punto</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>
+

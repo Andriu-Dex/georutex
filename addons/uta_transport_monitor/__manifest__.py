@@ -49,12 +49,14 @@ Módulo Odoo 16 Community para:
             "uta_transport_monitor/static/src/css/transport_map.css",
             "uta_transport_monitor/static/src/css/transport_dashboard.css",
             "uta_transport_monitor/static/src/js/trip_map_widget.js",
+            "uta_transport_monitor/static/src/js/route_editor_widget.js",
             "uta_transport_monitor/static/src/js/live_fleet_map_action.js",
             (
                 "uta_transport_monitor/static/src/js/"
                 "transport_dashboard_action.js"
             ),
             "uta_transport_monitor/static/src/xml/trip_map_widget.xml",
+            "uta_transport_monitor/static/src/xml/route_editor_widget.xml",
             (
                 "uta_transport_monitor/static/src/xml/"
                 "live_fleet_map_templates.xml"
