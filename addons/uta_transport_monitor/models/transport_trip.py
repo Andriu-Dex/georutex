@@ -1,7 +1,8 @@
 """Operational trip scheduling and lifecycle management model for GeoRutex."""
 
-from datetime import datetime, timedelta
+from datetime import timedelta, timezone
 import json
+import zoneinfo
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from .transport_route_version import format_duration_spanish
@@ -953,6 +954,164 @@ class TransportTrip(models.Model):
                 "type": "info",
                 "sticky": False,
             },
+        }
+
+    def action_report_incident(self):
+        """Open right-side editable incident card prelinked to this trip."""
+        self.ensure_one()
+        return {
+            "name": f"Reportar Incidencia — {self.name}",
+            "type": "ir.actions.act_window",
+            "res_model": "transport.incident",
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_trip_id": self.id,
+                "default_source": "manual",
+            },
+        }
+
+    @api.model
+    def get_driver_home_data(self):
+        """Return real operational home payload for the logged-in driver.
+
+        Strictly uses standard ORM access (respecting ir.rule isolation) so a
+        driver only receives their own trips, assigned vehicles, and incidents.
+        """
+        tz_ec = zoneinfo.ZoneInfo("America/Guayaquil")
+        now_ec = fields.Datetime.now().replace(tzinfo=timezone.utc).astimezone(
+            tz_ec
+        )
+        user = self.env.user
+
+        def _fmt_ec(dt_val):
+            if not dt_val:
+                return "Sin horario"
+            return (
+                dt_val.replace(tzinfo=timezone.utc)
+                .astimezone(tz_ec)
+                .strftime("%d/%m/%Y %H:%M")
+            )
+
+        # Own trips (record-rule filtered for drivers)
+        own_domain = []
+        if user.has_group("uta_transport_monitor.group_transport_driver") and not (
+            user.has_group("uta_transport_monitor.group_transport_manager")
+            or user.has_group("uta_transport_monitor.group_transport_analyst")
+        ):
+            own_domain = [
+                "|",
+                ("driver_user_id", "=", user.id),
+                ("driver_id", "=", user.partner_id.id),
+            ]
+
+        all_trips = self.search(own_domain, order="scheduled_start_utc desc, id desc")
+        state_labels = dict(self._fields["state"].selection)
+        trips_payload = []
+        for trip in all_trips[:8]:
+            trips_payload.append({
+                "id": trip.id,
+                "name": trip.name,
+                "route_name": trip.route_id.name if trip.route_id else "Sin ruta",
+                "route_code": trip.route_id.code if trip.route_id else "",
+                "origin_name": trip.route_id.origin_name if trip.route_id else "",
+                "destination_name": (
+                    trip.route_id.destination_name if trip.route_id else ""
+                ),
+                "vehicle_name": (
+                    trip.vehicle_id.name if trip.vehicle_id else "Sin vehículo"
+                ),
+                "scheduled_start_local": _fmt_ec(trip.scheduled_start_utc),
+                "scheduled_end_local": _fmt_ec(trip.scheduled_end_utc),
+                "state": trip.state,
+                "state_label": state_labels.get(trip.state, trip.state),
+                "source_type": trip.source_type,
+                "position_count": trip.position_count,
+                "incident_count": trip.incident_count,
+            })
+
+        # Own vehicles (record-rule filtered)
+        vehicles = self.env["fleet.vehicle"].search(
+            [("active", "=", True)], limit=5
+        )
+        freshness_labels = dict(
+            self.env["fleet.vehicle"]._fields["gps_freshness_state"].selection
+        )
+        vehicles_payload = []
+        for veh in vehicles:
+            vehicles_payload.append({
+                "id": veh.id,
+                "name": veh.name,
+                "license_plate": veh.license_plate or "",
+                "freshness": veh.gps_freshness_state or "no_data",
+                "freshness_label": freshness_labels.get(
+                    veh.gps_freshness_state, "Sin datos"
+                ),
+                "last_gps_time_local": veh.last_gps_time_local or "Sin registro",
+                "speed": veh.last_gps_speed or 0.0,
+                "is_simulated": veh.is_simulated,
+            })
+
+        # Own incidents (record-rule filtered)
+        inc_model = self.env["transport.incident"]
+        all_incidents = inc_model.search([], order="timestamp_utc desc, id desc")
+        inc_type_labels = dict(inc_model._fields["incident_type"].selection)
+        inc_sev_labels = dict(inc_model._fields["severity"].selection)
+        inc_state_labels = dict(inc_model._fields["state"].selection)
+        incidents_payload = []
+        for inc in all_incidents[:6]:
+            incidents_payload.append({
+                "id": inc.id,
+                "name": inc.name,
+                "trip_name": inc.trip_id.name if inc.trip_id else "Sin recorrido",
+                "incident_type": inc.incident_type,
+                "incident_type_label": inc_type_labels.get(
+                    inc.incident_type, inc.incident_type
+                ),
+                "severity": inc.severity,
+                "severity_label": inc_sev_labels.get(inc.severity, inc.severity),
+                "state": inc.state,
+                "state_label": inc_state_labels.get(inc.state, inc.state),
+                "timestamp_local": _fmt_ec(inc.timestamp_utc),
+                "description": inc.description or "",
+            })
+
+        days_es = [
+            "Lunes", "Martes", "Miércoles", "Jueves",
+            "Viernes", "Sábado", "Domingo",
+        ]
+        months_es = [
+            "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        ]
+        date_label = (
+            f"{days_es[now_ec.weekday()]}, {now_ec.day} de "
+            f"{months_es[now_ec.month]} de {now_ec.year}"
+        )
+
+        return {
+            "driver_name": user.name,
+            "driver_email": user.email or user.login,
+            "local_date_label": date_label,
+            "local_time_label": now_ec.strftime("%H:%M ECT"),
+            "stats": {
+                "total_trips": len(all_trips),
+                "active_trips": len(
+                    all_trips.filtered(
+                        lambda t: t.state in ("scheduled", "in_progress")
+                    )
+                ),
+                "completed_trips": len(
+                    all_trips.filtered(lambda t: t.state == "completed")
+                ),
+                "pending_incidents": len(
+                    all_incidents.filtered(lambda i: i.state == "pending")
+                ),
+                "total_incidents": len(all_incidents),
+            },
+            "vehicles": vehicles_payload,
+            "trips": trips_payload,
+            "incidents": incidents_payload,
         }
 
     def get_map_data(self):

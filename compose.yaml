@@ -34,10 +34,27 @@ services:
       PORT: 5432
       USER: ${POSTGRES_USER:-odoo}
       PASSWORD: ${POSTGRES_PASSWORD:-odoo_dev_password}
+      DB_NAME: ${ODOO_DB_NAME:-${POSTGRES_DB:-georutex}}
+      ODOO_INIT_MODULES: ${ODOO_INIT_MODULES:-base,uta_transport_monitor}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_ENCRYPTION: ${SMTP_ENCRYPTION:-starttls}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+    entrypoint: ["python3", "/usr/local/bin/georutex-entrypoint.py"]
+    command: ["odoo"]
     volumes:
       - ./addons:/mnt/extra-addons
       - ./infra/odoo/odoo.conf:/etc/odoo/odoo.conf
+      - ./infra/odoo/entrypoint.py:/usr/local/bin/georutex-entrypoint.py:ro
       - odoo_web_data:/var/lib/odoo
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/georutex/acceso', timeout=5)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
     networks:
       - georutex_net
 

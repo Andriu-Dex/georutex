@@ -10,3 +10,7 @@ from . import fleet_vehicle  # noqa: F401
 from . import transport_incident  # noqa: F401
 from . import transport_incident_justify_wizard  # noqa: F401
 from . import transport_evaluation  # noqa: F401
+from . import res_users  # noqa: F401
+from . import email_verification  # noqa: F401
+from . import ir_module_module  # noqa: F401
+from . import ir_http  # noqa: F401

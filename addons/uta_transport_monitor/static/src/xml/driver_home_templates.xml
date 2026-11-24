@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="uta_transport_monitor.GeoRutexDriverHomeAction" owl="1">
+        <div class="georutex-driver-home container-fluid py-3 py-md-4 px-3 px-md-4">
+            <!-- Hero Banner -->
+            <section class="georutex-dh-hero mb-4">
+                <div class="georutex-dh-hero-orb" aria-hidden="true"/>
+                <div class="row align-items-center g-3 position-relative">
+                    <div class="col-12 col-lg-7">
+                        <div class="d-flex align-items-center gap-3">
+                            <img
+                                class="georutex-dh-logo"
+                                src="/uta_transport_monitor/static/src/img/georutex_logo.png"
+                                alt="GeoRutex UTA"
+                            />
+                            <div>
+                                <span class="georutex-dh-pill">
+                                    <span class="georutex-dh-dot" aria-hidden="true"/>
+                                    Espacio Operativo del Conductor · UTA
+                                </span>
+                                <h1 class="georutex-dh-title mb-1">
+                                    Hola, <t t-esc="state.driverName"/>
+                                </h1>
+                                <p class="georutex-dh-subtitle mb-0">
+                                    <i class="fa fa-calendar-o me-1" aria-hidden="true"/>
+                                    <t t-esc="state.localDateLabel"/>
+                                    <span class="mx-2">·</span>
+                                    <i class="fa fa-clock-o me-1" aria-hidden="true"/>
+                                    <t t-esc="state.localTimeLabel"/>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-5">
+                        <div class="georutex-dh-hero-actions d-flex flex-wrap gap-2 justify-content-lg-end">
+                            <button
+                                type="button"
+                                class="btn btn-light georutex-dh-btn-light"
+                                t-on-click="() => this.openNewIncident(false)"
+                            >
+                                <i class="fa fa-exclamation-triangle me-2" aria-hidden="true"/>Reportar Incidencia
+                            </button>
+                            <button
+                                type="button"
+                                class="btn georutex-dh-btn-cyan"
+                                t-on-click="() => this.openLiveMap()"
+                            >
+                                <i class="fa fa-map-marker me-2" aria-hidden="true"/>Mapa en Vivo
+                            </button>
+                            <button
+                                type="button"
+                                class="btn georutex-dh-btn-ghost"
+                                t-on-click="() => this.loadDriverHome(true)"
+                                t-att-disabled="state.isLoading"
+                                aria-label="Actualizar datos"
+                                title="Actualizar datos"
+                            >
+                                <i t-attf-class="fa fa-refresh #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Alert -->
+            <div t-if="state.error" class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-4" role="alert">
+                <span><i class="fa fa-exclamation-circle me-2" aria-hidden="true"/><t t-esc="state.error"/></span>
+                <button type="button" class="btn btn-sm btn-outline-danger" t-on-click="() => this.loadDriverHome(false)">Reintentar</button>
+            </div>
+
+            <!-- 4 Responsive KPI Cards -->
+            <section class="row g-3 mb-4" aria-label="Resumen de jornada">
+                <div class="col-6 col-xl-3">
+                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
+                        <div class="georutex-dh-kpi-icon">
+                            <i class="fa fa-road" aria-hidden="true"/>
+                        </div>
+                        <div>
+                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.total_trips"/></div>
+                            <div class="georutex-dh-kpi-lbl">Recorridos Asignados</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
+                        <div class="georutex-dh-kpi-icon is-cyan">
+                            <i class="fa fa-play-circle" aria-hidden="true"/>
+                        </div>
+                        <div>
+                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.active_trips"/></div>
+                            <div class="georutex-dh-kpi-lbl">Programados / En Curso</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
+                        <div class="georutex-dh-kpi-icon is-navy">
+                            <i class="fa fa-flag-checkered" aria-hidden="true"/>
+                        </div>
+                        <div>
+                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.completed_trips"/></div>
+                            <div class="georutex-dh-kpi-lbl">Finalizados</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openAllIncidents()">
+                        <div class="georutex-dh-kpi-icon is-alert">
+                            <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
+                        </div>
+                        <div>
+                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.total_incidents"/></div>
+                            <div class="georutex-dh-kpi-lbl">Mis Incidencias</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Responsive Split Workspace -->
+            <div class="row g-4">
+                <!-- Left: My Trips -->
+                <div class="col-12 col-lg-8">
+                    <div class="georutex-dh-panel h-100">
+                        <div class="georutex-dh-panel-head">
+                            <div>
+                                <h2><i class="fa fa-bus me-2 text-primary" aria-hidden="true"/>Mis Recorridos</h2>
+                                <p class="mb-0">Consulta tu jornada, horarios programados y reporta novedades directamente.</p>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openMyTrips()">
+                                Ver todos <i class="fa fa-arrow-right ms-1" aria-hidden="true"/>
+                            </button>
+                        </div>
+
+                        <div t-if="state.isLoading" class="text-center py-5 text-muted">
+                            <i class="fa fa-spinner fa-spin fa-2x mb-2 text-primary" aria-hidden="true"/>
+                            <div>Cargando recorridos asignados...</div>
+                        </div>
+
+                        <div t-elif="!state.trips.length" class="georutex-dh-empty">
+                            <div class="georutex-dh-empty-icon">
+                                <i class="fa fa-map-o" aria-hidden="true"/>
+                            </div>
+                            <h3>Aún no tienes recorridos asignados</h3>
+                            <p>
+                                Cuando el Administrador de Transporte programe tu próxima ruta, aparecerá automáticamente aquí con tus paradas, horario en hora de Ecuador y trazado GPS.
+                            </p>
+                            <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
+                                <button type="button" class="btn btn-primary" t-on-click="() => this.openLiveMap()">
+                                    <i class="fa fa-map-marker me-2" aria-hidden="true"/>Explorar Mapa en Vivo
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" t-on-click="() => this.openAllIncidents()">
+                                    <i class="fa fa-list-alt me-2" aria-hidden="true"/>Ver Incidencias
+                                </button>
+                            </div>
+                        </div>
+
+                        <div t-else="" class="row g-3">
+                            <t t-foreach="state.trips" t-as="trip" t-key="trip.id">
+                                <div class="col-12 col-md-6">
+                                    <article class="georutex-dh-trip-item">
+                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                            <div>
+                                                <h3 class="mb-0"><t t-esc="trip.name"/></h3>
+                                                <small class="text-muted">
+                                                    <t t-esc="trip.route_code"/> · <t t-esc="trip.route_name"/>
+                                                </small>
+                                            </div>
+                                            <span t-attf-class="badge rounded-pill #{getStateBadgeClass(trip.state)}">
+                                                <t t-esc="trip.state_label"/>
+                                            </span>
+                                        </div>
+
+                                        <div class="georutex-dh-trip-meta">
+                                            <div><i class="fa fa-map-signs" aria-hidden="true"/> <t t-esc="trip.origin_name"/> → <t t-esc="trip.destination_name"/></div>
+                                            <div><i class="fa fa-bus" aria-hidden="true"/> <t t-esc="trip.vehicle_name"/></div>
+                                            <div><i class="fa fa-clock-o" aria-hidden="true"/> <t t-esc="trip.scheduled_start_local"/></div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top">
+                                            <div class="d-flex align-items-center gap-2">
+                                                <span t-if="trip.source_type === 'simulated'" class="badge rounded-pill bg-warning text-dark">Simulado</span>
+                                                <span t-else="" class="badge rounded-pill bg-primary">GPS Real</span>
+                                                <small class="text-muted"><t t-esc="trip.position_count"/> pts</small>
+                                            </div>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openTripDetail(trip.id)">
+                                                    Ver detalle
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.openNewIncident(trip.id)">
+                                                    <i class="fa fa-plus me-1" aria-hidden="true"/>Incidencia
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Assigned Vehicle & Recent Incidents -->
+                <div class="col-12 col-lg-4 d-flex flex-column gap-4">
+                    <!-- Assigned Vehicle -->
+                    <div class="georutex-dh-panel">
+                        <div class="georutex-dh-panel-head">
+                            <div>
+                                <h2><i class="fa fa-satellite-dish fa-wifi me-2 text-primary" aria-hidden="true"/>Mi Unidad GPS</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openLiveMap()">
+                                Mapa
+                            </button>
+                        </div>
+
+                        <div t-if="!state.vehicles.length" class="georutex-dh-empty-compact">
+                            <i class="fa fa-bus mb-2" aria-hidden="true"/>
+                            <p class="mb-0">Sin vehículo vinculado actualmente. El administrador asignará tu bus desde Flota.</p>
+                        </div>
+
+                        <div t-else="" class="d-flex flex-column gap-2">
+                            <t t-foreach="state.vehicles" t-as="veh" t-key="veh.id">
+                                <div class="georutex-dh-vehicle-row">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                                        <strong class="text-dark"><t t-esc="veh.name"/></strong>
+                                        <span class="badge rounded-pill bg-primary"><t t-esc="veh.freshness_label"/></span>
+                                    </div>
+                                    <div class="small text-muted">Placa: <strong><t t-esc="veh.license_plate || 'Sin placa'"/></strong></div>
+                                    <div class="small text-muted">Último GPS: <t t-esc="veh.last_gps_time_local"/></div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <!-- Recent Incidents -->
+                    <div class="georutex-dh-panel flex-grow-1">
+                        <div class="georutex-dh-panel-head">
+                            <div>
+                                <h2><i class="fa fa-exclamation-triangle me-2 text-primary" aria-hidden="true"/>Mis Incidencias</h2>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.openNewIncident(false)">
+                                <i class="fa fa-plus me-1" aria-hidden="true"/>Nueva
+                            </button>
+                        </div>
+
+                        <div t-if="!state.incidents.length" class="georutex-dh-empty-compact">
+                            <i class="fa fa-check-circle mb-2" aria-hidden="true"/>
+                            <p class="mb-0">No has registrado incidencias operacionales todavía.</p>
+                        </div>
+
+                        <div t-else="" class="d-flex flex-column gap-2">
+                            <t t-foreach="state.incidents" t-as="inc" t-key="inc.id">
+                                <div class="georutex-dh-incident-row" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
+                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                                        <strong class="text-dark"><t t-esc="inc.name"/></strong>
+                                        <span t-attf-class="badge rounded-pill #{getSeverityBadgeClass(inc.severity)}">
+                                            <t t-esc="inc.severity_label"/>
+                                        </span>
+                                    </div>
+                                    <div class="small fw-semibold text-primary"><t t-esc="inc.incident_type_label"/></div>
+                                    <div class="small text-muted">
+                                        <t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

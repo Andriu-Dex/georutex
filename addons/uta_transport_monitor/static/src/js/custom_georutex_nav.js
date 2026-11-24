@@ -1,6 +1,7 @@
 /** @odoo-module **/
 
 import { _t } from "@web/core/l10n/translation";
+import { session } from "@web/session";
 
 const openMenuKey = "georutex.openMenuXmlid";
 const selectedMenuKey = "georutex.selectedMenuXmlid";
@@ -160,9 +161,31 @@ function openRememberedMenu(menuSections) {
     }, 180);
 }
 
+function applyRoleNavbarRestrictions() {
+    const webClient = getWebClient();
+    if (!webClient) return;
+
+    const canManageApps = Boolean(session.georutex_can_manage_apps);
+    const isDriverOnly = Boolean(session.georutex_is_driver_only);
+    webClient.classList.toggle("o_georutex_no_apps_menu", !canManageApps);
+    webClient.classList.toggle("o_georutex_driver_mode", isDriverOnly);
+}
+
+function localizeSpanishFallbackLabels() {
+    document
+        .querySelectorAll(".o_list_button_add, .o-kanban-button-new")
+        .forEach((button) => {
+            if (button.textContent.trim().toLowerCase() === "new") {
+                button.textContent = "Nuevo";
+            }
+        });
+}
+
 function syncMenuState() {
+    applyRoleNavbarRestrictions();
     ensureSidebarToggle();
     localizeFormStatusButtons();
+    localizeSpanishFallbackLabels();
     hideNewFormBreadcrumb();
     const menuSections = getMenuSections();
     if (!menuSections) return;

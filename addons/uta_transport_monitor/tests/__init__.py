@@ -19,3 +19,4 @@ from . import test_vehicle_operational_name  # noqa: F401
 from . import test_route_editor_and_stop_types  # noqa: F401
 from . import test_trip_schedule_automation  # noqa: F401
 from . import test_usability_enhancements  # noqa: F401
+from . import test_driver_signup_flow  # noqa: F401

@@ -114,4 +114,27 @@
         <field name="perm_create" eval="True"/>
         <field name="perm_unlink" eval="True"/>
     </record>
+
+    <!-- ==================== VEHÍCULOS MONITOREADOS (fleet.vehicle) ==================== -->
+    <record id="rule_fleet_vehicle_driver" model="ir.rule">
+        <field name="name">Conductor: ver únicamente vehículos propios o asignados a sus recorridos</field>
+        <field name="model_id" ref="fleet.model_fleet_vehicle"/>
+        <field name="groups" eval="[(4, ref('group_transport_driver'))]"/>
+        <field name="domain_force">['|', ('driver_id', '=', user.partner_id.id), '|', ('trip_ids.driver_user_id', '=', user.id), ('trip_ids.driver_id', '=', user.partner_id.id)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="rule_fleet_vehicle_analyst" model="ir.rule">
+        <field name="name">Analista: lectura global de vehículos monitoreados</field>
+        <field name="model_id" ref="fleet.model_fleet_vehicle"/>
+        <field name="groups" eval="[(4, ref('group_transport_analyst'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
 </odoo>

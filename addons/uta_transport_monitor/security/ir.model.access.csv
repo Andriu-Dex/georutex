@@ -26,3 +26,14 @@ access_transport_incident_justify_wizard_analyst,transport.incident.justify.wiza
 access_transport_trip_evaluation_manager,transport.trip.evaluation.manager,model_transport_trip_evaluation,group_transport_manager,1,1,1,1
 access_transport_trip_evaluation_driver,transport.trip.evaluation.driver,model_transport_trip_evaluation,group_transport_driver,1,0,0,0
 access_transport_trip_evaluation_analyst,transport.trip.evaluation.analyst,model_transport_trip_evaluation,group_transport_analyst,1,1,1,0
+access_fleet_vehicle_driver_read,fleet.vehicle.driver.read,fleet.model_fleet_vehicle,group_transport_driver,1,0,0,0
+access_fleet_vehicle_analyst_read,fleet.vehicle.analyst.read,fleet.model_fleet_vehicle,group_transport_analyst,1,0,0,0
+access_fleet_vehicle_model_driver_read,fleet.vehicle.model.driver.read,fleet.model_fleet_vehicle_model,group_transport_driver,1,0,0,0
+access_fleet_vehicle_model_analyst_read,fleet.vehicle.model.analyst.read,fleet.model_fleet_vehicle_model,group_transport_analyst,1,0,0,0
+access_fleet_vehicle_brand_driver_read,fleet.vehicle.brand.driver.read,fleet.model_fleet_vehicle_model_brand,group_transport_driver,1,0,0,0
+access_fleet_vehicle_brand_analyst_read,fleet.vehicle.brand.analyst.read,fleet.model_fleet_vehicle_model_brand,group_transport_analyst,1,0,0,0
+access_fleet_vehicle_state_driver_read,fleet.vehicle.state.driver.read,fleet.model_fleet_vehicle_state,group_transport_driver,1,0,0,0
+access_fleet_vehicle_state_analyst_read,fleet.vehicle.state.analyst.read,fleet.model_fleet_vehicle_state,group_transport_analyst,1,0,0,0
+access_fleet_vehicle_tag_driver_read,fleet.vehicle.tag.driver.read,fleet.model_fleet_vehicle_tag,group_transport_driver,1,0,0,0
+access_fleet_vehicle_tag_analyst_read,fleet.vehicle.tag.analyst.read,fleet.model_fleet_vehicle_tag,group_transport_analyst,1,0,0,0
+access_transport_email_verification_manager,transport.email.verification.manager,model_transport_email_verification,group_transport_manager,1,1,1,1

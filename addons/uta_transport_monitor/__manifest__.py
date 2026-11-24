@@ -15,7 +15,7 @@ Módulo Odoo 16 Community para:
 - Dashboard gerencial interactivo y cálculo de métricas MT-01..08 y MCS-01..04.
 - Pruebas integrales extremo a extremo y evaluación de calidad ISO/IEC 25010.
     """,
-    "version": "16.0.6.0.0",
+    "version": "16.0.6.7.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",
@@ -29,6 +29,9 @@ Módulo Odoo 16 Community para:
         "security/groups.xml",
         "security/ir.model.access.csv",
         "security/rules.xml",
+        "security/menu_restrictions.xml",
+        "data/auth_signup_data.xml",
+        "data/mail_template_data.xml",
         "data/ir_sequence_data.xml",
         "views/dashboard_views.xml",
         "views/transport_position_views.xml",
@@ -46,8 +49,11 @@ Módulo Odoo 16 Community para:
         "demo/transport_demo_data.xml",
     ],
     "assets": {
+        "web._assets_primary_variables": [
+            "uta_transport_monitor/static/src/scss/georutex_primary_variables.scss",
+        ],
         "web.assets_frontend": [
-            "uta_transport_monitor/static/src/css/login.css",
+            "uta_transport_monitor/static/src/scss/georutex_auth.scss",
         ],
         "web.assets_backend": [
             "uta_transport_monitor/static/lib/leaflet/leaflet.css",
@@ -55,9 +61,11 @@ Módulo Odoo 16 Community para:
             "uta_transport_monitor/static/src/css/transport_map.css",
             "uta_transport_monitor/static/src/css/transport_dashboard.css",
             "uta_transport_monitor/static/src/css/custom_georutex.css",
+            "uta_transport_monitor/static/src/scss/georutex_driver.scss",
             "web/static/lib/Chart/Chart.js",
             "uta_transport_monitor/static/src/js/custom_georutex_nav.js",
             "uta_transport_monitor/static/src/js/custom_georutex_forms.js",
+            "uta_transport_monitor/static/src/js/driver_home_action.js",
             "uta_transport_monitor/static/src/js/trip_map_widget.js",
             "uta_transport_monitor/static/src/js/route_editor_widget.js",
             "uta_transport_monitor/static/src/js/live_fleet_map_action.js",
@@ -65,6 +73,7 @@ Módulo Odoo 16 Community para:
                 "uta_transport_monitor/static/src/js/"
                 "transport_dashboard_action.js"
             ),
+            "uta_transport_monitor/static/src/xml/driver_home_templates.xml",
             "uta_transport_monitor/static/src/xml/trip_map_widget.xml",
             "uta_transport_monitor/static/src/xml/route_editor_widget.xml",
             (

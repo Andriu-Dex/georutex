@@ -1,0 +1,814 @@
+// GeoRutex Authentication UI — Responsive PC/Tablet/Mobile & Cohesive Royal Blue (QWeb + Bootstrap 5 + SCSS)
+// IMPORTANT: Never apply `transform` or `filter` on `.o_database_list` or `.card-body` because
+// `.georutex-auth-brand` is rendered inside `.card-body` with `position: fixed` on desktop.
+
+$grx-navy-950: #0a162b;
+$grx-navy-900: #102344;
+$grx-navy-800: #173361;
+$grx-royal-700: #164496;
+$grx-royal-600: #1d56b8;
+$grx-royal-500: #2e6fd9;
+$grx-cyan-400: #5b93e6;
+$grx-cyan-300: #9dc2f5;
+$grx-ice-50: #f4f7fc;
+$grx-ice-100: #e9f0fa;
+$grx-surface: #ffffff;
+$grx-border: #d2dfef;
+$grx-text: #13223d;
+$grx-muted: #546684;
+$grx-danger: #dc2626;
+
+@keyframes georutexSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes georutexFloatSlow {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-7px);
+    }
+}
+
+@keyframes georutexOrbDrift {
+    0%, 100% {
+        transform: translate(0, 0) scale(1);
+    }
+    50% {
+        transform: translate(16px, -12px) scale(1.06);
+    }
+}
+
+@keyframes georutexRadarPulse {
+    0% {
+        transform: scale(0.92);
+        opacity: 0.72;
+    }
+    70% {
+        transform: scale(1.22);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1.22);
+        opacity: 0;
+    }
+}
+
+@keyframes georutexLiveBlink {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 0 0 rgba($grx-cyan-400, 0.7);
+    }
+    50% {
+        opacity: 0.75;
+        box-shadow: 0 0 0 7px rgba($grx-cyan-400, 0);
+    }
+}
+
+@keyframes georutexShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+}
+
+@keyframes georutexCheckPop {
+    0% { transform: scale(0.8); }
+    60% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
+
+@keyframes georutexTitleShimmer {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes georutexTitleReveal {
+    from {
+        opacity: 0;
+        letter-spacing: 0.1em;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        letter-spacing: -0.02em;
+        transform: translateY(0);
+    }
+}
+
+@keyframes georutexAccentGrow {
+    from {
+        transform: scaleX(0);
+        opacity: 0;
+    }
+    to {
+        transform: scaleX(1);
+        opacity: 1;
+    }
+}
+
+body:has(.georutex-auth-brand) {
+    min-height: 100vh !important;
+    margin: 0 !important;
+    overflow-x: hidden;
+    background: linear-gradient(180deg, $grx-ice-50 0%, $grx-ice-100 100%) !important;
+    color: $grx-text;
+
+    a {
+        color: $grx-royal-600;
+
+        &:hover {
+            color: $grx-royal-700;
+        }
+    }
+
+    .container.py-5 {
+        display: flex;
+        width: 100%;
+        max-width: none !important;
+        min-height: 100vh;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .o_database_list {
+        display: flex;
+        width: 50%;
+        max-width: none !important;
+        min-height: 100vh;
+        flex: 0 0 50%;
+        align-items: center;
+        justify-content: center;
+        margin: 0 0 0 auto !important;
+        padding: 2rem clamp(1rem, 3vw, 2.5rem);
+        border: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+
+        // Keep `.card-body` free of `transform` so `.georutex-auth-brand` stays viewport-fixed!
+        .card-body {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            padding: 2.1rem 2rem;
+            border: 1px solid $grx-border;
+            border-top: 4px solid $grx-royal-600;
+            border-radius: 22px;
+            background: $grx-surface;
+            box-shadow: 0 20px 50px rgba($grx-navy-900, 0.1);
+
+            > .text-center.pb-3.border-bottom,
+            > .text-center.small.mt-4 {
+                display: none !important;
+            }
+        }
+    }
+
+    .oe_login_form,
+    .oe_signup_form,
+    .oe_reset_password_form,
+    .georutex-otp-form {
+        margin: 0 !important;
+        max-width: none !important;
+        animation: georutexSlideUp 380ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+        .form-label,
+        .col-form-label {
+            color: $grx-text;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.35rem;
+        }
+
+        .form-control {
+            min-height: 46px;
+            border: 1.5px solid $grx-border;
+            border-radius: 11px;
+            font-size: 0.94rem;
+            color: $grx-text;
+            background: #fbfdff;
+            transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+
+            &:focus {
+                border-color: $grx-royal-500;
+                background: $grx-surface;
+                box-shadow: 0 0 0 4px rgba($grx-royal-500, 0.15);
+            }
+
+            &.is-invalid {
+                border-color: $grx-danger;
+                box-shadow: 0 0 0 3px rgba($grx-danger, 0.11);
+            }
+
+            &.is-valid {
+                border-color: $grx-royal-500;
+                box-shadow: 0 0 0 3px rgba($grx-cyan-400, 0.16);
+            }
+        }
+
+        .input-group {
+            .form-control {
+                border-radius: 11px 0 0 11px;
+            }
+
+            .georutex-pwd-toggle {
+                border: 1.5px solid $grx-border;
+                border-left: 0;
+                border-radius: 0 11px 11px 0;
+                background: $grx-ice-50;
+                color: $grx-muted;
+                padding: 0 0.9rem;
+                transition: color 0.15s ease, background-color 0.15s ease;
+
+                &:hover {
+                    color: $grx-royal-600;
+                    background: $grx-ice-100;
+                }
+            }
+        }
+
+        .alert {
+            border-radius: 12px;
+            font-size: 0.86rem;
+            font-weight: 500;
+            padding: 0.82rem 1rem;
+        }
+
+        .btn-secondary {
+            border-color: $grx-navy-800;
+            background: $grx-navy-800;
+            color: #fff;
+            border-radius: 11px;
+        }
+    }
+
+    .oe_login_buttons .btn-primary,
+    .georutex-cta-btn {
+        min-height: 48px;
+        border: 0 !important;
+        border-radius: 12px;
+        background: linear-gradient(135deg, $grx-royal-700 0%, $grx-royal-600 55%, $grx-royal-500 100%) !important;
+        color: #fff !important;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        box-shadow: 0 10px 22px rgba($grx-royal-600, 0.28);
+        transition: transform 0.16s ease, box-shadow 0.2s ease, filter 0.18s ease;
+
+        &:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+            box-shadow: 0 14px 28px rgba($grx-royal-600, 0.36);
+        }
+
+        &:active {
+            transform: translateY(0);
+        }
+    }
+}
+
+.georutex-shake {
+    animation: georutexShake 360ms ease-in-out;
+}
+
+.georutex-auth-heading {
+    margin-bottom: 1.35rem;
+    animation: georutexSlideUp 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+    .georutex-auth-head-row {
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .georutex-mini-logo {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1.5px solid rgba($grx-cyan-400, 0.55);
+        background: $grx-navy-950;
+        box-shadow: 0 4px 12px rgba($grx-royal-600, 0.22);
+    }
+
+    .georutex-auth-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 999px;
+        background: $grx-ice-100;
+        color: $grx-royal-700;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    h2 {
+        margin: 0 0 0.35rem;
+        color: $grx-navy-900;
+        font-size: 1.5rem;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+    }
+
+    &.is-centered {
+        text-align: center;
+        margin-bottom: 1.5rem;
+
+        .georutex-auth-head-row {
+            justify-content: center;
+        }
+    }
+
+    h2.georutex-dynamic-title {
+        display: inline-block;
+        position: relative;
+        margin: 0.15rem auto 0;
+        padding-bottom: 0.55rem;
+        font-size: 1.8rem;
+        font-weight: 800;
+        animation: georutexTitleReveal 520ms cubic-bezier(0.22, 1, 0.36, 1) both;
+
+        span {
+            display: inline-block;
+            background: linear-gradient(
+                90deg,
+                $grx-navy-900 0%,
+                $grx-royal-700 35%,
+                $grx-royal-500 55%,
+                $grx-royal-700 75%,
+                $grx-navy-900 100%
+            );
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: georutexTitleShimmer 6.5s ease-in-out infinite;
+        }
+
+        &::after {
+            content: "";
+            position: absolute;
+            left: 22%;
+            right: 22%;
+            bottom: 0;
+            height: 3px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, $grx-navy-800, $grx-royal-500, $grx-navy-800);
+            transform-origin: center;
+            animation: georutexAccentGrow 580ms 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+    }
+
+    p {
+        margin: 0;
+        color: $grx-muted;
+        font-size: 0.88rem;
+        line-height: 1.45;
+    }
+}
+
+.georutex-auth-brand {
+    position: fixed;
+    z-index: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    width: 50%;
+    height: 100vh;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    padding: 36px clamp(24px, 4.5vw, 68px);
+    color: #fff;
+    background:
+        radial-gradient(ellipse at 18% 82%, rgba($grx-cyan-400, 0.24), transparent 44%),
+        radial-gradient(ellipse at 85% 18%, rgba($grx-royal-500, 0.34), transparent 46%),
+        linear-gradient(150deg, $grx-navy-800 0%, $grx-navy-900 52%, $grx-navy-950 100%);
+}
+
+.georutex-orb {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    filter: blur(56px);
+    opacity: 0.16;
+    animation: georutexOrbDrift 11s ease-in-out infinite;
+}
+
+.georutex-orb-1 {
+    width: 280px;
+    height: 280px;
+    top: -70px;
+    right: -60px;
+    background: $grx-royal-500;
+}
+
+.georutex-orb-2 {
+    width: 240px;
+    height: 240px;
+    bottom: -60px;
+    left: -50px;
+    background: $grx-cyan-400;
+    animation-delay: -4.5s;
+}
+
+.georutex-brand-content {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    animation: georutexSlideUp 480ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.georutex-brand-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+
+    strong {
+        display: block;
+        font-size: clamp(26px, 2.8vw, 36px);
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        background: linear-gradient(90deg, #ffffff 0%, $grx-cyan-300 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    small {
+        display: block;
+        margin-top: 2px;
+        color: #c8dcfa;
+        font-size: 0.8rem;
+    }
+}
+
+.georutex-brand-logo-wrap {
+    position: relative;
+    display: inline-flex;
+    width: 66px;
+    height: 66px;
+    flex: 0 0 66px;
+    align-items: center;
+    justify-content: center;
+}
+
+.georutex-brand-logo {
+    position: relative;
+    z-index: 2;
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    object-fit: cover;
+    border: 1.5px solid rgba($grx-cyan-300, 0.35);
+    background: $grx-navy-950;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+}
+
+.georutex-logo-ring {
+    position: absolute;
+    inset: -4px;
+    border-radius: 21px;
+    border: 1.5px solid rgba($grx-cyan-300, 0.3);
+    animation: georutexRadarPulse 3.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
+
+.georutex-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.36rem 0.88rem;
+    margin-bottom: 16px;
+    border-radius: 999px;
+    border: 1px solid rgba($grx-cyan-400, 0.35);
+    background: rgba($grx-royal-500, 0.16);
+    color: #dbeafe;
+    font-size: 0.77rem;
+    font-weight: 600;
+}
+
+.georutex-live-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: $grx-cyan-400;
+    animation: georutexLiveBlink 2s ease-in-out infinite;
+}
+
+.georutex-login-visual {
+    position: relative;
+    height: clamp(175px, 28vh, 265px);
+    overflow: hidden;
+    border: 1px solid rgba($grx-cyan-400, 0.32);
+    border-radius: 18px;
+    background: $grx-navy-950;
+    box-shadow: 0 24px 56px rgba(0, 0, 0, 0.38);
+}
+
+.georutex-login-map {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.92;
+}
+
+.georutex-login-phone {
+    position: absolute;
+    right: 2%;
+    bottom: -16%;
+    width: clamp(115px, 14vw, 172px);
+    height: 120%;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 26px rgba(0, 0, 0, 0.45));
+    animation: georutexFloatSlow 4.8s ease-in-out infinite;
+}
+
+.georutex-brand-message {
+    margin-top: 20px;
+
+    h1 {
+        max-width: 500px;
+        margin: 0;
+        font-size: clamp(19px, 2.1vw, 26px);
+        font-weight: 700;
+        line-height: 1.3;
+        letter-spacing: -0.4px;
+    }
+
+    ul {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 18px;
+        margin: 14px 0 0;
+        padding: 0;
+        color: #d6e8ff;
+        font-size: 0.82rem;
+        list-style: none;
+    }
+
+    li::before {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin: 0 8px 1px 0;
+        border-radius: 50%;
+        background: $grx-cyan-400;
+        content: "";
+    }
+}
+
+.georutex-password-meter {
+    margin-top: 0.55rem;
+    padding: 0.78rem 0.92rem;
+    border: 1px solid $grx-border;
+    border-radius: 12px;
+    background: $grx-ice-50;
+
+    .georutex-meter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.76rem;
+        font-weight: 600;
+        margin-bottom: 0.42rem;
+        color: $grx-muted;
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 999px;
+        background: #dbe6f6;
+        margin-bottom: 0.62rem;
+
+        .progress-bar {
+            transition: width 260ms ease, background-color 260ms ease;
+        }
+    }
+
+    .georutex-pwd-rules {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.28rem 0.6rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        font-size: 0.75rem;
+
+        li {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: $grx-muted;
+            transition: color 0.18s ease;
+
+            &.is-met {
+                color: $grx-royal-600;
+                font-weight: 600;
+
+                i {
+                    color: $grx-royal-500;
+                    animation: georutexCheckPop 240ms ease;
+                }
+            }
+        }
+    }
+}
+
+.georutex-otp-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin: 0.5rem 0;
+
+    .georutex-otp-digit {
+        height: 54px;
+        padding: 0;
+        text-align: center;
+        font-size: 1.4rem;
+        font-weight: 800;
+        font-family: "Courier New", Courier, monospace;
+        color: $grx-navy-900;
+        border: 2px solid $grx-border;
+        border-radius: 12px;
+        background: $grx-ice-50;
+        transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.14s ease;
+
+        &:focus {
+            border-color: $grx-royal-500;
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 4px rgba($grx-royal-500, 0.16);
+        }
+    }
+}
+
+.georutex-field-feedback {
+    display: none;
+    margin-top: 0.32rem;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: $grx-danger;
+
+    &.is-visible {
+        display: block;
+    }
+}
+
+.georutex-auth-footer {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid $grx-ice-100;
+    text-align: center;
+    font-size: 0.83rem;
+    color: $grx-muted;
+
+    a {
+        color: $grx-royal-600;
+        font-weight: 600;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+// Responsive: Tablet & Mobile (< 992px)
+@media (max-width: 991.98px) {
+    body:has(.georutex-auth-brand) {
+        .container.py-5 {
+            display: block;
+            min-height: 100vh;
+        }
+
+        .o_database_list {
+            width: 100%;
+            min-height: 0;
+            flex: none;
+            padding: 1rem 0.85rem 2.25rem;
+
+            .card-body {
+                width: 100%;
+                max-width: 500px;
+                padding: 0;
+                border: 0;
+                border-radius: 0;
+                background: transparent;
+                box-shadow: none;
+            }
+        }
+
+        .oe_login_form,
+        .oe_signup_form,
+        .oe_reset_password_form,
+        .georutex-otp-wrapper {
+            padding: 1.35rem 1.15rem;
+            border: 1px solid $grx-border;
+            border-top: 4px solid $grx-royal-600;
+            border-radius: 18px;
+            background: $grx-surface;
+            box-shadow: 0 12px 32px rgba($grx-navy-900, 0.08);
+        }
+    }
+
+    .georutex-auth-brand {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        height: auto;
+        margin-bottom: 1rem;
+        padding: 20px 18px;
+        border-radius: 18px;
+    }
+
+    .georutex-auth-heading {
+        padding: 0 0.25rem;
+    }
+
+    .georutex-login-visual {
+        height: 145px;
+    }
+
+    .georutex-brand-logo-wrap {
+        width: 52px;
+        height: 52px;
+        flex-basis: 52px;
+    }
+
+    .georutex-brand-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 14px;
+    }
+
+    .georutex-password-meter .georutex-pwd-rules {
+        grid-template-columns: 1fr;
+    }
+
+    .georutex-otp-grid {
+        gap: 0.35rem;
+
+        .georutex-otp-digit {
+            height: 48px;
+            font-size: 1.2rem;
+        }
+    }
+}
+
+// Compact Laptop height support
+@media (min-width: 992px) and (max-height: 760px) {
+    .georutex-auth-brand {
+        padding: 24px 36px;
+    }
+
+    .georutex-login-visual {
+        height: 165px;
+    }
+
+    body:has(.georutex-auth-brand) .o_database_list {
+        padding: 1.25rem 1.5rem;
+
+        .card-body {
+            padding: 1.6rem 1.75rem;
+        }
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .georutex-orb,
+    .georutex-logo-ring,
+    .georutex-live-dot,
+    .georutex-login-phone,
+    .georutex-brand-content,
+    .georutex-auth-heading,
+    .georutex-shake,
+    body:has(.georutex-auth-brand) .oe_login_form,
+    body:has(.georutex-auth-brand) .oe_signup_form,
+    body:has(.georutex-auth-brand) .georutex-otp-form {
+        animation: none !important;
+        transition: none !important;
+    }
+}

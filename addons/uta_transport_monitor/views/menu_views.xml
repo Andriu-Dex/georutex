@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Root Menu: GeoRutex -->
+    <!-- Root Menu: GeoRutex (sequence=1 so GeoRutex opens as the default home app) -->
     <menuitem id="menu_georutex_root"
               name="GeoRutex - UTA"
-              web_icon="fleet,static/description/icon.png"
-              sequence="10"/>
+              web_icon="uta_transport_monitor,static/description/icon.png"
+              sequence="1"/>
 
-    <!-- 0. Resumen / Dashboard Gerencial (Phase 5, MT-01..08, MCS-01..04) -->
+    <!-- 0a. Inicio del Conductor (Home personalizado GeoRutex) -->
+    <menuitem id="menu_georutex_driver_home"
+              name="Inicio"
+              parent="menu_georutex_root"
+              action="action_transport_driver_home"
+              groups="uta_transport_monitor.group_transport_driver"
+              sequence="3"/>
+
+    <!-- 0b. Resumen / Dashboard Gerencial (Phase 5, MT-01..08, MCS-01..04) -->
     <menuitem id="menu_georutex_dashboard_main"
               name="Resumen / Dashboard"
               parent="menu_georutex_root"
@@ -27,6 +35,13 @@
         <field name="target">main</field>
     </record>
 
+    <menuitem id="menu_georutex_my_trips"
+              name="Mis Recorridos"
+              parent="menu_georutex_operations"
+              action="action_transport_trip_my_driver"
+              groups="uta_transport_monitor.group_transport_driver"
+              sequence="3"/>
+
     <menuitem id="menu_georutex_live_fleet_map"
               name="Mapa en Vivo"
               parent="menu_georutex_operations"
@@ -39,13 +54,6 @@
               action="action_transport_trip"
               groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
               sequence="10"/>
-
-    <menuitem id="menu_georutex_my_trips"
-              name="Mis Recorridos"
-              parent="menu_georutex_operations"
-              action="action_transport_trip_my_driver"
-              groups="uta_transport_monitor.group_transport_driver"
-              sequence="15"/>
 
     <menuitem id="menu_georutex_incidents"
               name="Incidencias Operacionales"

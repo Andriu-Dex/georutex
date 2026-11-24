@@ -21,12 +21,12 @@
         </field>
     </record>
 
-    <!-- Kanban View: Recorridos (Optimizado para Conductor y vista móvil) -->
+    <!-- Kanban View: Recorridos (Home moderno del Conductor, Bootstrap 5 + SCSS) -->
     <record id="view_transport_trip_kanban" model="ir.ui.view">
         <field name="name">transport.trip.kanban</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <kanban default_group_by="state" class="o_kanban_mobile">
+            <kanban default_group_by="state" class="o_kanban_mobile o_georutex_driver_kanban">
                 <field name="id"/>
                 <field name="name"/>
                 <field name="vehicle_id"/>
@@ -36,48 +36,60 @@
                 <field name="scheduled_end_utc"/>
                 <field name="source_type"/>
                 <field name="state"/>
+                <field name="position_count"/>
+                <field name="incident_count"/>
                 <templates>
                     <t t-name="kanban-box">
-                        <div t-attf-class="oe_kanban_global_click p-2">
-                            <div class="o_kanban_record_top mb-1">
-                                <div class="o_kanban_record_headings">
-                                    <strong class="o_kanban_record_title fs-5">
-                                        <field name="name"/>
-                                    </strong>
-                                    <span class="text-muted d-block">
-                                        <i class="fa fa-road me-1" title="Ruta"/>
-                                        <field name="route_id"/>
+                        <div class="oe_kanban_global_click o_georutex_driver_trip_card">
+                            <div t-attf-class="o_georutex_card_accent state-#{record.state.raw_value}"/>
+                            <div class="p-3">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                    <div>
+                                        <strong class="d-block fs-5 text-dark">
+                                            <field name="name"/>
+                                        </strong>
+                                        <span class="text-muted small d-flex align-items-center gap-1 mt-1">
+                                            <i class="fa fa-road text-primary" title="Ruta"/>
+                                            <field name="route_id"/>
+                                        </span>
+                                    </div>
+                                    <span class="badge rounded-pill px-2 py-1" t-attf-class="#{record.state.raw_value == 'completed' ? 'bg-success' : (record.state.raw_value == 'in_progress' ? 'bg-warning text-dark' : (record.state.raw_value == 'scheduled' ? 'bg-primary' : 'bg-secondary'))}">
+                                        <field name="state"/>
                                     </span>
                                 </div>
-                                <span class="badge rounded-pill" t-attf-class="#{record.state.raw_value == 'completed' ? 'bg-success' : (record.state.raw_value == 'in_progress' ? 'bg-warning text-dark' : (record.state.raw_value == 'scheduled' ? 'bg-primary' : 'bg-secondary'))}">
-                                    <field name="state"/>
-                                </span>
-                            </div>
-                            <div class="o_kanban_record_body my-2">
-                                <div>
-                                    <i class="fa fa-bus me-1 text-primary" title="Vehículo"/>
-                                    <strong>Vehículo: </strong><field name="vehicle_id"/>
+
+                                <div class="o_georutex_trip_meta_grid my-2">
+                                    <div class="o_georutex_trip_meta_row">
+                                        <i class="fa fa-bus text-primary" title="Vehículo"/>
+                                        <span><strong>Vehículo:</strong> <field name="vehicle_id"/></span>
+                                    </div>
+                                    <div class="o_georutex_trip_meta_row">
+                                        <i class="fa fa-user text-secondary" title="Conductor"/>
+                                        <span><strong>Conductor:</strong> <field name="driver_id"/></span>
+                                    </div>
+                                    <div class="o_georutex_trip_meta_row">
+                                        <i class="fa fa-clock-o text-info" title="Horario Programado"/>
+                                        <span><strong>Inicio:</strong> <field name="scheduled_start_utc"/></span>
+                                    </div>
                                 </div>
-                                <div>
-                                    <i class="fa fa-user me-1 text-secondary" title="Conductor"/>
-                                    <strong>Conductor: </strong><field name="driver_id"/>
-                                </div>
-                                <div class="mt-1">
-                                    <i class="fa fa-clock-o me-1 text-info" title="Horario Programado"/>
-                                    <span class="text-muted"><field name="scheduled_start_utc"/></span>
-                                </div>
-                            </div>
-                            <div class="o_kanban_record_bottom mt-1 pt-1 border-top">
-                                <div class="oe_kanban_bottom_left">
-                                    <span t-if="record.source_type.raw_value == 'simulated'" class="badge bg-warning text-dark">
-                                        Simulado
-                                    </span>
-                                    <span t-else="" class="badge bg-info text-white">
-                                        GPS Real
-                                    </span>
-                                </div>
-                                <div class="oe_kanban_bottom_right">
-                                    <field name="position_count"/> pts GPS
+
+                                <div class="o_georutex_card_actions">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <span t-if="record.source_type.raw_value == 'simulated'" class="badge rounded-pill bg-warning text-dark">
+                                            Simulado
+                                        </span>
+                                        <span t-else="" class="badge rounded-pill bg-info text-white">
+                                            GPS Real
+                                        </span>
+                                        <span class="small text-muted">
+                                            <i class="fa fa-map-pin me-1" aria-hidden="true"/><field name="position_count"/> pts
+                                        </span>
+                                    </div>
+                                    <button name="action_report_incident"
+                                            type="object"
+                                            class="btn btn-outline-danger btn-sm o_georutex_report_btn">
+                                        <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"/>Reportar incidencia
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -94,13 +106,13 @@
         <field name="arch" type="xml">
             <form string="Recorrido Operacional" class="o_georutex_trip_form">
                 <header>
-                    <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
-                    <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
-                    <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}"/>
+                    <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}" groups="uta_transport_monitor.group_transport_manager"/>
                     <button name="action_evaluate_trip" string="Evaluar Recorrido" type="object" class="btn-primary" icon="fa-check-circle" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
                     <button name="action_sync_trip_gps" string="Sincronizar GPS" type="object" class="btn-info" icon="fa-refresh" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
-                    <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}"/>
-                    <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}"/>
+                    <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
                 </header>
                 <sheet>
@@ -313,10 +325,10 @@
         <field name="search_view_id" ref="view_transport_trip_search"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
-                No tienes recorridos asignados actualmente
+                Bienvenido a tu espacio operativo en GeoRutex
             </p>
             <p>
-                Aquí podrás consultar tus recorridos asignados, consultar las paradas obligatorias y verificar tus horarios.
+                Aún no tienes recorridos asignados. Cuando el administrador programe tu jornada, verás aquí tus rutas, horarios, mapa en vivo y acceso directo para reportar incidencias operacionales.
             </p>
         </field>
     </record>

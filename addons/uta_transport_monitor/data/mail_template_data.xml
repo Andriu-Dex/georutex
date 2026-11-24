@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="mail_template_georutex_email_verification" model="mail.template">
+        <field name="name">GeoRutex: Verificación Numérica de Correo</field>
+        <field name="model_id" ref="model_transport_email_verification"/>
+        <field name="subject">GeoRutex UTA — Tu código de verificación ({{ ctx.get('otp_code', '') }})</field>
+        <field name="email_to">{{ object.email }}</field>
+        <field name="auto_delete" eval="True"/>
+        <field name="body_html" type="html">
+<div style="margin:0;padding:24px 12px;background-color:#eef4fc;font-family:'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#0f172a;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:580px;margin:0 auto;background-color:#ffffff;border-radius:18px;overflow:hidden;border:1px solid #cfe0f8;box-shadow:0 12px 32px rgba(7,22,51,0.12);">
+        <tr>
+            <td style="background:linear-gradient(135deg,#071633 0%,#0d2c6c 55%,#0d5bd9 100%);padding:28px 32px;text-align:center;">
+                <img t-att-src="'%s/uta_transport_monitor/static/src/img/georutex_logo.png' % ctx.get('georutex_base_url', '')" alt="GeoRutex UTA" width="96" height="96" style="display:block;margin:0 auto 12px;border-radius:20px;border:2px solid rgba(56,226,255,0.5);background-color:#071633;"/>
+                <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:700;letter-spacing:-0.4px;">GeoRutex · UTA</h1>
+                <p style="margin:6px 0 0;color:#bae6fd;font-size:13px;">Sistema de Monitoreo y Evaluación de Transporte Universitario</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:32px 32px 24px;">
+                <p style="margin:0 0 12px;font-size:16px;font-weight:600;color:#071633;">
+                    Hola, <t t-out="object.full_name"/>:
+                </p>
+                <p style="margin:0 0 20px;font-size:14px;line-height:1.6;color:#334155;">
+                    Gracias por registrarte como conductor en <strong>GeoRutex</strong>. Para confirmar que este correo electrónico te pertenece y activar tu cuenta, ingresa el siguiente código numérico de <strong>6 dígitos</strong> en la aplicación:
+                </p>
+                <div style="margin:24px 0;padding:22px 16px;text-align:center;background:linear-gradient(135deg,#eff6ff 0%,#e0f2fe 100%);border:2px solid #0d5bd9;border-radius:16px;">
+                    <div style="font-size:11px;font-weight:700;letter-spacing:1.6px;text-transform:uppercase;color:#0d5bd9;margin-bottom:8px;">
+                        Código de Verificación Numérico
+                    </div>
+                    <div style="font-size:36px;font-weight:800;letter-spacing:10px;color:#071633;font-family:'Courier New',Courier,monospace;">
+                        <t t-out="ctx.get('otp_code', '000000')"/>
+                    </div>
+                </div>
+                <p style="margin:0 0 16px;font-size:13px;line-height:1.55;color:#475569;">
+                    Este código es de un solo uso y tiene una validez de <strong><t t-out="ctx.get('otp_expiry_minutes', 10)"/> minutos</strong>. Por seguridad, no compartas este número con nadie.
+                </p>
+                <div style="margin-top:20px;padding:14px 16px;background-color:#f8fafc;border-left:4px solid #00b8f4;border-radius:8px;font-size:12px;color:#475569;">
+                    Si no solicitaste crear una cuenta en GeoRutex, puedes ignorar este mensaje con total tranquilidad.
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding:18px 32px;background-color:#f1f5f9;border-top:1px solid #e2e8f0;text-align:center;font-size:12px;color:#64748b;">
+                Universidad Técnica de Ambato · Proyecto Integrador GeoRutex<br/>
+                Correo automático enviado mediante SMTP — por favor no respondas a este mensaje.
+            </td>
+        </tr>
+    </table>
+</div>
+        </field>
+    </record>
+</odoo>
