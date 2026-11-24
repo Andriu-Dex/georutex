@@ -13,8 +13,11 @@ export class TripMapWidget extends Component {
 
     setup() {
         this.orm = useService("orm");
+        this.notification = useService("notification");
         this.mapRef = useRef("mapContainer");
         this.map = null;
+        this.resizeObserver = null;
+        this.mapRequest = 0;
         this.layers = {
             reference: null,
             stops: null,
@@ -28,12 +31,17 @@ export class TripMapWidget extends Component {
 
         onMounted(() => {
             this.initMap();
+            void this.loadCurrentMap();
         });
 
         onWillUnmount(() => {
             if (this.pollTimer) {
                 clearInterval(this.pollTimer);
                 this.pollTimer = null;
+            }
+            if (this.resizeObserver) {
+                this.resizeObserver.disconnect();
+                this.resizeObserver = null;
             }
             if (this.map) {
                 this.map.remove();
@@ -43,13 +51,16 @@ export class TripMapWidget extends Component {
 
         useEffect(
             () => {
-                if (this.map && this.props.record && this.props.record.resId) {
-                    void this.loadTripData(this.props.record.resId);
+                if (this.map) {
+                    void this.loadCurrentMap();
                 }
             },
             () => [
                 this.props.record && this.props.record.resId,
                 this.props.record && this.props.record.data.position_count,
+                this.getRelatedId(
+                    this.props.record && this.props.record.data.route_version_id
+                ),
             ]
         );
     }
@@ -68,17 +79,91 @@ export class TripMapWidget extends Component {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(this.map);
 
-        if (this.props.record && this.props.record.resId) {
-            void this.loadTripData(this.props.record.resId);
+        if (typeof ResizeObserver !== "undefined") {
+            this.resizeObserver = new ResizeObserver(() => {
+                if (this.map) {
+                    this.map.invalidateSize({ pan: false });
+                }
+            });
+            this.resizeObserver.observe(this.mapRef.el);
         }
     }
 
-    async loadTripData(tripId, isAutoRefresh = false) {
+    getRelatedId(value) {
+        if (Array.isArray(value)) {
+            return value[0] || false;
+        }
+        if (value && typeof value === "object") {
+            return value.id || value.resId || false;
+        }
+        return value || false;
+    }
+
+    async loadCurrentMap() {
+        if (!this.map) return;
+
+        const requestId = ++this.mapRequest;
+        const record = this.props.record;
+        if (record && record.resId) {
+            await this.loadTripData(record.resId, false, requestId);
+            return;
+        }
+
+        const routeVersionId = this.getRelatedId(
+            record && record.data && record.data.route_version_id
+        );
+        if (!routeVersionId) {
+            this.renderTripMap({
+                reference_polyline: [],
+                stops: [],
+                positions: [],
+            });
+            this.map.setView([-1.249, -78.625], 13);
+            return;
+        }
+
+        try {
+            const routeData = await this.orm.call(
+                "transport.route.version",
+                "get_route_editor_data",
+                [[routeVersionId]]
+            );
+            if (requestId !== this.mapRequest) return;
+
+            this.renderTripMap({
+                route_name: routeData.route_name,
+                reference_polyline: routeData.reference_polyline_coords || [],
+                stops: (routeData.stops || []).map((stop) => ({
+                    ...stop,
+                    status: "Planificada",
+                    scheduled_at: "",
+                })),
+                positions: [],
+            });
+        } catch (error) {
+            console.error("Error loading planned route preview:", error);
+            if (requestId === this.mapRequest) {
+                this.notification.add(
+                    "No se pudo cargar la vista previa de la ruta seleccionada.",
+                    { type: "danger" }
+                );
+            }
+        }
+    }
+
+    async loadTripData(tripId, isAutoRefresh = false, requestId = null) {
         try {
             const data = await this.orm.call("transport.trip", "get_map_data", [[tripId]]);
+            if (requestId !== null && requestId !== this.mapRequest) return;
             this.renderTripMap(data, isAutoRefresh);
         } catch (error) {
             console.error("Error loading trip map data:", error);
+            if (!isAutoRefresh && (requestId === null || requestId === this.mapRequest)) {
+                this.notification.add(
+                    "No se pudo cargar el mapa del recorrido.",
+                    { type: "danger" }
+                );
+            }
         }
     }
 
@@ -121,8 +206,8 @@ export class TripMapWidget extends Component {
                 const icon = window.L.divIcon({
                     className: "custom-div-icon",
                     html: `<div class="${pinClass}">${s.sequence}</div>`,
-                    iconSize: [26, 26],
-                    iconAnchor: [13, 13],
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
                 });
 
                 const marker = window.L.marker(pos, { icon }).addTo(stopGroup);
@@ -131,7 +216,7 @@ export class TripMapWidget extends Component {
                     offset: [0, -14],
                 });
                 marker.bindPopup(`
-                    <div style="font-size: 12px; line-height: 1.4;">
+                    <div style="font-size: 15px; line-height: 1.5;">
                         <strong>Control ${s.sequence}: ${s.name}</strong><br/>
                         <b>Tipo:</b> ${s.stop_type}<br/>
                         <b>Radio geocerca:</b> ${s.radius_m} m<br/>
@@ -242,7 +327,125 @@ export class TripMapWidget extends Component {
             this.map.fitBounds(this.layers.reference.getBounds(), { padding: [20, 20] });
         } else if (this.map && this.layers.trajectory) {
             this.map.fitBounds(this.layers.trajectory.getBounds(), { padding: [20, 20] });
+        } else if (this.map) {
+            this.map.setView([-1.249, -78.625], 13);
         }
+    }
+}
+
+export class TripFormDrawerHandle extends Component {
+    static template = "uta_transport_monitor.TripFormDrawerHandle";
+    static props = {
+        ...standardFieldProps,
+    };
+
+    setup() {
+        this.handleRef = useRef("handle");
+        this.dragState = null;
+        this.onPointerDown = this.onPointerDown.bind(this);
+        this.onPointerMove = this.onPointerMove.bind(this);
+        this.onPointerUp = this.onPointerUp.bind(this);
+        this.onKeyDown = this.onKeyDown.bind(this);
+
+        onMounted(() => {
+            const handle = this.handleRef.el;
+            handle.addEventListener("pointerdown", this.onPointerDown);
+            handle.addEventListener("pointermove", this.onPointerMove);
+            handle.addEventListener("pointerup", this.onPointerUp);
+            handle.addEventListener("pointercancel", this.onPointerUp);
+            handle.addEventListener("keydown", this.onKeyDown);
+        });
+
+        onWillUnmount(() => {
+            const handle = this.handleRef.el;
+            if (!handle) return;
+            handle.removeEventListener("pointerdown", this.onPointerDown);
+            handle.removeEventListener("pointermove", this.onPointerMove);
+            handle.removeEventListener("pointerup", this.onPointerUp);
+            handle.removeEventListener("pointercancel", this.onPointerUp);
+            handle.removeEventListener("keydown", this.onKeyDown);
+        });
+    }
+
+    getSheet() {
+        const formView = this.handleRef.el.closest(".o_form_view");
+        return formView && formView.querySelector(".o_form_sheet");
+    }
+
+    getHeightLimits() {
+        return {
+            min: 64,
+            max: Math.max(64, Math.floor(window.innerHeight * 0.88)),
+        };
+    }
+
+    setSheetHeight(height) {
+        const sheet = this.getSheet();
+        if (!sheet) return;
+
+        const limits = this.getHeightLimits();
+        const nextHeight = Math.max(limits.min, Math.min(limits.max, height));
+        sheet.style.height = `${nextHeight}px`;
+        this.handleRef.el.setAttribute(
+            "aria-valuenow",
+            String(Math.round((nextHeight / window.innerHeight) * 100))
+        );
+    }
+
+    onPointerDown(event) {
+        if (event.button !== 0) return;
+        const sheet = this.getSheet();
+        if (!sheet) return;
+
+        this.dragState = {
+            pointerId: event.pointerId,
+            startY: event.clientY,
+            startHeight: sheet.getBoundingClientRect().height,
+        };
+        if (this.handleRef.el.setPointerCapture) {
+            this.handleRef.el.setPointerCapture(event.pointerId);
+        }
+        event.preventDefault();
+    }
+
+    onPointerMove(event) {
+        if (!this.dragState || event.pointerId !== this.dragState.pointerId) return;
+        this.setSheetHeight(
+            this.dragState.startHeight + this.dragState.startY - event.clientY
+        );
+        event.preventDefault();
+    }
+
+    onPointerUp(event) {
+        if (!this.dragState || event.pointerId !== this.dragState.pointerId) return;
+        if (
+            this.handleRef.el.releasePointerCapture &&
+            this.handleRef.el.hasPointerCapture &&
+            this.handleRef.el.hasPointerCapture(event.pointerId)
+        ) {
+            this.handleRef.el.releasePointerCapture(event.pointerId);
+        }
+        this.dragState = null;
+    }
+
+    onKeyDown(event) {
+        const sheet = this.getSheet();
+        if (!sheet) return;
+
+        const limits = this.getHeightLimits();
+        const currentHeight = sheet.getBoundingClientRect().height;
+        if (event.key === "ArrowUp") {
+            this.setSheetHeight(currentHeight + 48);
+        } else if (event.key === "ArrowDown") {
+            this.setSheetHeight(currentHeight - 48);
+        } else if (event.key === "Home") {
+            this.setSheetHeight(limits.max);
+        } else if (event.key === "End") {
+            this.setSheetHeight(limits.min);
+        } else {
+            return;
+        }
+        event.preventDefault();
     }
 }
 
@@ -371,5 +574,6 @@ export class VehicleMapWidget extends Component {
 }
 
 registry.category("fields").add("trip_map_widget", TripMapWidget);
+registry.category("fields").add("trip_form_drawer_handle", TripFormDrawerHandle);
 registry.category("fields").add("vehicle_map_widget", VehicleMapWidget);
 

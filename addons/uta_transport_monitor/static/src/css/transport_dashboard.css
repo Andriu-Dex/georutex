@@ -1,44 +1,857 @@
-/* GeoRutex Executive Dashboard Styles (Phase 5) */
-
 .georutex-dashboard-container {
     display: flex;
-    flex-direction: column;
     height: 100%;
-    width: 100%;
-    background-color: #f8f9fa;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+    color: #0f172a;
+    background: #f1f5f9;
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    font-size: 18px;
 }
 
 .georutex-dashboard-header {
-    flex-shrink: 0;
+    display: flex;
+    min-height: 88px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.8rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
 }
 
-.georutex-filters-bar {
-    flex-shrink: 0;
+.georutex-dashboard-title {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.georutex-dashboard-title h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.georutex-context-badge {
+    padding: 0.42rem 0.8rem;
+    border: 1px solid #dbeafe;
+    border-radius: 999px;
+    color: #1d4ed8;
+    background: #eff6ff;
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.georutex-dashboard-toolbar {
+    display: flex;
+    min-height: 82px;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 1rem 1.8rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+}
+
+.georutex-period-pills,
+.georutex-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.georutex-period-pills {
+    flex-wrap: wrap;
+}
+
+.georutex-period-button {
+    min-height: 48px;
+    padding: 0.65rem 1.1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #475569;
+    background: #fff;
+    font-size: 1.04rem;
+    font-weight: 600;
+    transition: color 120ms ease, background 120ms ease, border-color 120ms ease;
+}
+
+.georutex-period-button:hover {
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.georutex-period-button.active {
+    border-color: #1d4ed8;
+    color: #fff;
+    background: #1d4ed8;
+}
+
+.georutex-toolbar-actions .btn {
+    min-height: 48px;
+    border-radius: 9px;
+    font-size: 1.04rem;
+    font-weight: 700;
+}
+
+.georutex-dashboard-container .georutex-button-blue {
+    border-color: #1d4ed8;
+    color: #fff;
+    background: #1d4ed8;
+}
+
+.georutex-dashboard-container .georutex-button-blue:hover {
+    border-color: #1e40af;
+    background: #1e40af;
+}
+
+.georutex-dashboard-container .georutex-button-light {
+    border-color: #e2e8f0;
+    color: #334155;
+    background: #fff;
+}
+
+.georutex-dashboard-container .georutex-button-light:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+}
+
+.georutex-filter-panel {
+    display: grid;
+    flex: 0 0 auto;
+    grid-template-columns: repeat(4, minmax(160px, 1fr));
+    gap: 0.9rem;
+    padding: 1.2rem 1.8rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.georutex-filter-field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.georutex-filter-field label {
+    color: #475569;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.georutex-filter-field input,
+.georutex-filter-field select {
+    min-height: 48px;
+    padding: 0.52rem 0.7rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #0f172a;
+    background: #fff;
+    font: inherit;
+    font-size: 1rem;
+}
+
+.georutex-filter-field input:focus,
+.georutex-filter-field select:focus {
+    border-color: #1d4ed8;
+    outline: 2px solid rgb(29 78 216 / 14%);
 }
 
 .georutex-dashboard-content {
+    position: relative;
+    min-height: 0;
     flex: 1 1 auto;
+    overflow: auto;
+    padding: 1.5rem 1.8rem 2rem;
 }
 
-.kpi-card {
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
+.georutex-dashboard-loading {
+    position: absolute;
+    z-index: 20;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: rgb(241 245 249 / 78%);
+    backdrop-filter: blur(1px);
 }
 
-.kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+.georutex-dashboard-loading .spinner-border {
+    width: 2rem;
+    height: 2rem;
+    color: #1d4ed8;
 }
 
-.cursor-pointer {
+.georutex-dashboard-section {
+    margin-bottom: 1.15rem;
+}
+
+.georutex-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.7rem;
+}
+
+.georutex-section-heading h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.3rem;
+    font-weight: 700;
+}
+
+.georutex-section-meta {
+    color: #64748b;
+    font-size: 0.96rem;
+}
+
+.georutex-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.georutex-summary-card {
+    position: relative;
+    display: flex;
+    min-height: 152px;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.2rem 1.35rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #1d4ed8;
+    border-radius: 14px;
+    color: #0f172a;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+    text-align: left;
+    transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+button.georutex-summary-card {
+    width: 100%;
+    font: inherit;
     cursor: pointer;
 }
 
-.cursor-pointer:hover {
-    filter: brightness(0.95);
+.georutex-summary-card:hover {
+    box-shadow: 0 7px 18px rgb(15 23 42 / 8%);
+    transform: translateY(-1px);
 }
 
-.chart-container {
+.georutex-summary-card:focus-visible,
+.georutex-metric-card:focus-visible {
+    outline: 3px solid rgb(17 31 74 / 30%);
+    outline-offset: 2px;
+}
+
+.georutex-summary-card--blue {
+    border-left-color: #1d4ed8;
+}
+
+.georutex-summary-card--green {
+    border-left-color: #16a34a;
+}
+
+.georutex-summary-card--red {
+    border-color: #fee2e2;
+    border-left-color: #dc2626;
+    background: #fef2f2;
+}
+
+.georutex-summary-card--amber {
+    border-left-color: #f59e0b;
+}
+
+.georutex-summary-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem;
+    color: #475569;
+    font-size: 1.04rem;
+    font-weight: 600;
+}
+
+.georutex-summary-icon {
+    color: #94a3b8;
+    font-size: 1.28rem;
+}
+
+.georutex-summary-value-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.georutex-summary-value {
+    color: #0f172a;
+    font-size: 2.65rem;
+    font-weight: 750;
+    letter-spacing: -0.04em;
+    line-height: 1.05;
+}
+
+.georutex-summary-note {
+    overflow: hidden;
+    color: #64748b;
+    font-size: 0.96rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.georutex-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.georutex-status-pill--green {
+    color: #15803d;
+    background: #dcfce7;
+}
+
+.georutex-status-pill--red {
+    color: #b91c1c;
+    background: #fee2e2;
+}
+
+.georutex-status-pill--amber {
+    color: #a16207;
+    background: #fef3c7;
+}
+
+.georutex-status-pill--blue {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
+.georutex-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.85fr) minmax(320px, 1fr);
+    gap: 1.1rem;
+}
+
+.georutex-surface-card {
+    min-width: 0;
+    padding: 1.35rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(15 23 42 / 4%);
+}
+
+.georutex-card-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
+.georutex-card-heading h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.georutex-card-heading p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    font-size: 0.96rem;
+}
+
+.georutex-chart-area {
+    position: relative;
+    height: 340px;
+}
+
+.georutex-chart-empty {
+    display: grid;
+    min-height: 340px;
+    place-items: center;
+    padding: 1.25rem;
+    border-radius: 10px;
+    color: #64748b;
+    background: #f8fafc;
+    font-size: 1.08rem;
+    text-align: center;
+}
+
+.georutex-map-preview {
+    position: relative;
+    height: 340px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #e2e8f0;
+}
+
+.georutex-map-preview-canvas {
     width: 100%;
+    height: 100%;
 }
 
+.georutex-preview-marker {
+    display: grid;
+    width: 34px !important;
+    height: 34px !important;
+    place-items: center;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    background: #1d4ed8;
+    box-shadow: 0 2px 6px rgb(15 23 42 / 35%);
+    font-size: 1rem;
+}
+
+.georutex-map-loading {
+    position: absolute;
+    z-index: 600;
+    top: 0.6rem;
+    left: 0.6rem;
+}
+
+.georutex-map-error {
+    position: absolute;
+    z-index: 500;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    padding: 1rem;
+    color: #991b1b;
+    background: rgb(254 242 242 / 94%);
+    font-size: 1rem;
+    text-align: center;
+}
+
+.georutex-map-preview .leaflet-control-attribution {
+    font-size: 9px;
+}
+
+.georutex-map-preview-empty {
+    position: absolute;
+    z-index: 500;
+    inset: 0;
+    overflow: hidden;
+    background: #e2e8f0;
+}
+
+.georutex-map-preview-empty img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.9;
+}
+
+.georutex-map-preview-empty::after {
+    position: absolute;
+    inset: 45% 0 0;
+    background: linear-gradient(transparent, rgb(15 23 42 / 76%));
+    content: "";
+}
+
+.georutex-map-preview-message {
+    position: absolute;
+    z-index: 1;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    left: 0.75rem;
+    color: #fff;
+}
+
+.georutex-map-preview-message strong {
+    display: block;
+    margin-top: 0.3rem;
+    font-size: 1.08rem;
+}
+
+.georutex-map-preview-message span {
+    font-size: 0.94rem;
+}
+
+.georutex-map-preview-topline {
+    position: absolute;
+    z-index: 600;
+    top: 0.6rem;
+    right: 0.6rem;
+    left: 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.georutex-map-count {
+    padding: 0.3rem 0.55rem;
+    border-radius: 999px;
+    color: #0f172a;
+    background: rgb(255 255 255 / 92%);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.georutex-map-link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid rgb(255 255 255 / 70%);
+    border-radius: 8px;
+    color: #0f172a;
+    background: #fff;
+    font-size: 0.96rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.georutex-map-link:hover {
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.georutex-metric-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.georutex-metric-card {
+    display: flex;
+    min-width: 0;
+    min-height: 190px;
+    flex-direction: column;
+    padding: 1.15rem 1.2rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    color: #0f172a;
+    background: #fff;
+    box-shadow: 0 2px 8px rgb(15 23 42 / 3%);
+    text-align: left;
+    transition: box-shadow 150ms ease, transform 150ms ease;
+}
+
+button.georutex-metric-card {
+    width: 100%;
+    font: inherit;
+    cursor: pointer;
+}
+
+.georutex-metric-card:hover {
+    box-shadow: 0 6px 15px rgb(15 23 42 / 7%);
+    transform: translateY(-1px);
+}
+
+.georutex-tone-blue {
+    border-top: 3px solid #1d4ed8;
+}
+
+.georutex-tone-green {
+    border-top: 3px solid #16a34a;
+}
+
+.georutex-tone-red {
+    border-top: 3px solid #dc2626;
+}
+
+.georutex-tone-amber {
+    border-top: 3px solid #f59e0b;
+}
+
+.georutex-tone-violet {
+    border-top: 3px solid #7c3aed;
+}
+
+.georutex-metric-topline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+}
+
+.georutex-metric-code {
+    padding: 0.18rem 0.4rem;
+    border-radius: 5px;
+    color: #475569;
+    background: #f1f5f9;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.georutex-metric-title {
+    display: block;
+    overflow: hidden;
+    margin-top: 0.45rem;
+    color: #475569;
+    font-size: 1rem;
+    font-weight: 650;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.georutex-metric-value {
+    overflow: hidden;
+    margin-top: 0.2rem;
+    color: #0f172a;
+    font-size: 1.9rem;
+    font-weight: 750;
+    letter-spacing: -0.025em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.georutex-metric-secondary {
+    overflow: hidden;
+    min-height: 1rem;
+    margin-top: 0.18rem;
+    color: #64748b;
+    font-size: 0.94rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.georutex-metric-segments {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: auto;
+    padding-top: 0.55rem;
+}
+
+.georutex-metric-segments span {
+    height: 7px;
+    flex: 1;
+    border-radius: 99px;
+    background: #e2e8f0;
+}
+
+.georutex-tone-blue .georutex-metric-segments .is-filled {
+    background: #1d4ed8;
+}
+
+.georutex-tone-green .georutex-metric-segments .is-filled {
+    background: #16a34a;
+}
+
+.georutex-tone-red .georutex-metric-segments .is-filled {
+    background: #dc2626;
+}
+
+.georutex-tone-amber .georutex-metric-segments .is-filled {
+    background: #f59e0b;
+}
+
+.georutex-tone-violet .georutex-metric-segments .is-filled {
+    background: #7c3aed;
+}
+
+.georutex-metric-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.45rem;
+    margin-top: 0.35rem;
+    color: #64748b;
+    font-size: 1rem;
+}
+
+.georutex-detail-section {
+    margin-top: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.georutex-detail-section > summary {
+    display: flex;
+    min-height: 54px;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem;
+    padding: 0.7rem 0.9rem;
+    color: #334155;
+    cursor: pointer;
+    font-size: 1.08rem;
+    font-weight: 700;
+    list-style: none;
+}
+
+.georutex-detail-section > summary::-webkit-details-marker {
+    display: none;
+}
+
+.georutex-detail-section > summary::after {
+    color: #64748b;
+    content: "\f107";
+    font-family: FontAwesome;
+}
+
+.georutex-detail-section[open] > summary {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.georutex-detail-content {
+    padding: 0.9rem;
+}
+
+.georutex-secondary-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+    gap: 0.9rem;
+}
+
+.georutex-data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 1rem;
+}
+
+.georutex-data-table th,
+.georutex-data-table td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+}
+
+.georutex-data-table th {
+    color: #475569;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.georutex-data-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.georutex-empty-state {
+    display: grid;
+    min-height: 150px;
+    place-items: center;
+    padding: 1rem;
+    color: #64748b;
+    font-size: 1.04rem;
+    text-align: center;
+}
+
+.georutex-details-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.8rem;
+}
+
+@media (max-width: 1100px) {
+    .georutex-summary-grid,
+    .georutex-metric-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .georutex-main-grid {
+        grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+    }
+}
+
+@media (max-width: 820px) {
+    .georutex-dashboard-header,
+    .georutex-dashboard-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .georutex-dashboard-toolbar {
+        gap: 0.65rem;
+    }
+
+    .georutex-toolbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .georutex-filter-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .georutex-main-grid,
+    .georutex-secondary-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .georutex-dashboard-header,
+    .georutex-dashboard-toolbar {
+        padding-right: 0.8rem;
+        padding-left: 0.8rem;
+    }
+
+    .georutex-dashboard-content {
+        padding: 0.8rem;
+    }
+
+    .georutex-dashboard-title {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .georutex-dashboard-title h1 {
+        font-size: 1.4rem;
+    }
+
+    .georutex-period-pills {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .georutex-period-button {
+        min-height: 46px;
+        padding-right: 0.55rem;
+        padding-left: 0.55rem;
+        font-size: 0.98rem;
+    }
+
+    .georutex-toolbar-actions .btn {
+        flex: 1;
+    }
+
+    .georutex-filter-panel,
+    .georutex-summary-grid,
+    .georutex-metric-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .georutex-filter-panel {
+        padding-right: 0.8rem;
+        padding-left: 0.8rem;
+    }
+
+    .georutex-summary-card {
+        min-height: 136px;
+    }
+
+    .georutex-chart-area,
+    .georutex-chart-empty,
+    .georutex-map-preview {
+        height: 290px;
+        min-height: 290px;
+    }
+
+    .georutex-section-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}

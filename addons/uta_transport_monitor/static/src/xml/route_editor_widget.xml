@@ -148,14 +148,14 @@
                                                 <t t-esc="stop.name"/>
                                             </b>
                                         </div>
-                                        <span t-attf-class="badge #{stop.stop_type === 'origin' ? 'bg-success-light text-success' : (stop.stop_type === 'destination' ? 'bg-danger-light text-danger' : 'bg-primary-light text-primary')} font-monospace" style="font-size: 10px;">
+                                        <span t-attf-class="badge #{stop.stop_type === 'origin' ? 'bg-success-light text-success' : (stop.stop_type === 'destination' ? 'bg-danger-light text-danger' : 'bg-primary-light text-primary')} font-monospace" style="font-size: 14px;">
                                             <t t-if="stop.stop_type === 'origin'">Origen</t>
                                             <t t-elif="stop.stop_type === 'destination'">Destino</t>
                                             <t t-else="">Control</t>
                                         </span>
                                     </div>
 
-                                    <div class="small text-muted mb-2 font-monospace" style="font-size: 11px;">
+                                    <div class="small text-muted mb-2 font-monospace" style="font-size: 15px;">
                                         <i class="fa fa-globe me-1"/><t t-esc="stop.latitude.toFixed(5)"/>, <t t-esc="stop.longitude.toFixed(5)"/><br/>
                                         <i class="fa fa-dot-circle-o me-1"/>Radio: <t t-esc="stop.radius_m"/>m | <i class="fa fa-clock-o me-1"/><t t-esc="stop.planned_offset_seconds"/>s
                                     </div>

@@ -69,3 +69,6 @@ traccar_logs/
 !/evidence/INDEX.md
 instruction.md
 
+# Leaflet is a required runtime asset for GeoRutex maps.
+!addons/uta_transport_monitor/static/lib/
+

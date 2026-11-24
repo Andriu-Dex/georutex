@@ -38,6 +38,8 @@ flowchart LR
 
 **Separación de red:** el receptor GPS suele usar OsmAnd sobre HTTP (puerto habitual 5055); la interfaz/API administrativa de Traccar suele usar 8082; Odoo suele usar 8069. Estos valores son **referencias**, no suposiciones válidas sin verificar la versión y configuración. No publicar 8082 como solución improvisada para ingestión. Traccar Client debe poder enviar a través de la red celular; Cloudflare Tunnel HTTP no implica soporte automático de cualquier protocolo TCP/UDP.
 
+**Interfaz de usuario:** las tareas de gestión, mapas y seguimiento se realizan desde Odoo; no se despliega una interfaz web adicional para Traccar. El servicio Traccar conserva su API en el puerto interno `8082` para la integración servidor-a-servidor con Odoo y su receptor GPS OsmAnd en `5055`. El puerto administrativo/API no se publica en el host; solo se publica el receptor GPS local para el túnel o mecanismo de ingreso configurado.
+
 ## 3. Componentes, carpetas y dependencias
 
 La estructura completa del repositorio se mantiene **únicamente** en `requirements.md`, sección 12.3. Para el addon, la distribución de responsabilidades es:

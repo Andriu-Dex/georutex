@@ -1,496 +1,401 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
-
     <t t-name="uta_transport_monitor.TransportDashboardAction" owl="1">
         <div class="georutex-dashboard-container">
-            <!-- Header Section -->
-            <div class="georutex-dashboard-header d-flex flex-wrap align-items-center justify-content-between p-3 border-bottom bg-white shadow-sm">
-                <div class="d-flex align-items-center mb-2 mb-md-0">
-                    <i class="fa fa-tachometer text-primary fa-2x me-3"/>
-                    <div>
-                        <h4 class="mb-0 fw-bold text-dark">GeoRutex — Panel Gerencial y Métricas de Transporte</h4>
-                        <small class="text-muted">Sistema de Monitoreo y Evaluación de Rutas Universitarias (UTA)</small>
-                    </div>
+            <header class="georutex-dashboard-header">
+                <div class="georutex-dashboard-title">
+                    <h1>Monitoreo y métricas de transporte</h1>
+                    <span class="georutex-context-badge">Panel de Control</span>
                 </div>
+                <button type="button"
+                        class="btn georutex-button-light"
+                        t-on-click="openEvaluationsList"
+                        title="Consultar evaluaciones y sus parámetros guardados">
+                    <i class="fa fa-history me-1"/> Auditoría
+                </button>
+            </header>
 
-                <!-- Source Selector Pills (RF-08, RF-31) -->
-                <div class="d-flex align-items-center">
-                    <div class="btn-group btn-group-sm me-3" role="group">
-                        <button type="button" 
-                                t-attf-class="btn #{state.filters.source_type == 'combined' ? 'btn-primary active' : 'btn-outline-primary'}"
-                                t-on-click="() => this.onSourceTypeChange('combined')">
-                            <i class="fa fa-database me-1"/> Combinado (Todos)
-                        </button>
-                        <button type="button" 
-                                t-attf-class="btn #{state.filters.source_type == 'real' ? 'btn-success active' : 'btn-outline-success'}"
-                                t-on-click="() => this.onSourceTypeChange('real')">
-                            <i class="fa fa-signal me-1"/> Solo Reales
-                        </button>
-                        <button type="button" 
-                                t-attf-class="btn #{state.filters.source_type == 'simulated' ? 'btn-info active' : 'btn-outline-info'}"
-                                t-on-click="() => this.onSourceTypeChange('simulated')">
-                            <i class="fa fa-cogs me-1"/> Solo Simulados
-                        </button>
-                    </div>
-
-                    <button class="btn btn-sm btn-outline-secondary" t-on-click="loadDashboardData" title="Recargar datos">
+            <div class="georutex-dashboard-toolbar">
+                <div class="georutex-period-pills" role="group" aria-label="Período del dashboard">
+                    <button type="button"
+                            t-attf-class="georutex-period-button #{state.activePreset == 'today' ? 'active' : ''}"
+                            t-on-click="() => this.setDatePreset('today')">Hoy</button>
+                    <button type="button"
+                            t-attf-class="georutex-period-button #{state.activePreset == 'week' ? 'active' : ''}"
+                            t-on-click="() => this.setDatePreset('week')">Esta semana</button>
+                    <button type="button"
+                            t-attf-class="georutex-period-button #{state.activePreset == 'month' ? 'active' : ''}"
+                            t-on-click="() => this.setDatePreset('month')">Este mes</button>
+                    <button type="button"
+                            t-attf-class="georutex-period-button #{state.activePreset == 'all' ? 'active' : ''}"
+                            t-on-click="() => this.setDatePreset('all')">Histórico</button>
+                </div>
+                <div class="georutex-toolbar-actions">
+                    <button type="button"
+                            class="btn georutex-button-light"
+                            t-on-click="refreshDashboard"
+                            title="Actualizar métricas y posiciones GPS">
                         <i class="fa fa-refresh me-1"/> Actualizar
                     </button>
+                    <button type="button"
+                            class="btn georutex-button-blue"
+                            t-att-aria-expanded="state.filtersOpen"
+                            t-on-click="toggleFilterPanel">
+                        <i class="fa fa-filter me-1"/> Filtrar
+                    </button>
                 </div>
             </div>
 
-            <!-- Filter Controls Bar -->
-            <div class="georutex-filters-bar bg-light p-3 border-bottom">
-                <div class="d-flex align-items-center gap-2 mb-2">
-                    <span class="small fw-bold text-muted me-1"><i class="fa fa-calendar me-1"/>Período Rápido:</span>
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('today')">
-                        Hoy
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('week')">
-                        Esta Semana
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" t-on-click="() => this.setDatePreset('month')">
-                        Este Mes
-                    </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" t-on-click="() => this.setDatePreset('all')">
-                        Todo el Historial
+            <form t-if="state.filtersOpen"
+                  class="georutex-filter-panel"
+                  t-on-submit="onFilterSubmit">
+                <div class="georutex-filter-field">
+                    <label for="georutex-date-from">Desde</label>
+                    <input id="georutex-date-from" type="date" t-model="state.filters.date_from"/>
+                </div>
+                <div class="georutex-filter-field">
+                    <label for="georutex-date-to">Hasta</label>
+                    <input id="georutex-date-to" type="date" t-model="state.filters.date_to"/>
+                </div>
+                <div class="georutex-filter-field">
+                    <label for="georutex-route-filter">Ruta</label>
+                    <select id="georutex-route-filter" t-model="state.filters.route_id">
+                        <option value="">Todas las rutas</option>
+                        <t t-foreach="state.availableRoutes" t-as="route" t-key="route.id">
+                            <option t-att-value="route.id"><t t-esc="route.name"/></option>
+                        </t>
+                    </select>
+                </div>
+                <div class="georutex-filter-field">
+                    <label for="georutex-vehicle-filter">Vehículo</label>
+                    <select id="georutex-vehicle-filter" t-model="state.filters.vehicle_id">
+                        <option value="">Todos los vehículos</option>
+                        <t t-foreach="state.availableVehicles" t-as="vehicle" t-key="vehicle.id">
+                            <option t-att-value="vehicle.id"><t t-esc="vehicle.name"/></option>
+                        </t>
+                    </select>
+                </div>
+                <div class="georutex-filter-field">
+                    <label for="georutex-source-filter">Fuente</label>
+                    <select id="georutex-source-filter" t-model="state.filters.source_type">
+                        <option value="combined">Real y simulado</option>
+                        <option value="real">Solo real</option>
+                        <option value="simulated">Solo simulado</option>
+                    </select>
+                </div>
+                <div class="georutex-filter-field">
+                    <span class="d-block" aria-hidden="true">&#160;</span>
+                    <button type="submit" class="btn georutex-button-blue">
+                        Aplicar filtros
                     </button>
                 </div>
-                <form class="row g-2 align-items-end" t-on-submit="onFilterSubmit">
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Fecha Desde</label>
-                        <input type="date" class="form-control form-control-sm" t-model="state.filters.date_from"/>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-3">
-                        <label class="form-label small fw-bold text-muted mb-1">Fecha Hasta</label>
-                        <input type="date" class="form-control form-control-sm" t-model="state.filters.date_to"/>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <label class="form-label small fw-bold text-muted mb-1">Ruta</label>
-                        <select class="form-select form-select-sm" t-model="state.filters.route_id">
-                            <option value="">Todas las rutas</option>
-                            <t t-foreach="state.availableRoutes" t-as="r" t-key="r.id">
-                                <option t-att-value="r.id"><t t-esc="r.name"/></option>
-                            </t>
-                        </select>
-                    </div>
-                    <div class="col-12 col-sm-6 col-md-2">
-                        <label class="form-label small fw-bold text-muted mb-1">Vehículo</label>
-                        <select class="form-select form-select-sm" t-model="state.filters.vehicle_id">
-                            <option value="">Todos los vehículos</option>
-                            <t t-foreach="state.availableVehicles" t-as="v" t-key="v.id">
-                                <option t-att-value="v.id"><t t-esc="v.name"/></option>
-                            </t>
-                        </select>
-                    </div>
-                    <div class="col-12 col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-sm btn-primary flex-fill">
-                            <i class="fa fa-filter me-1"/> Filtrar
-                        </button>
-                        <button type="button" class="btn btn-sm btn-outline-secondary" t-on-click="onResetFilters" title="Limpiar filtros">
-                            <i class="fa fa-eraser"/>
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <div class="georutex-filter-field">
+                    <span class="d-block" aria-hidden="true">&#160;</span>
+                    <button type="button"
+                            class="btn georutex-button-light"
+                            t-on-click="onResetFilters">
+                        Limpiar
+                    </button>
+                </div>
+            </form>
 
-            <!-- Main Content Area -->
-            <div class="georutex-dashboard-content p-3 overflow-auto">
+            <main class="georutex-dashboard-content">
                 <t t-if="state.isLoading">
-                    <div class="text-center py-5">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">Cargando...</span>
-                        </div>
-                        <p class="text-muted mt-2">Calculando métricas canónicas...</p>
+                    <div class="georutex-dashboard-loading" role="status" aria-live="polite">
+                        <span class="spinner-border" aria-hidden="true"/>
+                        <span class="visually-hidden">Cargando métricas…</span>
                     </div>
                 </t>
-                <t t-else="">
-                    <!-- Summary Strip -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-12 col-sm-6 col-xl-3">
-                            <div class="card shadow-sm border-0 bg-primary text-white h-100 cursor-pointer" t-on-click="() => this.openTripsList('all')">
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Recorridos Evaluados</h6>
-                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.executed_trips || 0"/></h3>
-                                        <small class="text-white-50">Total programados: <t t-esc="state.summary.total_trips || 0"/></small>
-                                    </div>
-                                    <i class="fa fa-bus fa-2x text-white-50"/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-3">
-                            <div class="card shadow-sm border-0 bg-success text-white h-100 cursor-pointer" t-on-click="() => this.openTripsList('compliant')">
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Recorridos Conformes</h6>
-                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.compliant_trips || 0"/></h3>
-                                        <small class="text-white-50">Conforme bruto y ajustado</small>
-                                    </div>
-                                    <i class="fa fa-check-circle fa-2x text-white-50"/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-3">
-                            <div class="card shadow-sm border-0 bg-danger text-white h-100 cursor-pointer" t-on-click="openIncidentsList">
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Incidencias Totales</h6>
-                                        <h3 class="mb-0 fw-bold"><t t-esc="state.summary.total_incidents || 0"/></h3>
-                                        <small class="text-white-50">Automáticas y manuales</small>
-                                    </div>
-                                    <i class="fa fa-exclamation-triangle fa-2x text-white-50"/>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-sm-6 col-xl-3">
-                            <div class="card shadow-sm border-0 bg-dark text-white h-100 cursor-pointer" t-on-click="openEvaluationsList">
-                                <div class="card-body d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="text-white-50 text-uppercase mb-1 small fw-bold">Auditoría / Trazabilidad</h6>
-                                        <h4 class="mb-0 fw-bold">Snapshots</h4>
-                                        <small class="text-white-50">Parámetros inmutables</small>
-                                    </div>
-                                    <i class="fa fa-history fa-2x text-white-50"/>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Operational KPI Cards (MT-01 to MT-08) -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">
-                            <i class="fa fa-road text-primary me-2"/>Métricas de Transporte (MT-01 a MT-08)
-                        </h5>
-                        <span class="badge bg-secondary">
-                            Fuente: <t t-esc="state.filters.source_type"/>
+                <section class="georutex-dashboard-section georutex-summary-grid"
+                         aria-label="Resumen operativo">
+                    <button type="button"
+                            class="georutex-summary-card georutex-summary-card--blue"
+                            t-on-click="() => this.openTripsList('all')">
+                        <span class="georutex-summary-label">
+                            Recorridos evaluados
+                            <i class="fa fa-bus georutex-summary-icon" aria-hidden="true"/>
+                        </span>
+                        <span class="georutex-summary-value-row">
+                            <strong class="georutex-summary-value">
+                                <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/>
+                            </strong>
+                            <span class="georutex-status-pill georutex-status-pill--blue">Evaluables</span>
+                        </span>
+                        <span class="georutex-summary-note">Muestra usada en MT-01</span>
+                    </button>
+
+                    <button type="button"
+                            class="georutex-summary-card georutex-summary-card--green"
+                            t-on-click="() => this.openTripsList('compliant')">
+                        <span class="georutex-summary-label">
+                            Recorridos conformes
+                            <i class="fa fa-check-circle georutex-summary-icon" aria-hidden="true"/>
+                        </span>
+                        <span class="georutex-summary-value-row">
+                            <strong class="georutex-summary-value">
+                                <t t-esc="state.summary.compliant_trips_gross || 0"/>
+                            </strong>
+                            <span t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na"
+                                  class="georutex-status-pill georutex-status-pill--green">
+                                <t t-esc="state.kpis['MT-01'].display_value"/>
+                            </span>
+                            <span t-else="" class="georutex-status-pill georutex-status-pill--amber">N/A</span>
+                        </span>
+                        <span class="georutex-summary-note">
+                            Bruto: <t t-esc="state.summary.compliant_trips_gross || 0"/>
+                            <span class="mx-1">·</span>
+                            Ajustado: <t t-esc="state.summary.compliant_trips_adjusted || 0"/>
+                        </span>
+                    </button>
+
+                    <button type="button"
+                            class="georutex-summary-card georutex-summary-card--red"
+                            t-on-click="openIncidentsList">
+                        <span class="georutex-summary-label">
+                            Incidencias totales
+                            <i class="fa fa-exclamation-triangle georutex-summary-icon" aria-hidden="true"/>
+                        </span>
+                        <span class="georutex-summary-value-row">
+                            <strong class="georutex-summary-value">
+                                <t t-esc="state.summary.total_incidents || 0"/>
+                            </strong>
+                            <span t-if="state.summary.total_incidents"
+                                  class="georutex-status-pill georutex-status-pill--red">Revisar</span>
+                            <span t-else="" class="georutex-status-pill georutex-status-pill--green">Sin incidencias</span>
+                        </span>
+                        <span class="georutex-summary-note">Automáticas y reportadas</span>
+                    </button>
+
+                    <button type="button"
+                            class="georutex-summary-card georutex-summary-card--amber"
+                            t-on-click="() => this.openTripsList('all')">
+                        <span class="georutex-summary-label">
+                            Puntualidad general
+                            <i class="fa fa-clock-o georutex-summary-icon" aria-hidden="true"/>
+                        </span>
+                        <span class="georutex-summary-value-row">
+                            <strong class="georutex-summary-value">
+                                <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/>
+                            </strong>
+                            <span t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na"
+                                  class="georutex-status-pill georutex-status-pill--amber">Calculada</span>
+                            <span t-else="" class="georutex-status-pill georutex-status-pill--amber">Sin muestra</span>
+                        </span>
+                        <span class="georutex-summary-note">
+                            n =
+                            <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/>
+                        </span>
+                    </button>
+                </section>
+
+                <section class="georutex-dashboard-section georutex-main-grid">
+                    <article class="georutex-surface-card">
+                        <div class="georutex-card-heading">
+                            <div>
+                                <h2>Cumplimiento y puntualidad</h2>
+                                <p>Tendencia diaria · porcentajes calculados sobre su muestra</p>
+                            </div>
+                            <i class="fa fa-line-chart text-primary" aria-hidden="true"/>
+                        </div>
+                        <t t-if="this.hasDailyTrendData">
+                            <div class="georutex-chart-area">
+                                <canvas t-ref="trendChartCanvas"
+                                        role="img"
+                                        aria-label="Gráfico de cumplimiento de rutas y puntualidad"/>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="georutex-chart-empty">
+                                No hay recorridos evaluables para graficar en este período.
+                            </div>
+                        </t>
+                    </article>
+
+                    <article class="georutex-surface-card">
+                        <div class="georutex-card-heading">
+                            <div>
+                                <h2>Ubicaciones de flota</h2>
+                                <p>Posiciones GPS disponibles · actualización cada 30 s</p>
+                            </div>
+                            <i class="fa fa-map-marker text-primary" aria-hidden="true"/>
+                        </div>
+                        <div class="georutex-map-preview">
+                            <div t-ref="mapPreviewCanvas" class="georutex-map-preview-canvas"/>
+                            <div class="georutex-map-preview-topline">
+                                <span class="georutex-map-count">
+                                    <t t-esc="state.livePositionCount"/> con ubicación
+                                </span>
+                                <button type="button"
+                                        class="georutex-map-link"
+                                        t-on-click="openLiveMap">
+                                    Abrir mapa <i class="fa fa-external-link ms-1" aria-hidden="true"/>
+                                </button>
+                            </div>
+                            <div t-if="state.liveMapStatus == 'empty'"
+                                 class="georutex-map-preview-empty">
+                                <img src="/uta_transport_monitor/static/src/img/mapa.webp"
+                                     alt="Vista ilustrativa de buses y rutas; no representa posiciones GPS reales."/>
+                                <div class="georutex-map-preview-message">
+                                    <span class="georutex-status-pill georutex-status-pill--amber">Vista ilustrativa</span>
+                                    <strong>Sin posiciones GPS disponibles</strong>
+                                    <span>El mapa real se mostrará cuando ingresen coordenadas válidas.</span>
+                                </div>
+                            </div>
+                            <div t-if="state.liveMapStatus == 'error'"
+                                 class="georutex-map-error"
+                                 role="status">
+                                <i class="fa fa-exclamation-circle me-1" aria-hidden="true"/>
+                                <t t-esc="state.liveMapError"/>
+                            </div>
+                            <span t-if="state.liveMapStatus == 'loading'"
+                                  class="georutex-map-count georutex-map-loading">
+                                Consultando GPS…
+                            </span>
+                        </div>
+                    </article>
+                </section>
+
+                <section class="georutex-dashboard-section">
+                    <div class="georutex-section-heading">
+                        <h2>Métricas de control · MT-01 a MT-08</h2>
+                        <span class="georutex-section-meta">
+                            Fuente:
+                            <t t-esc="state.filters.source_type == 'real' ? 'Real' : (state.filters.source_type == 'simulated' ? 'Simulado' : 'Combinado')"/>
+                            <span class="mx-1">·</span>
+                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].period : 'Todo el período'"/>
                         </span>
                     </div>
-
-                    <div class="row g-3 mb-4">
-                        <!-- MT-01 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-primary">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-primary">MT-01</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Cumplimiento de Rutas</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-primary mb-0 me-2"><t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].display_value : 'N/A'"/></h2>
-                                        <small class="text-muted">Bruto</small>
-                                    </div>
-                                    <t t-if="state.kpis['MT-01'] and state.kpis['MT-01'].secondary">
-                                        <div class="small text-success mb-2">
-                                            <strong>Ajustado:</strong> <t t-esc="state.kpis['MT-01'].secondary.adjusted_display"/>
-                                        </div>
+                    <div class="georutex-metric-grid">
+                        <t t-foreach="this.transportMetricCards" t-as="metric" t-key="metric.id">
+                            <button type="button"
+                                    t-attf-class="georutex-metric-card georutex-tone-#{metric.tone}"
+                                    t-att-title="this.getMetricTooltip(metric.metric)"
+                                    t-att-aria-label="metric.id + ' ' + metric.title + '. ' + this.getMetricTooltip(metric.metric)"
+                                    t-on-click="() => this.openMetric(metric.id)">
+                                <span class="georutex-metric-topline">
+                                    <span class="georutex-metric-code"><t t-esc="metric.id"/></span>
+                                    <i class="fa fa-info-circle text-muted" aria-hidden="true"/>
+                                </span>
+                                <span class="georutex-metric-title"><t t-esc="metric.title"/></span>
+                                <strong class="georutex-metric-value">
+                                    <t t-esc="metric.metric.display_value || 'N/A'"/>
+                                </strong>
+                                <span class="georutex-metric-secondary">
+                                    <t t-esc="this.getMetricSecondary(metric.id, metric.metric)"/>
+                                </span>
+                                <span class="georutex-metric-segments" aria-hidden="true">
+                                    <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
+                                        <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
                                     </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-02 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-success">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-success">MT-02</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Puntualidad de Viajes</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-success mb-0 me-2"><t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/></h2>
-                                    </div>
-                                    <t t-if="state.kpis['MT-02'] and state.kpis['MT-02'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Salida: <t t-esc="state.kpis['MT-02'].secondary.departure_punctuality_pct"/>% | Llegada: <t t-esc="state.kpis['MT-02'].secondary.arrival_punctuality_pct"/>%
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-03 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-warning">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-warning text-dark">MT-03</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Retraso Promedio Llegada</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-warning text-dark mb-0 me-2"><t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].display_value : 'N/A'"/></h2>
-                                        <small class="text-muted">General</small>
-                                    </div>
-                                    <t t-if="state.kpis['MT-03'] and state.kpis['MT-03'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Condicionado (tardías): <t t-esc="state.kpis['MT-03'].secondary.conditional_avg_delay_min"/> min
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-03'] ? state.kpis['MT-03'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-04 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-info">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-info text-white">MT-04</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Paradas Intermedias</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-info mb-0 me-2"><t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].display_value : 'N/A'"/></h2>
-                                    </div>
-                                    <t t-if="state.kpis['MT-04'] and state.kpis['MT-04'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Visitadas: <t t-esc="state.kpis['MT-04'].secondary.visited_count"/> | Omitidas: <t t-esc="state.kpis['MT-04'].secondary.missed_count"/>
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-04'] ? state.kpis['MT-04'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-05 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-secondary">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-secondary">MT-05</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Desviación Máxima</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-secondary mb-0 me-2"><t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].display_value : 'N/A'"/></h2>
-                                    </div>
-                                    <t t-if="state.kpis['MT-05'] and state.kpis['MT-05'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Viajes con desvío: <t t-esc="state.kpis['MT-05'].secondary.deviated_trips_pct"/>% | Tiempo fuera: <t t-esc="state.kpis['MT-05'].secondary.total_outside_time_min"/> min
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-05'] ? state.kpis['MT-05'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-06 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-dark">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-dark">MT-06</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Diferencia de Distancia</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-dark mb-0 me-2"><t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].display_value : 'N/A'"/></h2>
-                                    </div>
-                                    <t t-if="state.kpis['MT-06'] and state.kpis['MT-06'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Diferencia neta: <t t-esc="state.kpis['MT-06'].secondary.diff_km"/> km | MAE: <t t-esc="state.kpis['MT-06'].secondary.mae_km"/> km
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-06'] ? state.kpis['MT-06'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-07 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-primary">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-primary">MT-07</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Duración Promedio</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-primary mb-0 me-2"><t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].display_value : 'N/A'"/></h2>
-                                    </div>
-                                    <t t-if="state.kpis['MT-07'] and state.kpis['MT-07'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Planificada: <t t-esc="state.kpis['MT-07'].secondary.planned_avg_duration_min"/> min | Dif: <t t-esc="state.kpis['MT-07'].secondary.duration_difference_min"/> min
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-07'] ? state.kpis['MT-07'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MT-08 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 kpi-card border-top border-4 border-danger cursor-pointer" t-on-click="openIncidentsList">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-danger">MT-08</span>
-                                        <small class="text-muted">n = <t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].sample_size : 0"/></small>
-                                    </div>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Frecuencia Incidencias</h6>
-                                    <div class="d-flex align-items-baseline mb-2">
-                                        <h2 class="fw-bold text-danger mb-0 me-2"><t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].display_value : 'N/A'"/></h2>
-                                        <small class="text-muted">por 10 viajes</small>
-                                    </div>
-                                    <t t-if="state.kpis['MT-08'] and state.kpis['MT-08'].secondary">
-                                        <div class="small text-muted mb-2">
-                                            Total: <t t-esc="state.kpis['MT-08'].secondary.total_incident_count"/> incidencias
-                                        </div>
-                                    </t>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MT-08'] ? state.kpis['MT-08'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
+                                </span>
+                                <span class="georutex-metric-meta">
+                                    <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 'N/A'"/></span>
+                                    <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
+                                </span>
+                            </button>
+                        </t>
                     </div>
+                </section>
 
-                    <!-- Charts & Route Comparison Section -->
-                    <div class="row g-3 mb-4">
-                        <div class="col-12 col-lg-8">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-header bg-white border-bottom py-3">
-                                    <h6 class="fw-bold text-dark mb-0">
-                                        <i class="fa fa-line-chart text-primary me-2"/>Tendencia Diaria de Cumplimiento y Puntualidad
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container position-relative" style="height: 280px;">
-                                        <canvas t-ref="trendChartCanvas"/>
-                                    </div>
-                                </div>
-                            </div>
+                <details class="georutex-detail-section" t-on-toggle="onDetailsToggle">
+                    <summary>Comparativas, incidencias y métricas complementarias</summary>
+                    <div class="georutex-detail-content">
+                        <div class="georutex-section-heading">
+                            <h2>Métricas de calidad del software · MCS-01 a MCS-04</h2>
+                            <button type="button"
+                                    class="btn georutex-button-light"
+                                    t-on-click="onRunQualityBenchmarks"
+                                    t-att-disabled="state.qualityRunning">
+                                <i t-attf-class="fa #{state.qualityRunning ? 'fa-spinner fa-spin' : 'fa-play'} me-1"/>
+                                Ejecutar medición
+                            </button>
                         </div>
-
-                        <div class="col-12 col-lg-4">
-                            <div class="card shadow-sm h-100">
-                                <div class="card-header bg-white border-bottom py-3">
-                                    <h6 class="fw-bold text-dark mb-0">
-                                        <i class="fa fa-pie-chart text-danger me-2"/>Incidencias por Tipo
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-container position-relative" style="height: 280px;">
-                                        <canvas t-ref="incidentChartCanvas"/>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Route Comparison Table -->
-                    <div class="card shadow-sm mb-4">
-                        <div class="card-header bg-white border-bottom py-3">
-                            <h6 class="fw-bold text-dark mb-0">
-                                <i class="fa fa-table text-primary me-2"/>Comparativa de Rendimiento por Ruta
-                            </h6>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Ruta</th>
-                                        <th class="text-center">Recorridos</th>
-                                        <th class="text-center">Cumplimiento Bruto</th>
-                                        <th class="text-center">Cumplimiento Ajustado</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
-                                        <t t-foreach="state.charts.route_comparison" t-as="rc" t-key="rc.route_name">
-                                            <tr>
-                                                <td class="fw-bold"><t t-esc="rc.route_name"/></td>
-                                                <td class="text-center"><t t-esc="rc.total_trips"/></td>
-                                                <td class="text-center">
-                                                    <span t-attf-class="badge #{rc.compliance_gross_pct >= 80 ? 'bg-success' : 'bg-warning text-dark'}">
-                                                        <t t-esc="rc.compliance_gross_pct !== null ? rc.compliance_gross_pct + ' %' : 'N/A'"/>
-                                                    </span>
-                                                </td>
-                                                <td class="text-center">
-                                                    <span t-attf-class="badge #{rc.compliance_adj_pct >= 80 ? 'bg-success' : 'bg-secondary'}">
-                                                        <t t-esc="rc.compliance_adj_pct !== null ? rc.compliance_adj_pct + ' %' : 'N/A'"/>
-                                                    </span>
-                                                </td>
-                                            </tr>
+                        <div class="georutex-metric-grid">
+                            <t t-foreach="this.qualityMetricCards" t-as="metric" t-key="metric.id">
+                                <article t-attf-class="georutex-metric-card georutex-tone-#{metric.tone}"
+                                         t-att-title="this.getMetricTooltip(metric.metric)">
+                                    <span class="georutex-metric-topline">
+                                        <span class="georutex-metric-code"><t t-esc="metric.id"/></span>
+                                        <i class="fa fa-info-circle text-muted" aria-hidden="true"/>
+                                    </span>
+                                    <span class="georutex-metric-title"><t t-esc="metric.title"/></span>
+                                    <strong class="georutex-metric-value">
+                                        <t t-esc="metric.metric.display_value || 'N/A'"/>
+                                    </strong>
+                                    <span class="georutex-metric-secondary">
+                                        <t t-esc="metric.metric.is_na ? 'Sin muestra' : (metric.metric.unit || 'Resultado medido')"/>
+                                    </span>
+                                    <span class="georutex-metric-segments" aria-hidden="true">
+                                        <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
+                                            <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
                                         </t>
-                                    </t>
-                                    <t t-else="">
+                                    </span>
+                                    <span class="georutex-metric-meta">
+                                        <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 'N/A'"/></span>
+                                        <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
+                                    </span>
+                                </article>
+                            </t>
+                        </div>
+
+                        <div class="georutex-secondary-grid mt-3">
+                            <article class="georutex-surface-card">
+                                <div class="georutex-card-heading">
+                                    <div>
+                                        <h2>Comparativa por ruta</h2>
+                                        <p>Cumplimiento bruto y ajustado</p>
+                                    </div>
+                                </div>
+                                <table class="georutex-data-table">
+                                    <thead>
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted py-3">Sin rutas evaluadas en el período.</td>
+                                            <th>Ruta</th>
+                                            <th>Recorridos</th>
+                                            <th>Bruto</th>
+                                            <th>Ajustado</th>
                                         </tr>
-                                    </t>
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                        <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
+                                            <t t-foreach="state.charts.route_comparison" t-as="route" t-key="route.route_name">
+                                                <tr>
+                                                    <td><t t-esc="route.route_name"/></td>
+                                                    <td><t t-esc="route.total_trips"/></td>
+                                                    <td><t t-esc="route.compliance_gross_pct !== null ? route.compliance_gross_pct + ' %' : 'N/A'"/></td>
+                                                    <td><t t-esc="route.compliance_adj_pct !== null ? route.compliance_adj_pct + ' %' : 'N/A'"/></td>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                        <t t-else="">
+                                            <tr><td colspan="4" class="text-center">Sin rutas evaluadas en el período.</td></tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </article>
+
+                            <article class="georutex-surface-card">
+                                <div class="georutex-card-heading">
+                                    <div>
+                                        <h2>Incidencias por tipo</h2>
+                                        <p>Registros del período y fuente seleccionados</p>
+                                    </div>
+                                </div>
+                                <t t-if="this.hasIncidentChartData">
+                                    <div class="georutex-chart-area">
+                                        <canvas t-ref="incidentChartCanvas"
+                                                role="img"
+                                                aria-label="Incidencias agrupadas por tipo"/>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="georutex-empty-state">Sin incidencias registradas en este período.</div>
+                                </t>
+                            </article>
                         </div>
                     </div>
-
-                    <!-- Software Quality Benchmarks Section (MCS-01 to MCS-04) -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold text-dark mb-0">
-                            <i class="fa fa-shield text-success me-2"/>Métricas de Calidad del Software (MCS-01 a MCS-04)
-                        </h5>
-                        <button class="btn btn-sm btn-outline-success" t-on-click="onRunQualityBenchmarks" t-att-disabled="state.qualityRunning">
-                            <i t-attf-class="fa #{state.qualityRunning ? 'fa-spinner fa-spin' : 'fa-play'} me-1"/>
-                            Ejecutar Benchmarks de Calidad
-                        </button>
-                    </div>
-
-                    <div class="row g-3 mb-4">
-                        <!-- MCS-01 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 border-start border-4 border-success">
-                                <div class="card-body">
-                                    <span class="badge bg-success mb-2">MCS-01</span>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Integridad Registros GPS</h6>
-                                    <h3 class="fw-bold text-success mb-2"><t t-esc="state.kpis['MCS-01'] ? state.kpis['MCS-01'].display_value : 'N/A'"/></h3>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-01'] ? state.kpis['MCS-01'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MCS-02 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 border-start border-4 border-primary">
-                                <div class="card-body">
-                                    <span class="badge bg-primary mb-2">MCS-02</span>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Sincronización Traccar</h6>
-                                    <h3 class="fw-bold text-primary mb-2"><t t-esc="state.kpis['MCS-02'] ? state.kpis['MCS-02'].display_value : 'N/A'"/></h3>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-02'] ? state.kpis['MCS-02'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MCS-03 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 border-start border-4 border-info">
-                                <div class="card-body">
-                                    <span class="badge bg-info text-white mb-2">MCS-03</span>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Tiempo de Respuesta</h6>
-                                    <h3 class="fw-bold text-info mb-2"><t t-esc="state.kpis['MCS-03'] ? state.kpis['MCS-03'].display_value : 'N/A'"/></h3>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-03'] ? state.kpis['MCS-03'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- MCS-04 -->
-                        <div class="col-12 col-md-6 col-xl-3">
-                            <div class="card shadow-sm h-100 border-start border-4 border-warning">
-                                <div class="card-body">
-                                    <span class="badge bg-warning text-dark mb-2">MCS-04</span>
-                                    <h6 class="card-title fw-bold text-dark mb-1">Detección Incidencias</h6>
-                                    <h3 class="fw-bold text-warning text-dark mb-2"><t t-esc="state.kpis['MCS-04'] ? state.kpis['MCS-04'].display_value : 'N/A'"/></h3>
-                                    <p class="small text-muted mb-0"><t t-esc="state.kpis['MCS-04'] ? state.kpis['MCS-04'].interpretation : ''"/></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </t>
-            </div>
+                </details>
+            </main>
         </div>
     </t>
-
 </templates>
-

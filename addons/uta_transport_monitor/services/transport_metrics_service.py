@@ -310,10 +310,10 @@ class TransportMetricsService(models.AbstractModel):
             m2 = calculate_mt02_punctuality(t_evals)
 
             trend_labels.append(day)
-            trend_gross_compliance.append(m1.get("value") or 0.0)
-            adj_v = m1.get("secondary", {}).get("adjusted_value") or 0.0
+            trend_gross_compliance.append(m1.get("value"))
+            adj_v = m1.get("secondary", {}).get("adjusted_value")
             trend_adj_compliance.append(adj_v)
-            trend_punctuality.append(m2.get("value") or 0.0)
+            trend_punctuality.append(m2.get("value"))
 
         # 2. Incident breakdown by type
         inc_types_count = defaultdict(int)

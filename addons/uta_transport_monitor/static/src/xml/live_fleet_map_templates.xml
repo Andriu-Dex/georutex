@@ -11,8 +11,8 @@
                         <small class="text-muted">
                             Última actualización: <b t-esc="state.lastUpdated"/>
                         </small>
-                        <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.loadFleetData(true)" title="Refrescar posiciones">
-                            <i class="fa fa-sync-alt" t-att-class="state.isLoading ? 'fa-spin' : ''"/>
+                        <button type="button" class="btn btn-sm btn-outline-primary o_georutex_refresh_button" t-on-click="() => this.loadFleetData(true)" title="Refrescar posiciones" aria-label="Actualizar posiciones">
+                            <i class="fa fa-refresh" t-att-class="state.isLoading ? 'fa-spin' : ''"/>
                         </button>
                     </div>
 

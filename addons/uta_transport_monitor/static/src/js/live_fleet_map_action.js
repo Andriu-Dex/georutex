@@ -22,6 +22,7 @@ export class LiveFleetMapAction extends Component {
             isLoading: false,
             autoRefresh: true,
             lastUpdated: "",
+            hasLoadError: false,
         });
 
         onMounted(() => {
@@ -87,12 +88,23 @@ export class LiveFleetMapAction extends Component {
             const data = await this.orm.call("fleet.vehicle", "get_live_fleet_positions", []);
             this.state.vehicles = data || [];
             this.state.lastUpdated = new Date().toLocaleTimeString();
+            this.state.hasLoadError = false;
             this.updateMarkers();
             if (showNotice) {
-                this.notification.add("Datos de flota actualizados correctamente", { type: "info" });
+                this.notification.add("Datos de flota actualizados correctamente", {
+                    type: "info",
+                    sticky: false,
+                });
             }
         } catch (error) {
             console.error("Error loading live fleet data:", error);
+            if (!this.state.hasLoadError) {
+                this.notification.add("No se pudieron cargar las posiciones GPS.", {
+                    type: "danger",
+                    sticky: false,
+                });
+            }
+            this.state.hasLoadError = true;
         } finally {
             this.state.isLoading = false;
         }
@@ -125,18 +137,18 @@ export class LiveFleetMapAction extends Component {
                 className: "custom-div-icon",
                 html: `
                     <div class="georutex-live-bus-marker ${v.freshness}">
-                        <i class="fa fa-bus" style="font-size: 14px;"></i>
+                        <i class="fa fa-bus" style="font-size: 16px;"></i>
                         <div class="georutex-pulse-ring"></div>
                     </div>
                 `,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
+                iconSize: [36, 36],
+                iconAnchor: [18, 18],
             });
 
             const marker = window.L.marker(pos, { icon: busIcon }).addTo(this.map);
             marker.bindPopup(`
-                <div style="font-size: 12px; line-height: 1.4;">
-                    <strong style="font-size: 13px;">${v.name}</strong><br/>
+                <div style="font-size: 15px; line-height: 1.5;">
+                    <strong style="font-size: 17px;">${v.name}</strong><br/>
                     <b>Placa:</b> ${v.license_plate || "S/P"}<br/>
                     <b>Conductor:</b> ${v.driver_name}<br/>
                     <b>Velocidad:</b> ${v.speed} km/h<br/>

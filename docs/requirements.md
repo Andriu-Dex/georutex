@@ -1372,6 +1372,7 @@ georutex/
 │   ├── odoo/                             # Dockerfile de pruebas + odoo.conf sin secretos
 │   ├── traccar/                          # traccar.xml / configuración de receptor
 │   └── cloudflare/                       # solo si se selecciona Tunnel
+├── .dockerignore                         # excluye secretos, evidencia y dependencias locales del contexto
 ├── tests/
 │   ├── unit/                             # Pytest de dominio en entorno con Odoo instalado
 │   ├── integration/                      # pruebas de stack y contratos

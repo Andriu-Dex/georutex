@@ -6,8 +6,13 @@
         <div class="o_georutex_map_container">
             <div class="o_georutex_map_toolbar">
                 <div class="o_georutex_map_stats">
-                    <span class="fw-bold">Mapa Operacional del Recorrido</span>
-                    <t t-if="props.record and props.record.data.source_type == 'real'">
+                    <span class="fw-bold">Ruta planificada</span>
+                    <t t-if="props.record &amp;&amp; !props.record.resId">
+                        <span class="o_georutex_badge o_georutex_badge_preview">
+                            <i class="fa fa-map me-1"/>Vista previa
+                        </span>
+                    </t>
+                    <t t-elif="props.record and props.record.data.source_type == 'real'">
                         <span class="o_georutex_badge o_georutex_badge_real">
                             <i class="fa fa-satellite-dish me-1"/>GPS Real
                         </span>
@@ -33,6 +38,21 @@
                 </div>
             </div>
             <div t-ref="mapContainer" class="o_georutex_map"/>
+        </div>
+    </t>
+
+    <t t-name="uta_transport_monitor.TripFormDrawerHandle" owl="1">
+        <div t-ref="handle"
+             class="o_georutex_trip_drawer_handle"
+             role="slider"
+             tabindex="0"
+             aria-label="Altura del formulario del recorrido"
+             aria-orientation="vertical"
+             aria-valuemin="8"
+             aria-valuemax="88"
+             aria-valuenow="56">
+            <span class="o_georutex_trip_drawer_grip" aria-hidden="true"/>
+            <span class="visually-hidden">Arrastra para plegar o ampliar el formulario</span>
         </div>
     </t>
 

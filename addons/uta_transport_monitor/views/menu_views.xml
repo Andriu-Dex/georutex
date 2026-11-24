@@ -2,7 +2,7 @@
 <odoo>
     <!-- Root Menu: GeoRutex -->
     <menuitem id="menu_georutex_root"
-              name="GeoRutex"
+              name="GeoRutex - UTA"
               web_icon="fleet,static/description/icon.png"
               sequence="10"/>
 

@@ -190,12 +190,12 @@ export class RouteEditorWidget extends Component {
                 markerClass = "georutex-stop-origin";
                 colorHex = "#2E7D32";
                 typeLabel = "Origen / Salida";
-                iconInner = '<i class="fa fa-flag" style="font-size: 11px;"></i>';
+                iconInner = '<i class="fa fa-flag" style="font-size: 14px;"></i>';
             } else if (stop.stop_type === "destination") {
                 markerClass = "georutex-stop-destination";
                 colorHex = "#C62828";
                 typeLabel = "Destino / Llegada";
-                iconInner = '<i class="fa fa-flag-checkered" style="font-size: 11px;"></i>';
+                iconInner = '<i class="fa fa-flag-checkered" style="font-size: 14px;"></i>';
             }
 
             // DivIcon pin
@@ -206,8 +206,8 @@ export class RouteEditorWidget extends Component {
                         <span>${iconInner}</span>
                     </div>
                 `,
-                iconSize: [28, 28],
-                iconAnchor: [14, 14],
+                iconSize: [34, 34],
+                iconAnchor: [17, 17],
             });
 
             const marker = window.L.marker(pos, {
@@ -217,7 +217,7 @@ export class RouteEditorWidget extends Component {
 
             // Popup
             marker.bindPopup(`
-                <div style="min-width: 180px; font-size: 12px; line-height: 1.4;">
+                <div style="min-width: 220px; font-size: 15px; line-height: 1.5;">
                     <strong>#${index + 1} - ${stop.name}</strong><br/>
                     <b>Tipo:</b> ${typeLabel}<br/>
                     <b>Coordenadas:</b> ${stop.latitude.toFixed(5)}, ${stop.longitude.toFixed(5)}<br/>

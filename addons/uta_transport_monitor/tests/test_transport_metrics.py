@@ -6,6 +6,7 @@ Validates metric accuracy, source isolation, filter handling, and idempotency.
 
 import json
 from datetime import datetime, timedelta
+from types import SimpleNamespace
 from odoo.tests.common import TransactionCase
 
 
@@ -282,3 +283,22 @@ class TestTransportMetrics(TransactionCase):
         })
         self.assertEqual(res["summary"]["total_trips"], 1)
         self.assertEqual(res["kpis"]["MT-01"]["denominator"], 1)
+
+    def test_06_chart_preserves_missing_evidence_as_gaps(self):
+        """Scheduled trips without evaluations must not plot fabricated zeroes."""
+        trip = SimpleNamespace(
+            scheduled_start_utc=datetime(2026, 11, 8, 8, 0, 0),
+            last_evaluation_id=False,
+            state="scheduled",
+            actual_start_utc=False,
+            actual_end_utc=False,
+            route_id=False,
+        )
+
+        charts = self.metrics_service._build_chart_data([trip], [])
+        daily = charts["daily_trends"]
+
+        self.assertEqual(daily["labels"], ["2026-11-08"])
+        self.assertEqual(daily["gross_compliance"], [None])
+        self.assertEqual(daily["adjusted_compliance"], [None])
+        self.assertEqual(daily["punctuality"], [None])

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="georutex_auth_brand" name="GeoRutex authentication branding">
+        <section class="georutex-auth-brand" aria-label="GeoRutex">
+            <div class="georutex-brand-content">
+                <header class="georutex-brand-header">
+                    <span class="georutex-brand-mark" aria-hidden="true">
+                        <svg viewBox="0 0 48 48" fill="none">
+                            <circle cx="24" cy="24" r="20" stroke="currentColor" stroke-width="3"/>
+                            <path d="M15 28a9 9 0 0 1 18 0M19 28a5 5 0 0 1 10 0M24 28v.1" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                        </svg>
+                    </span>
+                    <span>
+                        <strong>GeoRutex</strong>
+                        <small>Universidad Técnica de Ambato · Proyecto Integrador</small>
+                    </span>
+                </header>
+
+                <div class="georutex-login-visual">
+                    <img
+                        class="georutex-login-map"
+                        src="/uta_transport_monitor/static/src/img/mapa.webp"
+                        alt="Mapa urbano con rutas y ubicaciones de vehículos"
+                    />
+                    <img
+                        class="georutex-login-phone"
+                        src="/uta_transport_monitor/static/src/img/celular.webp"
+                        alt="Teléfono móvil con la ruta de un bus"
+                    />
+                </div>
+
+                <div class="georutex-brand-message">
+                    <h1>Rastreo y monitoreo de buses universitarios en tiempo real</h1>
+                    <ul>
+                        <li>Rutas y paradas</li>
+                        <li>Seguridad UTA</li>
+                        <li>Alertas al instante</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </template>
+
+    <template id="georutex_login_brand" inherit_id="web.login" name="GeoRutex login">
+        <xpath expr="//form[hasclass('oe_login_form')]" position="before">
+            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
+        </xpath>
+
+        <xpath expr="//label[@for='db']" position="replace">
+            <label for="db" class="col-form-label">Base de datos</label>
+        </xpath>
+        <xpath expr="//a[@href='/web/database/selector']" position="replace">
+            <a role="button" href="/web/database/selector" class="btn btn-secondary">Seleccionar <i class="fa fa-database" role="img" aria-label="Base de datos" title="Base de datos"/></a>
+        </xpath>
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">Correo electrónico</label>
+        </xpath>
+        <xpath expr="//input[@id='login']" position="attributes">
+            <attribute name="placeholder">nombre@uta.edu.ec</attribute>
+        </xpath>
+        <xpath expr="//label[@for='password']" position="replace">
+            <label for="password" class="form-label">Contraseña</label>
+        </xpath>
+        <xpath expr="//input[@id='password']" position="attributes">
+            <attribute name="placeholder">Ingresa tu contraseña</attribute>
+        </xpath>
+        <xpath expr="//form[hasclass('oe_login_form')]//button[@type='submit'][not(@name)]" position="replace">
+            <button type="submit" class="btn btn-primary">INICIAR SESIÓN</button>
+        </xpath>
+    </template>
+
+    <template id="georutex_login_signup_labels" inherit_id="auth_signup.login" name="GeoRutex login links">
+        <xpath expr="//a[@t-if='signup_enabled']" position="replace">
+            <a t-if="signup_enabled" t-attf-href="/web/signup?{{ keep_query() }}">Crear cuenta</a>
+        </xpath>
+        <xpath expr="//a[@t-if='reset_password_enabled']" position="replace">
+            <a t-if="reset_password_enabled" t-attf-href="/web/reset_password?{{ keep_query() }}">¿Olvidaste tu contraseña?</a>
+        </xpath>
+    </template>
+
+    <template id="georutex_login_layout_labels" inherit_id="web.login_layout" name="GeoRutex login layout">
+        <xpath expr="//a[@href='/web/database/manager']" position="replace">
+            <a class="border-end pe-2 me-1" href="/web/database/manager">Administrar bases de datos</a>
+        </xpath>
+    </template>
+
+    <template id="georutex_signup_brand" inherit_id="auth_signup.signup" name="GeoRutex signup">
+        <xpath expr="//form[hasclass('oe_signup_form')]" position="before">
+            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
+        </xpath>
+        <xpath expr="//form[hasclass('oe_signup_form')]//button[@type='submit']" position="replace">
+            <button type="submit" class="btn btn-primary">CREAR CUENTA</button>
+        </xpath>
+        <xpath expr="//form[hasclass('oe_signup_form')]//a[@role='button']" position="replace">
+            <a t-attf-href="/web/login?{{ keep_query() }}" class="btn btn-link btn-sm" role="button">¿Ya tienes una cuenta?</a>
+        </xpath>
+    </template>
+
+    <template id="georutex_signup_field_labels" inherit_id="auth_signup.fields" name="GeoRutex signup field labels">
+        <xpath expr="//label[@for='login']" position="replace">
+            <label for="login" class="form-label">Correo electrónico</label>
+        </xpath>
+        <xpath expr="//label[@for='name']" position="replace">
+            <label for="name" class="form-label">Nombre completo</label>
+        </xpath>
+        <xpath expr="//input[@id='name']" position="attributes">
+            <attribute name="placeholder">Ej. Juan Pérez</attribute>
+        </xpath>
+        <xpath expr="//label[@for='password']" position="replace">
+            <label for="password" class="form-label">Contraseña</label>
+        </xpath>
+        <xpath expr="//label[@for='confirm_password']" position="replace">
+            <label for="confirm_password" class="form-label">Confirmar contraseña</label>
+        </xpath>
+    </template>
+</odoo>

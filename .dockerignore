@@ -1,0 +1,12 @@
+.git
+**/.git
+.env
+.env.*
+!.env.example
+evidence/
+infra/traccar/traccar.xml
+**/node_modules/
+**/.venv/
+**/venv/
+**/__pycache__/
+**/*.py[cod]

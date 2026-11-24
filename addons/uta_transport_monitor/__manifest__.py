@@ -22,6 +22,8 @@ Módulo Odoo 16 Community para:
     "depends": [
         "base",
         "fleet",
+        "web",
+        "auth_signup",
     ],
     "data": [
         "security/groups.xml",
@@ -37,17 +39,25 @@ Módulo Odoo 16 Community para:
         "views/transport_trip_views.xml",
         "views/fleet_vehicle_views.xml",
         "views/menu_views.xml",
+        "views/login_templates.xml",
         "data/ir_cron_data.xml",
     ],
     "demo": [
         "demo/transport_demo_data.xml",
     ],
     "assets": {
+        "web.assets_frontend": [
+            "uta_transport_monitor/static/src/css/login.css",
+        ],
         "web.assets_backend": [
             "uta_transport_monitor/static/lib/leaflet/leaflet.css",
             "uta_transport_monitor/static/lib/leaflet/leaflet.js",
             "uta_transport_monitor/static/src/css/transport_map.css",
             "uta_transport_monitor/static/src/css/transport_dashboard.css",
+            "uta_transport_monitor/static/src/css/custom_georutex.css",
+            "web/static/lib/Chart/Chart.js",
+            "uta_transport_monitor/static/src/js/custom_georutex_nav.js",
+            "uta_transport_monitor/static/src/js/custom_georutex_forms.js",
             "uta_transport_monitor/static/src/js/trip_map_widget.js",
             "uta_transport_monitor/static/src/js/route_editor_widget.js",
             "uta_transport_monitor/static/src/js/live_fleet_map_action.js",

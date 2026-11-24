@@ -92,7 +92,7 @@
         <field name="name">transport.trip.form</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <form string="Recorrido Operacional">
+            <form string="Recorrido Operacional" class="o_georutex_trip_form">
                 <header>
                     <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
                     <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}"/>
@@ -104,6 +104,10 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
                 </header>
                 <sheet>
+                    <div class="o_georutex_trip_map_backdrop">
+                        <field name="id" widget="trip_map_widget" nolabel="1"/>
+                    </div>
+                    <field name="id" widget="trip_form_drawer_handle" nolabel="1"/>
                     <field name="is_schedule_overdue" invisible="1"/>
                     <div class="alert alert-warning mb-3" role="alert" attrs="{'invisible': [('is_schedule_overdue', '=', False)]}">
                         <i class="fa fa-exclamation-triangle me-2" title="Alerta"/>
@@ -167,9 +171,6 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Mapa del Recorrido" name="map_page">
-                            <field name="id" widget="trip_map_widget" nolabel="1"/>
-                        </page>
                         <page string="Paradas y Controles Programados" name="stops_page">
                             <field name="stop_visit_ids" readonly="1">
                                 <tree string="Visitas a Puntos de Control">

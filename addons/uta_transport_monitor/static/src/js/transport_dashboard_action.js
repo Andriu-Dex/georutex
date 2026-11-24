@@ -14,12 +14,20 @@ export class TransportDashboardAction extends Component {
 
         this.trendChartRef = useRef("trendChartCanvas");
         this.incidentChartRef = useRef("incidentChartCanvas");
+        this.mapPreviewRef = useRef("mapPreviewCanvas");
 
         this.trendChart = null;
         this.incidentChart = null;
+        this.mapPreview = null;
+        this.mapPreviewMarkers = null;
+        this.mapPreviewHasInitialView = false;
+        this.mapRefreshTimer = null;
+        this.chartRenderTimer = null;
 
         this.state = useState({
             isLoading: true,
+            filtersOpen: false,
+            activePreset: "all",
             filters: {
                 date_from: "",
                 date_to: "",
@@ -29,6 +37,9 @@ export class TransportDashboardAction extends Component {
             },
             availableRoutes: [],
             availableVehicles: [],
+            liveMapStatus: "loading",
+            livePositionCount: 0,
+            liveMapError: "",
             kpis: {},
             charts: {},
             summary: {},
@@ -36,13 +47,245 @@ export class TransportDashboardAction extends Component {
         });
 
         onMounted(async () => {
-            await this.loadFilterOptions();
-            await this.loadDashboardData();
+            this.initMapPreview();
+            await Promise.all([
+                this.loadFilterOptions(),
+                this.loadDashboardData(),
+                this.loadLiveMapPositions(),
+            ]);
+            this.mapRefreshTimer = setInterval(() => {
+                this.loadLiveMapPositions();
+            }, 30000);
         });
 
         onWillUnmount(() => {
+            if (this.mapRefreshTimer) {
+                clearInterval(this.mapRefreshTimer);
+                this.mapRefreshTimer = null;
+            }
+            if (this.chartRenderTimer) {
+                clearTimeout(this.chartRenderTimer);
+                this.chartRenderTimer = null;
+            }
             this.destroyCharts();
+            if (this.mapPreview) {
+                this.mapPreview.remove();
+                this.mapPreview = null;
+                this.mapPreviewMarkers = null;
+            }
         });
+    }
+
+    get hasDailyTrendData() {
+        const trends = this.state.charts.daily_trends;
+        if (!trends || !Array.isArray(trends.labels) || !trends.labels.length) {
+            return false;
+        }
+        return [trends.gross_compliance, trends.punctuality].some(
+            (series) => Array.isArray(series) && series.some((value) => value !== null && value !== undefined)
+        );
+    }
+
+    get hasIncidentChartData() {
+        const incidents = this.state.charts.incidents_by_type;
+        return Boolean(
+            incidents &&
+            Array.isArray(incidents.labels) &&
+            Array.isArray(incidents.counts) &&
+            incidents.counts.some((count) => count > 0)
+        );
+    }
+
+    get transportMetricCards() {
+        return [
+            { id: "MT-01", title: "Cumplimiento de rutas", tone: "blue" },
+            { id: "MT-02", title: "Puntualidad", tone: "green" },
+            { id: "MT-03", title: "Retraso promedio", tone: "amber" },
+            { id: "MT-04", title: "Paradas visitadas", tone: "blue" },
+            { id: "MT-05", title: "Desviación de ruta", tone: "red" },
+            { id: "MT-06", title: "Diferencia de distancia", tone: "violet" },
+            { id: "MT-07", title: "Duración promedio", tone: "blue" },
+            { id: "MT-08", title: "Frecuencia de incidencias", tone: "red" },
+        ].map((item) => ({
+            ...item,
+            metric: this.state.kpis[item.id] || {},
+        }));
+    }
+
+    get qualityMetricCards() {
+        return [
+            { id: "MCS-01", title: "Integridad GPS", tone: "green" },
+            { id: "MCS-02", title: "Sincronización Traccar", tone: "blue" },
+            { id: "MCS-03", title: "Tiempo de respuesta", tone: "violet" },
+            { id: "MCS-04", title: "Detección de incidencias", tone: "amber" },
+        ].map((item) => ({
+            ...item,
+            metric: this.state.kpis[item.id] || {},
+        }));
+    }
+
+    initMapPreview() {
+        if (!this.mapPreviewRef.el || typeof window.L === "undefined") {
+            this.state.liveMapStatus = "error";
+            this.state.liveMapError = "El mapa no está disponible en este momento.";
+            this.notification.add(this.state.liveMapError, {
+                type: "danger",
+                sticky: false,
+            });
+            return;
+        }
+
+        this.mapPreview = window.L.map(this.mapPreviewRef.el, {
+            zoomControl: false,
+            attributionControl: true,
+        }).setView([-1.249, -78.625], 12);
+        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        }).addTo(this.mapPreview);
+        this.mapPreviewMarkers = window.L.layerGroup().addTo(this.mapPreview);
+        window.setTimeout(() => {
+            if (this.mapPreview) {
+                this.mapPreview.invalidateSize();
+            }
+        }, 150);
+    }
+
+    async loadLiveMapPositions() {
+        if (!this.mapPreview || !this.mapPreviewMarkers) {
+            return;
+        }
+        try {
+            const vehicles = await this.orm.call(
+                "fleet.vehicle",
+                "get_live_fleet_positions",
+                []
+            );
+            const positions = (vehicles || []).filter((vehicle) => {
+                const latitude = Number(vehicle.latitude);
+                const longitude = Number(vehicle.longitude);
+                return vehicle.has_coordinates &&
+                    Number.isFinite(latitude) &&
+                    Number.isFinite(longitude) &&
+                    latitude >= -90 && latitude <= 90 &&
+                    longitude >= -180 && longitude <= 180;
+            });
+
+            this.mapPreviewMarkers.clearLayers();
+            positions.forEach((vehicle) => {
+                const marker = window.L.marker(
+                    [Number(vehicle.latitude), Number(vehicle.longitude)],
+                    {
+                        icon: window.L.divIcon({
+                            className: "georutex-preview-marker",
+                            html: '<span class="fa fa-bus" aria-hidden="true"></span>',
+                            iconSize: [34, 34],
+                            iconAnchor: [17, 17],
+                        }),
+                    }
+                ).addTo(this.mapPreviewMarkers);
+                const label = document.createElement("span");
+                label.textContent = vehicle.name || "Vehículo UTA";
+                marker.bindTooltip(label);
+            });
+
+            this.state.livePositionCount = positions.length;
+            this.state.liveMapStatus = positions.length ? "ready" : "empty";
+            this.state.liveMapError = "";
+            if (positions.length && !this.mapPreviewHasInitialView) {
+                const bounds = window.L.latLngBounds(
+                    positions.map((vehicle) => [
+                        Number(vehicle.latitude),
+                        Number(vehicle.longitude),
+                    ])
+                );
+                this.mapPreview.fitBounds(bounds, { padding: [24, 24], maxZoom: 14 });
+                this.mapPreviewHasInitialView = true;
+            }
+        } catch (err) {
+            console.error("Error loading dashboard map positions:", err);
+            if (this.state.liveMapStatus !== "error") {
+                this.notification.add("No se pudieron actualizar las posiciones GPS.", {
+                    type: "danger",
+                    sticky: false,
+                });
+            }
+            this.state.liveMapStatus = "error";
+            this.state.liveMapError = "No se pudieron actualizar las posiciones GPS.";
+        }
+    }
+
+    getMetricTooltip(metric) {
+        if (!metric) {
+            return "Sin información de la métrica.";
+        }
+        const details = [];
+        if (metric.formula) details.push(`Fórmula: ${metric.formula}`);
+        if (metric.unit) details.push(`Unidad: ${metric.unit}`);
+        if (metric.period) details.push(`Período: ${metric.period}`);
+        if (metric.source_type) details.push(`Fuente: ${metric.source_type}`);
+        if (metric.sample_size !== undefined) details.push(`Muestra n: ${metric.sample_size}`);
+        if (metric.numerator !== undefined) details.push(`Numerador: ${metric.numerator}`);
+        if (metric.denominator !== undefined) details.push(`Denominador: ${metric.denominator}`);
+        if (metric.rule_version) details.push(`Versión de regla: ${metric.rule_version}`);
+        if (metric.na_reason) details.push(`Sin resultado: ${metric.na_reason}`);
+        if (metric.interpretation) details.push(`Interpretación: ${metric.interpretation}`);
+        return details.join("\n");
+    }
+
+    getMetricSecondary(metricId, metric) {
+        const secondary = metric && metric.secondary ? metric.secondary : {};
+        if (metric && metric.is_na && metricId !== "MT-08") {
+            return "";
+        }
+        const value = (key) => (
+            secondary[key] === null || secondary[key] === undefined
+                ? "N/A"
+                : secondary[key]
+        );
+        switch (metricId) {
+            case "MT-01":
+                return secondary.adjusted_display ? `Ajustado ${secondary.adjusted_display}` : "";
+            case "MT-02":
+                return `Salida ${value("departure_punctuality_pct")}% · llegada ${value("arrival_punctuality_pct")}%`;
+            case "MT-03":
+                return `En tardíos: ${value("conditional_avg_delay_min")} min`;
+            case "MT-04":
+                return `Visitadas ${value("visited_count")} · omitidas ${value("missed_count")}`;
+            case "MT-05":
+                return `Viajes desviados: ${value("deviated_trips_pct")}%`;
+            case "MT-06":
+                return `MAE ${value("mae_km")} km`;
+            case "MT-07":
+                return `Plan ${value("planned_avg_duration_min")} min`;
+            case "MT-08":
+                return `${value("total_incident_count")} incidencias`;
+            default:
+                return "";
+        }
+    }
+
+    getMetricSource(metric) {
+        if (!metric || !metric.source_type) {
+            return "Fuente no disponible";
+        }
+        const sourceLabels = {
+            real: "Real",
+            simulated: "Simulado",
+            combined: "Combinado",
+        };
+        return sourceLabels[metric.source_type] || metric.source_type;
+    }
+
+    getMetricSegmentClass(metric, segment) {
+        if (!metric || metric.is_na || metric.value === null || metric.value === undefined) {
+            return "";
+        }
+        if (metric.unit === "%") {
+            const percentage = Math.max(0, Math.min(100, Number(metric.value) || 0));
+            return segment <= Math.ceil(percentage / 20) ? "is-filled" : "";
+        }
+        return "is-filled";
     }
 
     async loadFilterOptions() {
@@ -63,6 +306,10 @@ export class TransportDashboardAction extends Component {
             this.state.availableVehicles = vehicles;
         } catch (err) {
             console.error("Error loading filter options:", err);
+            this.notification.add("No se pudieron cargar las opciones de filtro.", {
+                type: "warning",
+                sticky: false,
+            });
         }
     }
 
@@ -79,14 +326,18 @@ export class TransportDashboardAction extends Component {
             this.state.charts = data.charts || {};
             this.state.summary = data.summary || {};
 
-            // Render charts next tick after DOM update
-            setTimeout(() => {
+            if (this.chartRenderTimer) {
+                clearTimeout(this.chartRenderTimer);
+            }
+            this.chartRenderTimer = setTimeout(() => {
+                this.chartRenderTimer = null;
                 this.renderCharts();
             }, 50);
         } catch (err) {
             console.error("Error loading dashboard metrics:", err);
             this.notification.add("Error al cargar métricas del panel.", {
                 type: "danger",
+                sticky: false,
             });
         } finally {
             this.state.isLoading = false;
@@ -111,37 +362,34 @@ export class TransportDashboardAction extends Component {
             return;
         }
 
-        // 1. Daily Trends Chart (Lines)
-        if (this.trendChartRef.el && this.state.charts.daily_trends) {
+        if (this.trendChartRef.el && this.hasDailyTrendData) {
             const trends = this.state.charts.daily_trends;
             const ctx = this.trendChartRef.el.getContext("2d");
             this.trendChart = new window.Chart(ctx, {
                 type: "line",
                 data: {
-                    labels: trends.labels.length ? trends.labels : ["Sin datos"],
+                    labels: trends.labels,
                     datasets: [
                         {
-                            label: "Cumplimiento Bruto (%)",
-                            data: trends.gross_compliance.length ? trends.gross_compliance : [0],
-                            borderColor: "#0288D1",
-                            backgroundColor: "rgba(2, 136, 209, 0.1)",
+                            label: "Cumplimiento de rutas",
+                            data: trends.gross_compliance,
+                            borderColor: "#243d70",
+                            backgroundColor: "rgba(29, 78, 216, 0.08)",
+                            pointBackgroundColor: "#243d70",
+                            pointRadius: 3,
                             fill: true,
-                            tension: 0.3,
+                            lineTension: 0.35,
+                            spanGaps: false,
                         },
                         {
-                            label: "Cumplimiento Ajustado (%)",
-                            data: trends.adjusted_compliance.length ? trends.adjusted_compliance : [0],
-                            borderColor: "#2E7D32",
+                            label: "Puntualidad",
+                            data: trends.punctuality,
+                            borderColor: "#246c38",
                             backgroundColor: "transparent",
-                            borderDash: [5, 5],
-                            tension: 0.3,
-                        },
-                        {
-                            label: "Puntualidad de Viajes (%)",
-                            data: trends.punctuality.length ? trends.punctuality : [0],
-                            borderColor: "#E65100",
-                            backgroundColor: "transparent",
-                            tension: 0.3,
+                            pointBackgroundColor: "#246c38",
+                            pointRadius: 3,
+                            lineTension: 0.35,
+                            spanGaps: false,
                         },
                     ],
                 },
@@ -149,57 +397,113 @@ export class TransportDashboardAction extends Component {
                     responsive: true,
                     maintainAspectRatio: false,
                     scales: {
-                        y: {
-                            min: 0,
-                            max: 100,
-                            ticks: { callback: (val) => val + "%" },
-                        },
+                        xAxes: [{
+                            ticks: {
+                                fontSize: 13,
+                                fontColor: "#64748b",
+                            },
+                        }],
+                        yAxes: [{
+                            ticks: {
+                                min: 0,
+                                max: 100,
+                                fontSize: 13,
+                                fontColor: "#64748b",
+                                callback: (val) => val + "%",
+                            },
+                            scaleLabel: {
+                                display: true,
+                                labelString: "Porcentaje",
+                            },
+                        }],
                     },
-                    plugins: {
-                        legend: { position: "top" },
+                    legend: {
+                        position: "top",
+                        labels: { usePointStyle: true, boxWidth: 10, fontSize: 14 },
+                    },
+                    tooltips: {
+                        mode: "index",
+                        intersect: false,
+                        titleFontSize: 14,
+                        bodyFontSize: 14,
+                        callbacks: {
+                            label: (item, chartData) => {
+                                const label = chartData.datasets[item.datasetIndex].label || "";
+                                return item.yLabel === null || item.yLabel === undefined
+                                    ? `${label}: Sin muestra`
+                                    : `${label}: ${item.yLabel}%`;
+                            },
+                        },
                     },
                 },
             });
         }
 
-        // 2. Incidents by Type Chart (Doughnut / Bar)
-        if (this.incidentChartRef.el && this.state.charts.incidents_by_type) {
+        if (this.incidentChartRef.el && this.hasIncidentChartData) {
             const inc = this.state.charts.incidents_by_type;
             const ctx = this.incidentChartRef.el.getContext("2d");
-            const hasData = inc.counts && inc.counts.some((c) => c > 0);
-
-            const labels = hasData ? inc.labels : ["Sin incidencias"];
-            const counts = hasData ? inc.counts : [0];
             const colors = [
-                "#D32F2F", "#F57C00", "#7B1FA2", "#1976D2",
-                "#388E3C", "#0288D1", "#C2185B", "#795548"
+                "#dc2626", "#f59e0b", "#7c3aed", "#243d70",
+                "#246c38", "#0ea5e9", "#db2777", "#78716c",
             ];
 
             this.incidentChart = new window.Chart(ctx, {
                 type: "doughnut",
                 data: {
-                    labels: labels,
+                    labels: inc.labels,
                     datasets: [
                         {
-                            data: counts,
-                            backgroundColor: colors.slice(0, labels.length),
+                            data: inc.counts,
+                            backgroundColor: colors.slice(0, inc.labels.length),
                         },
                     ],
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: "right" },
+                    legend: {
+                        position: "right",
+                        labels: { usePointStyle: true, boxWidth: 10, fontSize: 13 },
                     },
                 },
             });
         }
     }
 
+    onDetailsToggle() {
+        window.setTimeout(() => {
+            if (this.incidentChart) {
+                this.incidentChart.resize();
+            }
+        }, 0);
+    }
+
     async onSourceTypeChange(type) {
         this.state.filters.source_type = type;
         await this.loadDashboardData();
+    }
+
+    toggleFilterPanel() {
+        this.state.filtersOpen = !this.state.filtersOpen;
+    }
+
+    async refreshDashboard() {
+        await Promise.all([
+            this.loadDashboardData(),
+            this.loadLiveMapPositions(),
+        ]);
+    }
+
+    openLiveMap() {
+        this.actionService.doAction("uta_transport_monitor.action_transport_live_fleet_map");
+    }
+
+    openMetric(metricId) {
+        if (metricId === "MT-08") {
+            this.openIncidentsList();
+            return;
+        }
+        this.openTripsList(metricId === "MT-01" ? "compliant" : "all");
     }
 
     async setDatePreset(preset) {
@@ -229,11 +533,15 @@ export class TransportDashboardAction extends Component {
             this.state.filters.date_from = "";
             this.state.filters.date_to = "";
         }
+        this.state.activePreset = preset;
+        this.state.filtersOpen = false;
         await this.loadDashboardData();
     }
 
     async onFilterSubmit(e) {
         if (e) e.preventDefault();
+        this.state.activePreset = "";
+        this.state.filtersOpen = false;
         await this.loadDashboardData();
     }
 
@@ -243,6 +551,8 @@ export class TransportDashboardAction extends Component {
         this.state.filters.route_id = "";
         this.state.filters.vehicle_id = "";
         this.state.filters.source_type = "combined";
+        this.state.activePreset = "all";
+        this.state.filtersOpen = false;
         await this.loadDashboardData();
     }
 
@@ -260,11 +570,13 @@ export class TransportDashboardAction extends Component {
             this.state.kpis["MCS-04"] = qData["MCS-04"];
             this.notification.add("Benchmarks de calidad ejecutados con éxito.", {
                 type: "success",
+                sticky: false,
             });
         } catch (err) {
             console.error("Error running quality benchmarks:", err);
             this.notification.add("Error al ejecutar benchmarks de calidad.", {
                 type: "danger",
+                sticky: false,
             });
         } finally {
             this.state.qualityRunning = false;
