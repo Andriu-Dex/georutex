@@ -6,6 +6,14 @@
               web_icon="uta_transport_monitor,static/description/icon.png"
               sequence="1"/>
 
+    <!-- 0. Inicio del Administrador (Centro de Control GeoRutex) -->
+    <menuitem id="menu_georutex_admin_home"
+              name="Inicio"
+              parent="menu_georutex_root"
+              action="action_transport_admin_home"
+              groups="uta_transport_monitor.group_transport_manager"
+              sequence="2"/>
+
     <!-- 0a. Inicio del Conductor (Home personalizado GeoRutex) -->
     <menuitem id="menu_georutex_driver_home"
               name="Inicio"

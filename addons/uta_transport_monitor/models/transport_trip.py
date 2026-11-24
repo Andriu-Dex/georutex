@@ -6,6 +6,7 @@ import zoneinfo
 from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from .transport_route_version import format_duration_spanish
+from ..domain.geo import haversine_distance, is_valid_coordinate
 
 
 class TransportTrip(models.Model):
@@ -1030,7 +1031,7 @@ class TransportTrip(models.Model):
                 "incident_count": trip.incident_count,
             })
 
-        # Own vehicles (record-rule filtered)
+        # Own vehicles (record-rule filtered) with real GPS coordinates & speed
         vehicles = self.env["fleet.vehicle"].search(
             [("active", "=", True)], limit=5
         )
@@ -1048,7 +1049,13 @@ class TransportTrip(models.Model):
                     veh.gps_freshness_state, "Sin datos"
                 ),
                 "last_gps_time_local": veh.last_gps_time_local or "Sin registro",
-                "speed": veh.last_gps_speed or 0.0,
+                "speed": round(float(veh.last_gps_speed or 0.0), 1),
+                "has_speed": bool(veh.last_gps_fix_time),
+                "latitude": veh.last_gps_latitude or 0.0,
+                "longitude": veh.last_gps_longitude or 0.0,
+                "has_coordinates": bool(
+                    veh.last_gps_latitude and veh.last_gps_longitude
+                ),
                 "is_simulated": veh.is_simulated,
             })
 
@@ -1089,6 +1096,178 @@ class TransportTrip(models.Model):
             f"{months_es[now_ec.month]} de {now_ec.year}"
         )
 
+        # Featured trip (active in_progress or next scheduled) with real telemetry & map data
+        featured = (
+            all_trips.filtered(lambda t: t.state == "in_progress")[:1]
+            or all_trips.filtered(lambda t: t.state == "scheduled")[:1]
+            or all_trips[:1]
+        )
+        featured_payload = False
+        if featured:
+            trip = featured[0]
+            # Map stop visits using real transport.stop.visit fields (route_stop_id, first_arrival_utc, status)
+            visits_by_stop = {
+                v.route_stop_id.id: v for v in trip.stop_visit_ids if v.route_stop_id
+            }
+            stops_list = []
+            visited_count = 0
+            next_stop = None
+            raw_stops = (
+                trip.route_version_id.stop_ids.sorted(
+                    key=lambda s: (s.sequence, s.id)
+                )
+                if trip.route_version_id
+                else self.env["transport.route.stop"]
+            )
+            for idx, st in enumerate(raw_stops, start=1):
+                visit = visits_by_stop.get(st.id)
+                is_visited = bool(
+                    visit and (visit.first_arrival_utc or visit.status in ("on_time", "late"))
+                )
+                if is_visited:
+                    visited_count += 1
+                stop_entry = {
+                    "id": st.id,
+                    "order": idx,
+                    "name": st.name,
+                    "stop_type": st.stop_type,
+                    "latitude": st.latitude or 0.0,
+                    "longitude": st.longitude or 0.0,
+                    "has_coords": bool(st.latitude and st.longitude),
+                    "visited": is_visited,
+                    "status": visit.status if visit else "pending",
+                    "delay_s": visit.delay_s if visit else 0,
+                    "scheduled_local": (
+                        _fmt_ec(visit.scheduled_at_utc) if visit and visit.scheduled_at_utc else ""
+                    ),
+                    "arrival_local": (
+                        _fmt_ec(visit.first_arrival_utc) if visit and visit.first_arrival_utc else ""
+                    ),
+                }
+                if not is_visited and next_stop is None:
+                    next_stop = stop_entry
+                stops_list.append(stop_entry)
+
+            total_stops = len(stops_list)
+            remaining_stops = max(0, total_stops - visited_count)
+            progress_pct = (
+                int(round((visited_count / total_stops) * 100))
+                if total_stops
+                else (100 if trip.state == "completed" else 0)
+            )
+
+            # Real distance traveled in km (from actual_distance_m or haversine over position_ids)
+            distance_km = None
+            if trip.actual_distance_m and trip.actual_distance_m > 0:
+                distance_km = round(trip.actual_distance_m / 1000.0, 2)
+            elif len(trip.position_ids) >= 2:
+                pts = trip.position_ids.sorted(key=lambda p: (p.fix_time, p.id))
+                total_m = 0.0
+                prev_pt = None
+                for pt in pts:
+                    if is_valid_coordinate(pt.latitude, pt.longitude):
+                        if prev_pt is not None:
+                            total_m += haversine_distance(
+                                prev_pt.latitude, prev_pt.longitude,
+                                pt.latitude, pt.longitude,
+                            )
+                        prev_pt = pt
+                if total_m > 0:
+                    distance_km = round(total_m / 1000.0, 2)
+
+            # Real elapsed time from actual_start_utc / manual_start_utc
+            start_ref = trip.actual_start_utc or trip.manual_start_utc
+            end_ref = trip.actual_end_utc or trip.manual_end_utc
+            if start_ref:
+                ref_end_dt = end_ref or fields.Datetime.now()
+                elapsed_sec = max(0, int((ref_end_dt - start_ref).total_seconds()))
+                hrs, rem = divmod(elapsed_sec, 3600)
+                mins = rem // 60
+                elapsed_display = f"{hrs}h {mins}m" if hrs else f"{mins} min"
+            else:
+                elapsed_display = "Sin iniciar"
+
+            # Real punctuality indicator from evaluation or observed stop delays
+            eval_labels = dict(self._fields["evaluation_status"].selection)
+            if trip.evaluation_status and trip.evaluation_status != "unevaluated":
+                punctuality_label = eval_labels.get(trip.evaluation_status, "Sin evaluar")
+                punctuality_tone = (
+                    "green" if trip.evaluation_status == "compliant"
+                    else ("red" if trip.evaluation_status == "non_compliant" else "amber")
+                )
+            else:
+                delays = [s["delay_s"] for s in stops_list if s["visited"] and s["delay_s"] is not None]
+                if delays:
+                    max_delay_min = int(round(max(delays) / 60.0))
+                    punctuality_label = (
+                        "Puntual" if max_delay_min <= 2 else f"+{max_delay_min} min retraso"
+                    )
+                    punctuality_tone = "green" if max_delay_min <= 2 else "amber"
+                else:
+                    punctuality_label = "Sin evaluar"
+                    punctuality_tone = "muted"
+
+            # Real reference polyline from route_version_id
+            ref_polyline = []
+            if trip.route_version_id and trip.route_version_id.reference_polyline:
+                try:
+                    raw_poly = json.loads(trip.route_version_id.reference_polyline)
+                    coords = (
+                        raw_poly.get("coordinates")
+                        if isinstance(raw_poly, dict) and raw_poly.get("type") == "LineString"
+                        else raw_poly
+                    )
+                    if isinstance(coords, list):
+                        for pt in coords:
+                            if isinstance(pt, (list, tuple)) and len(pt) >= 2:
+                                ref_polyline.append([pt[1], pt[0]])
+                except Exception:
+                    ref_polyline = []
+
+            veh = trip.vehicle_id
+            featured_payload = {
+                "id": trip.id,
+                "name": trip.name,
+                "route_name": trip.route_id.name if trip.route_id else "Sin ruta",
+                "route_code": trip.route_id.code if trip.route_id else "",
+                "origin_name": trip.route_id.origin_name if trip.route_id else "",
+                "destination_name": (
+                    trip.route_id.destination_name if trip.route_id else ""
+                ),
+                "vehicle_name": veh.name if veh else "Sin vehículo",
+                "license_plate": veh.license_plate if veh else "",
+                "vehicle_speed_display": (
+                    f"{round(float(veh.last_gps_speed or 0.0), 1)} km/h"
+                    if veh and veh.last_gps_fix_time
+                    else "N/A"
+                ),
+                "vehicle_lat": veh.last_gps_latitude if veh and veh.last_gps_latitude else 0.0,
+                "vehicle_lon": veh.last_gps_longitude if veh and veh.last_gps_longitude else 0.0,
+                "vehicle_has_coords": bool(veh and veh.last_gps_latitude and veh.last_gps_longitude),
+                "vehicle_freshness": veh.gps_freshness_state if veh else "no_data",
+                "scheduled_start_local": _fmt_ec(trip.scheduled_start_utc),
+                "scheduled_end_local": _fmt_ec(trip.scheduled_end_utc),
+                "state": trip.state,
+                "state_label": state_labels.get(trip.state, trip.state),
+                "source_type": trip.source_type,
+                "position_count": trip.position_count,
+                "incident_count": trip.incident_count,
+                "stops": stops_list,
+                "next_stop_name": next_stop["name"] if next_stop else ("Recorrido completo" if total_stops else "Sin paradas"),
+                "next_stop_order": next_stop["order"] if next_stop else total_stops,
+                "visited_stops": visited_count,
+                "remaining_stops": remaining_stops,
+                "total_stops": total_stops,
+                "progress_pct": progress_pct,
+                "distance_display": f"{distance_km} km" if distance_km is not None else "N/A",
+                "elapsed_display": elapsed_display,
+                "punctuality_label": punctuality_label,
+                "punctuality_tone": punctuality_tone,
+                "reference_polyline": ref_polyline,
+                "can_start": trip.state in ("draft", "scheduled"),
+                "can_complete": trip.state == "in_progress",
+            }
+
         return {
             "driver_name": user.name,
             "driver_email": user.email or user.login,
@@ -1109,9 +1288,267 @@ class TransportTrip(models.Model):
                 ),
                 "total_incidents": len(all_incidents),
             },
+            "featured_trip": featured_payload,
             "vehicles": vehicles_payload,
             "trips": trips_payload,
             "incidents": incidents_payload,
+        }
+
+    @api.model
+    def action_driver_transition_trip(self, trip_id, target_action):
+        """Allow an assigned driver (or manager) to start/complete their own trip safely."""
+        trip = self.browse(int(trip_id)).exists()
+        if not trip:
+            raise UserError("El recorrido seleccionado no existe.")
+        user = self.env.user
+        is_manager = user.has_group("uta_transport_monitor.group_transport_manager")
+        is_owner = (
+            trip.driver_user_id.id == user.id
+            or (trip.driver_id and trip.driver_id.id == user.partner_id.id)
+        )
+        if not (is_manager or is_owner):
+            raise UserError("No tienes permisos para cambiar el estado de este recorrido.")
+        if target_action == "start":
+            trip.sudo().action_start()
+        elif target_action == "complete":
+            trip.sudo().action_complete()
+        else:
+            raise UserError("Acción de recorrido no soportada.")
+        return {"ok": True, "state": trip.state}
+
+    @api.model
+    def get_admin_home_data(self):
+        """Return real fleet, map, KPI, route, trip, incident, and Traccar data for Admin Ops Center."""
+        user = self.env.user
+        if not (
+            user.has_group("base.group_system")
+            or user.has_group("uta_transport_monitor.group_transport_manager")
+            or user.has_group("uta_transport_monitor.group_transport_analyst")
+        ):
+            raise UserError("Acceso restringido al centro de control de flota.")
+
+        tz_ec = zoneinfo.ZoneInfo("America/Guayaquil")
+        now_utc = fields.Datetime.now().replace(tzinfo=timezone.utc)
+        now_ec = now_utc.astimezone(tz_ec)
+
+        def _fmt_ec(dt_val):
+            if not dt_val:
+                return "Sin horario"
+            return (
+                dt_val.replace(tzinfo=timezone.utc)
+                .astimezone(tz_ec)
+                .strftime("%d/%m/%Y %H:%M")
+            )
+
+        Vehicle = self.env["fleet.vehicle"]
+        Route = self.env["transport.route"]
+        Stop = self.env["transport.route.stop"]
+        Incident = self.env["transport.incident"]
+        Position = self.env["transport.vehicle.position"]
+
+        all_vehicles = Vehicle.search([("active", "=", True)])
+        tracked_vehicles = all_vehicles.filtered(lambda v: v.gps_tracking_enabled)
+        online_vehicles = tracked_vehicles.filtered(
+            lambda v: v.gps_freshness_state in ("online", "fresh")
+        )
+        stale_vehicles = tracked_vehicles.filtered(
+            lambda v: v.gps_freshness_state == "stale"
+        )
+        offline_vehicles = tracked_vehicles.filtered(
+            lambda v: v.gps_freshness_state not in ("online", "fresh", "stale")
+        )
+        simulated_vehicles = all_vehicles.filtered(lambda v: v.is_simulated)
+
+        active_routes = Route.search([("active", "=", True)], order="code asc, name asc")
+        stops_total = Stop.search_count([])
+
+        today_start_ec = now_ec.replace(hour=0, minute=0, second=0, microsecond=0)
+        today_start_utc = today_start_ec.astimezone(timezone.utc).replace(tzinfo=None)
+        trips_today = self.search(
+            [("scheduled_start_utc", ">=", today_start_utc)]
+        )
+        active_trips = self.search([("state", "in", ("scheduled", "in_progress"))])
+        recent_trips = self.search([], order="scheduled_start_utc desc, id desc", limit=20)
+
+        open_incidents = Incident.search(
+            [("state", "in", ("pending", "reported", "under_review"))]
+        )
+        critical_incidents = open_incidents.filtered(
+            lambda i: i.severity in ("critical", "high")
+        )
+        recent_incidents = Incident.search([], order="timestamp_utc desc, id desc", limit=10)
+
+        total_positions = Position.search_count([])
+        last_pos = Position.search([], order="fix_time desc, id desc", limit=1)
+
+        # Real MT-01, MT-02 & daily trend metrics from transport.metrics.service
+        mt01 = {"display_value": "N/A", "value": None, "sample_size": 0, "is_na": True}
+        mt02 = {"display_value": "N/A", "value": None, "sample_size": 0, "is_na": True}
+        daily_trends = {"labels": [], "gross_compliance": [], "punctuality": []}
+        try:
+            metrics_payload = self.env["transport.metrics.service"].get_dashboard_metrics(
+                {"source_type": "combined"}
+            )
+            kpis_map = metrics_payload.get("kpis") or {}
+            if "MT-01" in kpis_map:
+                mt01 = kpis_map["MT-01"]
+            if "MT-02" in kpis_map:
+                mt02 = kpis_map["MT-02"]
+            charts_map = metrics_payload.get("charts") or {}
+            if charts_map.get("daily_trends"):
+                daily_trends = charts_map["daily_trends"]
+        except Exception:
+            _logger.exception("Admin home metrics lookup fallback to N/A")
+
+        # Live fleet positions for the protagonist Leaflet map & vehicle panel
+        live_vehicles = []
+        try:
+            live_vehicles = Vehicle.get_live_fleet_positions()
+        except Exception:
+            _logger.exception("Admin home live fleet positions fallback")
+
+        state_labels = dict(self._fields["state"].selection)
+        inc_type_labels = dict(Incident._fields["incident_type"].selection)
+        inc_sev_labels = dict(Incident._fields["severity"].selection)
+        inc_state_labels = dict(Incident._fields["state"].selection)
+
+        days_es = [
+            "Lunes", "Martes", "Miércoles", "Jueves",
+            "Viernes", "Sábado", "Domingo",
+        ]
+        months_es = [
+            "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+        ]
+        date_label = (
+            f"{days_es[now_ec.weekday()]}, {now_ec.day} de "
+            f"{months_es[now_ec.month]} de {now_ec.year}"
+        )
+
+        routes_payload = []
+        for rt in active_routes[:8]:
+            active_ver = rt.version_ids.filtered(lambda v: v.state == "approved")[:1]
+            if not active_ver:
+                active_ver = rt.version_ids[:1]
+            routes_payload.append({
+                "id": rt.id,
+                "code": rt.code or "",
+                "name": rt.name,
+                "origin_name": rt.origin_name or "",
+                "destination_name": rt.destination_name or "",
+                "stop_count": len(active_ver.stop_ids) if active_ver else 0,
+            })
+
+        return {
+            "user_name": user.name,
+            "local_date_label": date_label,
+            "local_time_label": now_ec.strftime("%H:%M ECT"),
+            "stats": {
+                "vehicles_total": len(all_vehicles),
+                "vehicles_tracked": len(tracked_vehicles),
+                "vehicles_online": len(online_vehicles),
+                "vehicles_stale": len(stale_vehicles),
+                "vehicles_offline": len(offline_vehicles),
+                "vehicles_simulated": len(simulated_vehicles),
+                "routes_active": len(active_routes),
+                "stops_total": stops_total,
+                "trips_today": len(trips_today),
+                "trips_active": len(active_trips),
+                "incidents_open": len(open_incidents),
+                "incidents_critical": len(critical_incidents),
+                "positions_total": total_positions,
+            },
+            "kpis": {
+                "mt01": {
+                    "display_value": mt01.get("display_value", "N/A"),
+                    "value": mt01.get("value"),
+                    "sample_size": mt01.get("sample_size", 0),
+                    "is_na": bool(mt01.get("is_na", True)),
+                },
+                "mt02": {
+                    "display_value": mt02.get("display_value", "N/A"),
+                    "value": mt02.get("value"),
+                    "sample_size": mt02.get("sample_size", 0),
+                    "is_na": bool(mt02.get("is_na", True)),
+                },
+            },
+            "daily_trends": daily_trends,
+            "live_vehicles": live_vehicles,
+            "routes": routes_payload,
+            "traccar": {
+                "last_fix_local": (
+                    _fmt_ec(last_pos.fix_time) if last_pos else "Sin registros"
+                ),
+                "online_ratio": (
+                    f"{len(online_vehicles)} / {len(tracked_vehicles)}"
+                    if tracked_vehicles
+                    else "0 / 0"
+                ),
+                "has_signal": bool(online_vehicles),
+            },
+            "recent_trips": [
+                {
+                    "id": t.id,
+                    "name": t.name,
+                    "route_name": t.route_id.name if t.route_id else "Sin ruta",
+                    "route_code": t.route_id.code if t.route_id else "",
+                    "vehicle_name": t.vehicle_id.name if t.vehicle_id else "Sin vehículo",
+                    "driver_name": (
+                        t.driver_user_id.name
+                        if t.driver_user_id
+                        else (t.driver_id.name if t.driver_id else "Sin conductor")
+                    ),
+                    "scheduled_start_local": _fmt_ec(t.scheduled_start_utc),
+                    "state": t.state,
+                    "state_label": state_labels.get(t.state, t.state),
+                    "source_type": t.source_type,
+                    "position_count": t.position_count,
+                }
+                for t in recent_trips
+            ],
+            "recent_incidents": [
+                {
+                    "id": inc.id,
+                    "name": inc.name,
+                    "trip_name": inc.trip_id.name if inc.trip_id else "Sin recorrido",
+                    "incident_type_label": inc_type_labels.get(
+                        inc.incident_type, inc.incident_type
+                    ),
+                    "severity": inc.severity,
+                    "severity_label": inc_sev_labels.get(inc.severity, inc.severity),
+                    "state": inc.state,
+                    "state_label": inc_state_labels.get(inc.state, inc.state),
+                    "is_open": inc.state in ("pending", "reported", "under_review"),
+                    "timestamp_local": _fmt_ec(inc.timestamp_utc),
+                }
+                for inc in recent_incidents
+            ],
+        }
+
+    @api.model
+    def action_admin_sync_traccar(self):
+        """Trigger fleet-wide Traccar GPS sync for transport managers."""
+        if not (
+            self.env.user.has_group("base.group_system")
+            or self.env.user.has_group("uta_transport_monitor.group_transport_manager")
+        ):
+            raise UserError("Solo los administradores de transporte pueden sincronizar la flota.")
+        tracked = self.env["fleet.vehicle"].search(
+            [("active", "=", True), ("gps_tracking_enabled", "=", True)]
+        )
+        synced = 0
+        errors = []
+        for vehicle in tracked:
+            try:
+                vehicle.action_sync_gps_positions()
+                synced += 1
+            except Exception as exc:
+                errors.append(f"{vehicle.name}: {exc}")
+        return {
+            "tracked_count": len(tracked),
+            "synced_count": synced,
+            "error_count": len(errors),
+            "errors": errors[:3],
         }
 
     def get_map_data(self):

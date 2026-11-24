@@ -23,6 +23,7 @@ from ..models.email_verification import mask_email
 
 _logger = logging.getLogger(__name__)
 
+GEORUTEX_HOME_ROUTE = "/georutex/inicio"
 GEORUTEX_LOGIN_ROUTE = "/georutex/acceso"
 GEORUTEX_SIGNUP_ROUTE = "/georutex/registro-conductor"
 GEORUTEX_VERIFY_ROUTE = "/georutex/verificar-correo"
@@ -30,6 +31,96 @@ GEORUTEX_RESEND_ROUTE = "/georutex/reenviar-codigo"
 GEORUTEX_RESET_ROUTE = "/georutex/recuperar-acceso"
 GEORUTEX_LOGOUT_ROUTE = "/georutex/cerrar-sesion"
 GEORUTEX_PANEL_ROUTE = "/georutex/panel"
+
+GEORUTEX_PROTECTED_SECTIONS = {
+    "centro-control": (
+        "uta_transport_monitor.action_transport_admin_home",
+        "uta_transport_monitor.menu_georutex_admin_home",
+        ("uta_transport_monitor.group_transport_manager",),
+    ),
+    "inicio-conductor": (
+        "uta_transport_monitor.action_transport_driver_home",
+        "uta_transport_monitor.menu_georutex_driver_home",
+        (
+            "uta_transport_monitor.group_transport_driver",
+            "uta_transport_monitor.group_transport_manager",
+        ),
+    ),
+    "dashboard": (
+        "uta_transport_monitor.action_transport_dashboard",
+        "uta_transport_monitor.menu_georutex_dashboard_main",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "mapa-en-vivo": (
+        "uta_transport_monitor.action_transport_live_fleet_map",
+        "uta_transport_monitor.menu_georutex_live_fleet_map",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+            "uta_transport_monitor.group_transport_driver",
+        ),
+    ),
+    "recorridos": (
+        "uta_transport_monitor.action_transport_trip",
+        "uta_transport_monitor.menu_georutex_trips",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "incidencias": (
+        "uta_transport_monitor.action_transport_incident",
+        "uta_transport_monitor.menu_georutex_incidents",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+            "uta_transport_monitor.group_transport_driver",
+        ),
+    ),
+    "evaluaciones": (
+        "uta_transport_monitor.action_transport_trip_evaluation",
+        "uta_transport_monitor.menu_georutex_evaluations",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "rutas": (
+        "uta_transport_monitor.action_transport_route",
+        "uta_transport_monitor.menu_georutex_routes",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "versiones-ruta": (
+        "uta_transport_monitor.action_transport_route_version",
+        "uta_transport_monitor.menu_georutex_route_versions",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "flota": (
+        "uta_transport_monitor.action_transport_monitored_fleet",
+        "uta_transport_monitor.menu_georutex_fleet",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+    "telemetria": (
+        "uta_transport_monitor.action_transport_vehicle_position",
+        "uta_transport_monitor.menu_georutex_positions",
+        (
+            "uta_transport_monitor.group_transport_manager",
+            "uta_transport_monitor.group_transport_analyst",
+        ),
+    ),
+}
 
 
 def _build_url_with_query(path, params=None):
@@ -80,19 +171,52 @@ class GeoRutexAuthController(AuthSignupHome):
             return "/web"
         return super()._login_redirect(uid, redirect=redirect)
 
-    @http.route("/", type="http", auth="none")
+    def _render_public_home(self):
+        """Render the public GSAP-powered GeoRutex landing page before login."""
+        ensure_db()
+        is_authenticated = bool(request.session.uid)
+        user_name = ""
+        if is_authenticated:
+            try:
+                user_name = request.env.user.name or ""
+            except Exception:
+                user_name = ""
+        response = request.render(
+            "uta_transport_monitor.georutex_public_home",
+            {
+                "is_authenticated": is_authenticated,
+                "user_name": user_name,
+                "login_url": GEORUTEX_LOGIN_ROUTE,
+                "signup_url": GEORUTEX_SIGNUP_ROUTE,
+                "panel_url": GEORUTEX_PANEL_ROUTE,
+                "logout_url": GEORUTEX_LOGOUT_ROUTE,
+            },
+        )
+        response = _security_headers(response)
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+    @http.route("/", type="http", auth="none", sitemap=False)
     def index(self, s_action=None, db=None, **kw):
-        """Send unauthenticated visitors directly to /georutex/acceso."""
-        if request.session.uid:
+        """Serve the public GeoRutex Home before login, or redirect authenticated users."""
+        if request.session.uid and kw.get("vista") != "publica":
             return request.redirect_query(
                 "/web", query=request.params, code=302
             )
-        return request.redirect(
-            _build_url_with_query(GEORUTEX_LOGIN_ROUTE, kw), code=302
-        )
+        return self._render_public_home()
 
     @http.route(
-        [GEORUTEX_PANEL_ROUTE, "/inicio"],
+        [GEORUTEX_HOME_ROUTE, "/inicio"],
+        type="http",
+        auth="none",
+        sitemap=False,
+    )
+    def georutex_public_home(self, **kw):
+        """Explicit public GeoRutex General Home route."""
+        return self._render_public_home()
+
+    @http.route(
+        GEORUTEX_PANEL_ROUTE,
         type="http",
         auth="none",
         sitemap=False,
@@ -102,6 +226,32 @@ class GeoRutexAuthController(AuthSignupHome):
         if request.session.uid:
             return request.redirect("/web", code=302)
         return request.redirect(GEORUTEX_LOGIN_ROUTE, code=302)
+
+    @http.route(
+        "/georutex/<string:section_slug>",
+        type="http",
+        auth="user",
+        sitemap=False,
+    )
+    def georutex_protected_section(self, section_slug, **kw):
+        """Role-protected server-side router for clean /georutex/<section> URLs."""
+        spec = GEORUTEX_PROTECTED_SECTIONS.get(section_slug)
+        if not spec:
+            return request.redirect("/web", code=302)
+        action_xmlid, menu_xmlid, allowed_groups = spec
+        user = request.env.user
+        is_allowed = user.has_group("base.group_system") or any(
+            user.has_group(grp) for grp in allowed_groups
+        )
+        if not is_allowed:
+            return request.redirect("/web", code=302)
+        action = request.env.ref(action_xmlid, raise_if_not_found=False)
+        menu = request.env.ref(menu_xmlid, raise_if_not_found=False)
+        if action and menu:
+            return request.redirect(
+                f"/web#action={action.id}&menu_id={menu.id}", code=302
+            )
+        return request.redirect("/web", code=302)
 
     @http.route(
         "/georutex/mis-recorridos",
@@ -618,15 +768,15 @@ class GeoRutexSessionController(Session):
         auth="none",
         sitemap=False,
     )
-    def georutex_logout(self, redirect=GEORUTEX_LOGIN_ROUTE):
-        """Log out and redirect to /georutex/acceso."""
+    def georutex_logout(self, redirect=GEORUTEX_HOME_ROUTE):
+        """Log out and redirect to /georutex/inicio."""
         request.session.logout(keep_db=True)
-        return request.redirect(redirect or GEORUTEX_LOGIN_ROUTE, code=303)
+        return request.redirect(redirect or GEORUTEX_HOME_ROUTE, code=303)
 
     @http.route("/web/session/logout", type="http", auth="none")
     def logout(self, redirect="/web"):
-        """Override default logout to return to /georutex/acceso."""
+        """Override default logout to return to /georutex/inicio."""
         target = redirect
         if target in ("/web", "/web/login", "/iniciar-sesion", "/", None, ""):
-            target = GEORUTEX_LOGIN_ROUTE
+            target = GEORUTEX_HOME_ROUTE
         return super().logout(redirect=target)

@@ -284,10 +284,18 @@ class TestDriverSignupHttpRedirect(HttpCase):
         return match.group(1)
 
     def test_01_default_routes_redirect_to_georutex_endpoints(self):
-        """/, /web/login, /web/signup, and /web/reset_password redirect to /georutex/*."""
+        """/ renders the public Home before login; auth routes redirect to /georutex/*; protected sections require auth."""
         r_root = self.url_open("/", allow_redirects=False)
-        self.assertEqual(r_root.status_code, 302)
-        self.assertIn("/georutex/acceso", r_root.headers.get("Location", ""))
+        self.assertEqual(r_root.status_code, 200)
+        self.assertIn("GeoRutex", r_root.text)
+        self.assertIn("/georutex/acceso", r_root.text)
+
+        r_home = self.url_open("/georutex/inicio", allow_redirects=False)
+        self.assertEqual(r_home.status_code, 200)
+        self.assertIn("assets_public_home", r_home.text)
+
+        r_protected = self.url_open("/georutex/dashboard", allow_redirects=False)
+        self.assertIn(r_protected.status_code, (302, 303))
 
         r_login = self.url_open("/web/login", allow_redirects=False)
         self.assertEqual(r_login.status_code, 302)

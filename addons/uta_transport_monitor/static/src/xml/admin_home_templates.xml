@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="uta_transport_monitor.GeoRutexAdminHomeAction" owl="1">
+        <div class="tblr-ops-page" t-ref="adminHomeRoot">
+            <div class="tblr-container">
+                <!-- 1. COMPACT OPERATIONAL PAGE HEADER (Tabler / Samsara / Fleetio) -->
+                <header class="tblr-page-header">
+                    <div>
+                        <div class="tblr-pretitle">CENTRO DE OPERACIONES · GEORUTEX UTA</div>
+                        <h1 class="tblr-page-title">Panel Operativo de Flota y Telemetría</h1>
+                    </div>
+                    <div class="tblr-header-right">
+                        <span class="tblr-status-chip" title="Estado de señal Traccar">
+                            <span t-attf-class="tblr-status-dot #{state.traccar.has_signal ? 'is-green is-animated' : 'is-amber'}"/>
+                            <span>Traccar: <strong><t t-esc="state.traccar.online_ratio"/></strong></span>
+                        </span>
+                        <span class="tblr-status-chip">
+                            <i class="fa fa-clock-o text-muted" aria-hidden="true"/>
+                            <span><t t-esc="state.localTimeLabel || 'ECT'"/></span>
+                        </span>
+                        <button type="button" class="tblr-btn" t-on-click="() => this.syncTraccarFleet()" t-att-disabled="state.isSyncing">
+                            <i t-attf-class="fa #{state.isSyncing ? 'fa-spinner fa-spin' : 'fa-refresh'}" aria-hidden="true"/>
+                            <span>Sincronizar GPS</span>
+                        </button>
+                        <button type="button" class="tblr-btn" t-on-click="() => this.loadAdminHome(true)" t-att-disabled="state.isLoading" title="Actualizar panel">
+                            <i t-attf-class="fa fa-repeat #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
+                        </button>
+                        <button type="button" class="tblr-btn tblr-btn--primary" t-on-click="() => this.openNewTrip()">
+                            <i class="fa fa-plus" aria-hidden="true"/>
+                            <span>Nuevo Recorrido</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Error Alert State -->
+                <div t-if="state.error" class="tblr-alert-error" role="alert">
+                    <span><i class="fa fa-exclamation-triangle me-2" aria-hidden="true"/><t t-esc="state.error"/></span>
+                    <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.loadAdminHome(false)">Reintentar</button>
+                </div>
+
+                <!-- 2. SIX SIMULTANEOUS OPERATIONAL KPI TILES (Zero Carousel!) -->
+                <section class="tblr-kpi-grid" aria-label="Indicadores operativos clave">
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openFleet()">
+                        <div class="tblr-subheader">
+                            <span>Flota Activa</span>
+                            <span t-attf-class="tblr-status-dot #{state.stats.vehicles_online ? 'is-green is-animated' : 'is-amber'}"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.stats.vehicles_online"/> / <t t-esc="state.stats.vehicles_tracked"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span><t t-esc="state.stats.vehicles_total"/> unidades Fleet</span>
+                            <span><t t-esc="this.fleetOnlinePct"/>%</span>
+                        </div>
+                        <div class="tblr-progress-sm"><div t-attf-style="width: #{this.fleetOnlinePct}%;"/></div>
+                    </article>
+
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openRoutes()">
+                        <div class="tblr-subheader">
+                            <span>Rutas y Paradas</span>
+                            <i class="fa fa-map-signs text-muted" aria-hidden="true"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.stats.routes_active"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span><t t-esc="state.stats.stops_total"/> controles activos</span>
+                        </div>
+                    </article>
+
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openTrips()">
+                        <div class="tblr-subheader">
+                            <span>Recorridos Hoy</span>
+                            <i class="fa fa-road text-muted" aria-hidden="true"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.stats.trips_today"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span><t t-esc="state.stats.trips_active"/> en operación</span>
+                        </div>
+                    </article>
+
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openDashboard()">
+                        <div class="tblr-subheader">
+                            <span>Cumplimiento MT-01</span>
+                            <i class="fa fa-check-circle text-muted" aria-hidden="true"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.kpis.mt01.display_value"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span>Muestra n = <t t-esc="state.kpis.mt01.sample_size"/></span>
+                        </div>
+                    </article>
+
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openDashboard()">
+                        <div class="tblr-subheader">
+                            <span>Puntualidad MT-02</span>
+                            <i class="fa fa-clock-o text-muted" aria-hidden="true"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.kpis.mt02.display_value"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span>Muestra n = <t t-esc="state.kpis.mt02.sample_size"/></span>
+                        </div>
+                    </article>
+
+                    <article class="tblr-kpi-tile" role="button" tabindex="0" t-on-click="() => this.openIncidents()">
+                        <div class="tblr-subheader">
+                            <span>Incidencias Abiertas</span>
+                            <span t-attf-class="tblr-status-dot #{state.stats.incidents_open ? 'is-red' : 'is-green'}"/>
+                        </div>
+                        <div class="tblr-kpi-value"><t t-esc="state.stats.incidents_open"/></div>
+                        <div class="tblr-kpi-meta">
+                            <span><t t-esc="state.stats.incidents_critical"/> críticas / altas</span>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- 3. PROTAGONIST OPERATIONS STAGE: LIVE GPS MAP + VEHICLES & ROUTES -->
+                <section class="tblr-ops-stage">
+                    <!-- Left: Interactive Protagonist Leaflet GPS Map -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-map-marker text-primary" aria-hidden="true"/>
+                                Mapa GPS de Flota en Tiempo Real
+                                <span class="tblr-badge is-blue ms-1"><t t-esc="this.positionedVehicleCount"/> ubicadas</span>
+                            </h2>
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <div class="tblr-btn-group" role="group" aria-label="Filtrar unidades en mapa">
+                                    <button type="button" t-att-class="state.vehicleFilter === 'all' ? 'is-active' : ''" t-on-click="() => this.setVehicleFilter('all')">Todos</button>
+                                    <button type="button" t-att-class="state.vehicleFilter === 'fresh' ? 'is-active' : ''" t-on-click="() => this.setVehicleFilter('fresh')">En vivo</button>
+                                    <button type="button" t-att-class="state.vehicleFilter === 'offline' ? 'is-active' : ''" t-on-click="() => this.setVehicleFilter('offline')">Sin señal</button>
+                                </div>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.recenterMap()" title="Centrar mapa">
+                                    <i class="fa fa-crosshairs" aria-hidden="true"/>
+                                </button>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openLiveMap()">
+                                    Pantalla completa <i class="fa fa-external-link" aria-hidden="true"/>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="tblr-map-wrap">
+                            <div t-ref="adminMapCanvas" class="tblr-map-canvas"/>
+                            <!-- Tabler Map Block Floating Search & Legend Overlays -->
+                            <div class="tblr-map-search-overlay">
+                                <i class="fa fa-search text-muted" aria-hidden="true"/>
+                                <input type="search"
+                                       placeholder="Buscar unidad o placa..."
+                                       t-model="state.vehicleSearch"
+                                       t-on-input="() => this.onVehicleSearchInput()"
+                                       aria-label="Buscar unidad en mapa"/>
+                            </div>
+                            <div class="tblr-map-legend-pill">
+                                <span><i class="tblr-status-dot is-green"/> En vivo (<t t-esc="state.stats.vehicles_online"/>)</span>
+                                <span><i class="tblr-status-dot is-amber"/> Reciente (<t t-esc="state.stats.vehicles_stale"/>)</span>
+                                <span><i class="tblr-status-dot is-red"/> Sin señal (<t t-esc="state.stats.vehicles_offline"/>)</span>
+                            </div>
+                            <div t-if="!this.positionedVehicleCount and !state.isLoading" class="tblr-map-empty-overlay">
+                                <strong>Sin coordenadas GPS activas</strong>
+                                <div>Cuando Traccar reciba posiciones de los dispositivos vinculados, aparecerán automáticamente en Ambato.</div>
+                            </div>
+                        </div>
+
+                        <!-- Non-intrusive Compact Animated Vehicle Telemetry Rail (preserves vehicle animation cleanly) -->
+                        <div class="tblr-vehicle-rail" aria-hidden="true">
+                            <svg class="tblr-vehicle-rail-svg" viewBox="0 0 1000 46" preserveAspectRatio="xMidYMid slice">
+                                <line x1="0" y1="35" x2="1000" y2="35" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="14 10" class="grx-road-dashes"/>
+                                <g class="grx-bus-ltr">
+                                    <g class="grx-bus-float">
+                                        <rect x="8" y="13" width="62" height="20" rx="5" fill="#182433"/>
+                                        <rect x="8" y="26" width="62" height="3" fill="#066fd1"/>
+                                        <rect x="14" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="29" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="44" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="59" y="16" width="8" height="7" rx="1.5" fill="#93c5fd"/>
+                                        <circle cx="21" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+                                        <circle cx="57" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+                                    </g>
+                                </g>
+                            </svg>
+                            <span class="tblr-rail-meta">
+                                <i class="fa fa-satellite-dish fa-wifi me-1"/> Telemetría Traccar: <t t-esc="state.stats.positions_total"/> posiciones registradas
+                            </span>
+                            <span class="tblr-rail-meta">
+                                Último fix: <t t-esc="state.traccar.last_fix_local"/>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Unit Status Summary (Fleet Overview 2x2) + Vehicles + Routes -->
+                    <div class="d-flex flex-column gap-3">
+                        <div class="tblr-card">
+                            <div class="tblr-card-header">
+                                <h2 class="tblr-card-title">
+                                    <i class="fa fa-th-large text-primary" aria-hidden="true"/>
+                                    Resumen de Unidades
+                                </h2>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openFleet()">Flota</button>
+                            </div>
+                            <div class="tblr-card-body py-2">
+                                <div class="tblr-unit-summary-grid">
+                                    <div class="tblr-unit-stat is-green">
+                                        <span>EN LÍNEA</span>
+                                        <strong><t t-esc="state.stats.vehicles_online"/></strong>
+                                    </div>
+                                    <div class="tblr-unit-stat is-amber">
+                                        <span>RECIENTE</span>
+                                        <strong><t t-esc="state.stats.vehicles_stale"/></strong>
+                                    </div>
+                                    <div class="tblr-unit-stat is-red">
+                                        <span>SIN SEÑAL</span>
+                                        <strong><t t-esc="state.stats.vehicles_offline"/></strong>
+                                    </div>
+                                    <div class="tblr-unit-stat is-blue">
+                                        <span>SIMULADAS</span>
+                                        <strong><t t-esc="state.stats.vehicles_simulated"/></strong>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center pt-2 mt-2 border-top small">
+                                    <span class="tblr-pretitle mb-0">TOTAL FLOTA ACTIVA</span>
+                                    <strong><t t-esc="state.stats.vehicles_total"/></strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tblr-card">
+                            <div class="tblr-card-header">
+                                <h2 class="tblr-card-title">
+                                    <i class="fa fa-bus text-primary" aria-hidden="true"/>
+                                    Vehículos y Dispositivos
+                                </h2>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openFleet()">Gestionar</button>
+                            </div>
+                            <div t-if="state.isLoading" class="tblr-card-body d-flex flex-column gap-2">
+                                <div class="tblr-skeleton-line"/>
+                                <div class="tblr-skeleton-line" style="width: 75%;"/>
+                            </div>
+                            <div t-elif="!this.filteredVehicles.length" class="tblr-empty">
+                                <i class="fa fa-bus" aria-hidden="true"/>
+                                <strong>Sin unidades monitoreadas</strong>
+                                <p>Vincula un vehículo en Fleet con seguimiento Traccar para supervisarlo aquí.</p>
+                            </div>
+                            <div t-else="" class="tblr-list-scroll">
+                                <t t-foreach="this.filteredVehicles" t-as="v" t-key="v.vehicle_id">
+                                    <div t-attf-class="tblr-list-item #{state.selectedVehicleId === v.vehicle_id ? 'is-selected' : ''}"
+                                         role="button" tabindex="0"
+                                         t-on-click="() => this.focusVehicle(v)">
+                                        <div class="d-flex align-items-center gap-2 min-w-0">
+                                            <span t-attf-class="tblr-status-dot #{this.getFreshnessDotClass(v.freshness)}"/>
+                                            <div class="text-truncate">
+                                                <div class="tblr-item-title text-truncate"><t t-esc="v.name"/></div>
+                                                <div class="tblr-item-sub text-truncate">
+                                                    <t t-esc="v.license_plate || 'S/P'"/> · <t t-esc="v.driver_name"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end flex-shrink-0">
+                                            <div class="tblr-item-title"><t t-esc="Math.round(v.speed || 0)"/> km/h</div>
+                                            <div class="tblr-item-sub"><t t-esc="v.fix_time_local"/></div>
+                                        </div>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+
+                        <div class="tblr-card flex-grow-1">
+                            <div class="tblr-card-header">
+                                <h2 class="tblr-card-title">
+                                    <i class="fa fa-map-signs text-primary" aria-hidden="true"/>
+                                    Rutas y Paradas
+                                </h2>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openRoutes()">Ver rutas</button>
+                            </div>
+                            <div t-if="!state.routes.length" class="tblr-empty">
+                                <i class="fa fa-map-o" aria-hidden="true"/>
+                                <strong>Sin rutas configuradas</strong>
+                                <p>Crea tus corredores universitarios y define al menos 4 controles por ruta.</p>
+                            </div>
+                            <div t-else="" class="tblr-list-scroll" style="max-height: 175px;">
+                                <t t-foreach="state.routes" t-as="rt" t-key="rt.id">
+                                    <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openRouteDetail(rt.id)">
+                                        <div class="min-w-0">
+                                            <div class="tblr-item-title text-truncate"><t t-esc="rt.name"/></div>
+                                            <div class="tblr-item-sub text-truncate"><t t-esc="rt.origin_name"/> → <t t-esc="rt.destination_name"/></div>
+                                        </div>
+                                        <span class="tblr-badge is-muted"><t t-esc="rt.stop_count"/> paradas</span>
+                                    </div>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. MIDDLE ANALYTICS & INCIDENTS ROW -->
+                <section class="tblr-mid-grid">
+                    <!-- Compliance & Punctuality Trend Chart -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-line-chart text-primary" aria-hidden="true"/>
+                                Tendencia de Cumplimiento y Puntualidad
+                            </h2>
+                            <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openDashboard()">
+                                Ver 12 KPIs <i class="fa fa-arrow-right" aria-hidden="true"/>
+                            </button>
+                        </div>
+                        <div class="tblr-card-body">
+                            <div t-if="this.hasTrendData" t-ref="adminTrendCanvas" class="tblr-chart-box" role="img" aria-label="Tendencia diaria de cumplimiento y puntualidad"/>
+                            <div t-else="" class="tblr-empty">
+                                <i class="fa fa-bar-chart" aria-hidden="true"/>
+                                <strong>Sin recorridos evaluados todavía</strong>
+                                <p>Cuando finalices y evalúes recorridos, la tendencia real de MT-01 y MT-02 aparecerá aquí.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Operational Incidents Feed -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-exclamation-triangle text-primary" aria-hidden="true"/>
+                                Incidencias Operacionales
+                            </h2>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="tblr-btn-group" role="group">
+                                    <button type="button" t-att-class="state.incidentFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'all'; }">Todas</button>
+                                    <button type="button" t-att-class="state.incidentFilter === 'open' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'open'; }">Abiertas</button>
+                                </div>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openNewIncident()">+ Nueva</button>
+                            </div>
+                        </div>
+                        <div t-if="!this.filteredIncidents.length" class="tblr-empty">
+                            <i class="fa fa-check-circle" aria-hidden="true"/>
+                            <strong>Sin incidencias registradas</strong>
+                            <p>No existen novedades operacionales para el filtro seleccionado.</p>
+                        </div>
+                        <div t-else="" class="tblr-list-scroll" style="max-height: 260px;">
+                            <t t-foreach="this.filteredIncidents" t-as="inc" t-key="inc.id">
+                                <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
+                                    <div class="min-w-0">
+                                        <div class="tblr-item-title text-truncate">
+                                            <t t-esc="inc.name"/> · <t t-esc="inc.incident_type_label"/>
+                                        </div>
+                                        <div class="tblr-item-sub">
+                                            <t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-shrink-0">
+                                        <span t-attf-class="tblr-badge #{this.getSeverityBadgeClass(inc.severity)}">
+                                            <t t-esc="inc.severity_label"/>
+                                        </span>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. BOTTOM FILTERABLE RECENT TRIPS TABLE (Tabler .card-table .table-vcenter) -->
+                <section class="tblr-card">
+                    <div class="tblr-card-header">
+                        <h2 class="tblr-card-title">
+                            <i class="fa fa-list-alt text-primary" aria-hidden="true"/>
+                            Recorridos Operacionales Recientes
+                        </h2>
+                        <div class="tblr-table-toolbar">
+                            <input type="search"
+                                   class="tblr-search-input"
+                                   placeholder="Buscar ruta, bus o conductor..."
+                                   t-model="state.tripSearch"
+                                   aria-label="Buscar recorridos"/>
+                            <div class="tblr-btn-group" role="group" aria-label="Filtrar estado de recorridos">
+                                <button type="button" t-att-class="state.tripFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'all'; }">Todos</button>
+                                <button type="button" t-att-class="state.tripFilter === 'in_progress' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'in_progress'; }">En curso</button>
+                                <button type="button" t-att-class="state.tripFilter === 'scheduled' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'scheduled'; }">Programados</button>
+                                <button type="button" t-att-class="state.tripFilter === 'completed' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'completed'; }">Finalizados</button>
+                            </div>
+                            <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openTrips()">Ver todos</button>
+                        </div>
+                    </div>
+
+                    <div t-if="!this.filteredTrips.length" class="tblr-empty">
+                        <i class="fa fa-road" aria-hidden="true"/>
+                        <strong>No hay recorridos que coincidan</strong>
+                        <p>Programa un nuevo recorrido operacional o limpia los filtros de búsqueda.</p>
+                    </div>
+
+                    <div t-else="" class="tblr-table-wrap">
+                        <table class="tblr-table">
+                            <thead>
+                                <tr>
+                                    <th>Recorrido</th>
+                                    <th>Ruta</th>
+                                    <th>Vehículo</th>
+                                    <th>Conductor</th>
+                                    <th>Inicio (ECT)</th>
+                                    <th>Fuente / GPS</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="this.filteredTrips" t-as="trip" t-key="trip.id">
+                                    <tr t-on-click="() => this.openTripDetail(trip.id)">
+                                        <td><strong><t t-esc="trip.name"/></strong></td>
+                                        <td><t t-esc="trip.route_name"/></td>
+                                        <td><t t-esc="trip.vehicle_name"/></td>
+                                        <td><t t-esc="trip.driver_name"/></td>
+                                        <td class="grx-num"><t t-esc="trip.scheduled_start_local"/></td>
+                                        <td>
+                                            <span t-if="trip.source_type === 'simulated'" class="tblr-badge is-amber">Simulado</span>
+                                            <span t-else="" class="tblr-badge is-blue">Real</span>
+                                            <span class="tblr-item-sub ms-1"><t t-esc="trip.position_count"/> pts</span>
+                                        </td>
+                                        <td>
+                                            <span t-attf-class="tblr-badge #{this.getStateBadgeClass(trip.state)}">
+                                                <t t-esc="trip.state_label"/>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </t>
+</templates>

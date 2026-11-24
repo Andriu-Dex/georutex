@@ -1,269 +1,335 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="uta_transport_monitor.GeoRutexDriverHomeAction" owl="1">
-        <div class="georutex-driver-home container-fluid py-3 py-md-4 px-3 px-md-4">
-            <!-- Hero Banner -->
-            <section class="georutex-dh-hero mb-4">
-                <div class="georutex-dh-hero-orb" aria-hidden="true"/>
-                <div class="row align-items-center g-3 position-relative">
-                    <div class="col-12 col-lg-7">
-                        <div class="d-flex align-items-center gap-3">
-                            <img
-                                class="georutex-dh-logo"
-                                src="/uta_transport_monitor/static/src/img/georutex_logo.png"
-                                alt="GeoRutex UTA"
-                            />
-                            <div>
-                                <span class="georutex-dh-pill">
-                                    <span class="georutex-dh-dot" aria-hidden="true"/>
-                                    Espacio Operativo del Conductor · UTA
+        <div class="tblr-ops-page drv-cockpit-page" t-ref="driverHomeRoot">
+            <div class="tblr-container">
+                <!-- COMPACT DRIVER SHIFT HEADER (Mobile-First, Safe-Stop Focus) -->
+                <header class="tblr-page-header">
+                    <div>
+                        <div class="tblr-pretitle">CABINA OPERATIVA DEL CONDUCTOR · UTA</div>
+                        <h1 class="tblr-page-title">
+                            Hola, <t t-esc="state.driverName"/>
+                            <t t-if="this.primaryVehicle">
+                                <span class="tblr-item-sub ms-2 fw-normal">
+                                    · <t t-esc="this.primaryVehicle.name"/>
+                                    <t t-if="this.primaryVehicle.license_plate"> (<t t-esc="this.primaryVehicle.license_plate"/>)</t>
                                 </span>
-                                <h1 class="georutex-dh-title mb-1">
-                                    Hola, <t t-esc="state.driverName"/>
-                                </h1>
-                                <p class="georutex-dh-subtitle mb-0">
-                                    <i class="fa fa-calendar-o me-1" aria-hidden="true"/>
-                                    <t t-esc="state.localDateLabel"/>
-                                    <span class="mx-2">·</span>
-                                    <i class="fa fa-clock-o me-1" aria-hidden="true"/>
-                                    <t t-esc="state.localTimeLabel"/>
-                                </p>
-                            </div>
-                        </div>
+                            </t>
+                        </h1>
                     </div>
-                    <div class="col-12 col-lg-5">
-                        <div class="georutex-dh-hero-actions d-flex flex-wrap gap-2 justify-content-lg-end">
-                            <button
-                                type="button"
-                                class="btn btn-light georutex-dh-btn-light"
-                                t-on-click="() => this.openNewIncident(false)"
-                            >
-                                <i class="fa fa-exclamation-triangle me-2" aria-hidden="true"/>Reportar Incidencia
-                            </button>
-                            <button
-                                type="button"
-                                class="btn georutex-dh-btn-cyan"
-                                t-on-click="() => this.openLiveMap()"
-                            >
-                                <i class="fa fa-map-marker me-2" aria-hidden="true"/>Mapa en Vivo
-                            </button>
-                            <button
-                                type="button"
-                                class="btn georutex-dh-btn-ghost"
-                                t-on-click="() => this.loadDriverHome(true)"
-                                t-att-disabled="state.isLoading"
-                                aria-label="Actualizar datos"
-                                title="Actualizar datos"
-                            >
-                                <i t-attf-class="fa fa-refresh #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Error Alert -->
-            <div t-if="state.error" class="alert alert-danger d-flex align-items-center justify-content-between gap-2 mb-4" role="alert">
-                <span><i class="fa fa-exclamation-circle me-2" aria-hidden="true"/><t t-esc="state.error"/></span>
-                <button type="button" class="btn btn-sm btn-outline-danger" t-on-click="() => this.loadDriverHome(false)">Reintentar</button>
-            </div>
-
-            <!-- 4 Responsive KPI Cards -->
-            <section class="row g-3 mb-4" aria-label="Resumen de jornada">
-                <div class="col-6 col-xl-3">
-                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
-                        <div class="georutex-dh-kpi-icon">
-                            <i class="fa fa-road" aria-hidden="true"/>
-                        </div>
-                        <div>
-                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.total_trips"/></div>
-                            <div class="georutex-dh-kpi-lbl">Recorridos Asignados</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-xl-3">
-                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
-                        <div class="georutex-dh-kpi-icon is-cyan">
-                            <i class="fa fa-play-circle" aria-hidden="true"/>
-                        </div>
-                        <div>
-                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.active_trips"/></div>
-                            <div class="georutex-dh-kpi-lbl">Programados / En Curso</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-xl-3">
-                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openMyTrips()">
-                        <div class="georutex-dh-kpi-icon is-navy">
-                            <i class="fa fa-flag-checkered" aria-hidden="true"/>
-                        </div>
-                        <div>
-                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.completed_trips"/></div>
-                            <div class="georutex-dh-kpi-lbl">Finalizados</div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-6 col-xl-3">
-                    <div class="georutex-dh-kpi-card" role="button" tabindex="0" t-on-click="() => this.openAllIncidents()">
-                        <div class="georutex-dh-kpi-icon is-alert">
+                    <div class="tblr-header-right">
+                        <span class="tblr-status-chip">
+                            <span t-attf-class="tblr-status-dot #{this.gpsStatusInfo.dot}"/>
+                            <span><t t-esc="this.gpsStatusInfo.label"/></span>
+                        </span>
+                        <span class="tblr-status-chip">
+                            <i class="fa fa-clock-o text-muted" aria-hidden="true"/>
+                            <span><t t-esc="state.localTimeLabel || 'ECT'"/></span>
+                        </span>
+                        <button type="button" class="tblr-btn" t-on-click="() => this.loadDriverHome(true)" t-att-disabled="state.isLoading" title="Actualizar jornada">
+                            <i t-attf-class="fa fa-refresh #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
+                        </button>
+                        <button type="button" class="tblr-btn tblr-btn--primary" t-on-click="() => this.openNewIncident(state.featuredTrip ? state.featuredTrip.id : false)">
                             <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
-                        </div>
-                        <div>
-                            <div class="georutex-dh-kpi-val"><t t-esc="state.stats.total_incidents"/></div>
-                            <div class="georutex-dh-kpi-lbl">Mis Incidencias</div>
-                        </div>
+                            <span>Reportar Incidencia</span>
+                        </button>
                     </div>
-                </div>
-            </section>
+                </header>
 
-            <!-- Main Responsive Split Workspace -->
-            <div class="row g-4">
-                <!-- Left: My Trips -->
-                <div class="col-12 col-lg-8">
-                    <div class="georutex-dh-panel h-100">
-                        <div class="georutex-dh-panel-head">
-                            <div>
-                                <h2><i class="fa fa-bus me-2 text-primary" aria-hidden="true"/>Mis Recorridos</h2>
-                                <p class="mb-0">Consulta tu jornada, horarios programados y reporta novedades directamente.</p>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openMyTrips()">
-                                Ver todos <i class="fa fa-arrow-right ms-1" aria-hidden="true"/>
-                            </button>
-                        </div>
-
-                        <div t-if="state.isLoading" class="text-center py-5 text-muted">
-                            <i class="fa fa-spinner fa-spin fa-2x mb-2 text-primary" aria-hidden="true"/>
-                            <div>Cargando recorridos asignados...</div>
-                        </div>
-
-                        <div t-elif="!state.trips.length" class="georutex-dh-empty">
-                            <div class="georutex-dh-empty-icon">
-                                <i class="fa fa-map-o" aria-hidden="true"/>
-                            </div>
-                            <h3>Aún no tienes recorridos asignados</h3>
-                            <p>
-                                Cuando el Administrador de Transporte programe tu próxima ruta, aparecerá automáticamente aquí con tus paradas, horario en hora de Ecuador y trazado GPS.
-                            </p>
-                            <div class="d-flex flex-wrap justify-content-center gap-2 mt-3">
-                                <button type="button" class="btn btn-primary" t-on-click="() => this.openLiveMap()">
-                                    <i class="fa fa-map-marker me-2" aria-hidden="true"/>Explorar Mapa en Vivo
-                                </button>
-                                <button type="button" class="btn btn-outline-primary" t-on-click="() => this.openAllIncidents()">
-                                    <i class="fa fa-list-alt me-2" aria-hidden="true"/>Ver Incidencias
-                                </button>
-                            </div>
-                        </div>
-
-                        <div t-else="" class="row g-3">
-                            <t t-foreach="state.trips" t-as="trip" t-key="trip.id">
-                                <div class="col-12 col-md-6">
-                                    <article class="georutex-dh-trip-item">
-                                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
-                                            <div>
-                                                <h3 class="mb-0"><t t-esc="trip.name"/></h3>
-                                                <small class="text-muted">
-                                                    <t t-esc="trip.route_code"/> · <t t-esc="trip.route_name"/>
-                                                </small>
-                                            </div>
-                                            <span t-attf-class="badge rounded-pill #{getStateBadgeClass(trip.state)}">
-                                                <t t-esc="trip.state_label"/>
-                                            </span>
-                                        </div>
-
-                                        <div class="georutex-dh-trip-meta">
-                                            <div><i class="fa fa-map-signs" aria-hidden="true"/> <t t-esc="trip.origin_name"/> → <t t-esc="trip.destination_name"/></div>
-                                            <div><i class="fa fa-bus" aria-hidden="true"/> <t t-esc="trip.vehicle_name"/></div>
-                                            <div><i class="fa fa-clock-o" aria-hidden="true"/> <t t-esc="trip.scheduled_start_local"/></div>
-                                        </div>
-
-                                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3 pt-2 border-top">
-                                            <div class="d-flex align-items-center gap-2">
-                                                <span t-if="trip.source_type === 'simulated'" class="badge rounded-pill bg-warning text-dark">Simulado</span>
-                                                <span t-else="" class="badge rounded-pill bg-primary">GPS Real</span>
-                                                <small class="text-muted"><t t-esc="trip.position_count"/> pts</small>
-                                            </div>
-                                            <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openTripDetail(trip.id)">
-                                                    Ver detalle
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.openNewIncident(trip.id)">
-                                                    <i class="fa fa-plus me-1" aria-hidden="true"/>Incidencia
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </article>
-                                </div>
-                            </t>
-                        </div>
-                    </div>
+                <!-- Error Alert State -->
+                <div t-if="state.error" class="tblr-alert-error" role="alert">
+                    <span><i class="fa fa-exclamation-triangle me-2" aria-hidden="true"/><t t-esc="state.error"/></span>
+                    <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.loadDriverHome(false)">Reintentar</button>
                 </div>
 
-                <!-- Right: Assigned Vehicle & Recent Incidents -->
-                <div class="col-12 col-lg-4 d-flex flex-column gap-4">
-                    <!-- Assigned Vehicle -->
-                    <div class="georutex-dh-panel">
-                        <div class="georutex-dh-panel-head">
-                            <div>
-                                <h2><i class="fa fa-satellite-dish fa-wifi me-2 text-primary" aria-hidden="true"/>Mi Unidad GPS</h2>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-primary" t-on-click="() => this.openLiveMap()">
-                                Mapa
-                            </button>
+                <!-- PROTAGONIST 2-COLUMN DRIVER COCKPIT (ELLIBUS Telemetry + Tabler MapDeliveryTracker) -->
+                <section class="drv-cockpit-grid mb-3">
+                    <!-- LEFT: SHIFT TELEMETRY & STOP PROGRESS -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-tachometer text-primary" aria-hidden="true"/>
+                                <t t-if="state.featuredTrip">
+                                    Recorrido Actual · <t t-esc="state.featuredTrip.name"/>
+                                </t>
+                                <t t-else="">
+                                    Jornada Operativa
+                                </t>
+                            </h2>
+                            <span t-if="state.featuredTrip" t-attf-class="tblr-badge #{this.getStateBadgeClass(state.featuredTrip.state)}">
+                                <t t-esc="state.featuredTrip.state_label"/>
+                            </span>
                         </div>
 
-                        <div t-if="!state.vehicles.length" class="georutex-dh-empty-compact">
-                            <i class="fa fa-bus mb-2" aria-hidden="true"/>
-                            <p class="mb-0">Sin vehículo vinculado actualmente. El administrador asignará tu bus desde Flota.</p>
-                        </div>
-
-                        <div t-else="" class="d-flex flex-column gap-2">
-                            <t t-foreach="state.vehicles" t-as="veh" t-key="veh.id">
-                                <div class="georutex-dh-vehicle-row">
-                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                                        <strong class="text-dark"><t t-esc="veh.name"/></strong>
-                                        <span class="badge rounded-pill bg-primary"><t t-esc="veh.freshness_label"/></span>
+                        <div class="tblr-card-body">
+                            <!-- Active Trip Context Bar -->
+                            <div t-if="state.featuredTrip" class="drv-route-banner mb-3">
+                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                                    <div>
+                                        <div class="tblr-pretitle mb-1"><t t-esc="state.featuredTrip.route_code"/> · <t t-esc="state.featuredTrip.route_name"/></div>
+                                        <div class="fw-bold"><t t-esc="state.featuredTrip.origin_name"/> → <t t-esc="state.featuredTrip.destination_name"/></div>
+                                        <div class="tblr-item-sub mt-1">
+                                            Inicio programado: <strong><t t-esc="state.featuredTrip.scheduled_start_local"/></strong>
+                                            · <t t-esc="state.featuredTrip.position_count"/> pts GPS
+                                        </div>
                                     </div>
-                                    <div class="small text-muted">Placa: <strong><t t-esc="veh.license_plate || 'Sin placa'"/></strong></div>
-                                    <div class="small text-muted">Último GPS: <t t-esc="veh.last_gps_time_local"/></div>
+                                    <div class="d-flex gap-2 flex-wrap">
+                                        <button t-if="state.featuredTrip.can_start"
+                                                type="button"
+                                                class="tblr-btn tblr-btn--primary"
+                                                t-att-disabled="state.isTransitioning"
+                                                t-on-click="() => this.transitionTrip(state.featuredTrip.id, 'start')">
+                                            <i class="fa fa-play" aria-hidden="true"/> Iniciar Recorrido
+                                        </button>
+                                        <button t-if="state.featuredTrip.can_complete"
+                                                type="button"
+                                                class="tblr-btn tblr-btn--primary"
+                                                t-att-disabled="state.isTransitioning"
+                                                t-on-click="() => this.transitionTrip(state.featuredTrip.id, 'complete')">
+                                            <i class="fa fa-flag-checkered" aria-hidden="true"/> Finalizar
+                                        </button>
+                                        <button type="button" class="tblr-btn" t-on-click="() => this.openTripDetail(state.featuredTrip.id)">
+                                            Detalle
+                                        </button>
+                                    </div>
                                 </div>
-                            </t>
+                            </div>
+
+                            <div t-elif="!state.isLoading" class="drv-route-banner mb-3">
+                                <div class="fw-bold">Sin recorrido activo en este momento</div>
+                                <div class="tblr-item-sub">Cuando el Administrador programe tu siguiente ruta aparecerá automáticamente con tus paradas, telemetría y mapa.</div>
+                            </div>
+
+                            <!-- 6 REAL TELEMETRY TILES (2x3 ELLIBUS Grid) -->
+                            <div class="drv-telemetry-grid mb-3">
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Próxima Parada</span><i class="fa fa-map-marker text-primary"/></span>
+                                    <div class="drv-stat-val text-truncate" t-att-title="state.featuredTrip ? state.featuredTrip.next_stop_name : 'Sin ruta'">
+                                        <t t-esc="state.featuredTrip ? state.featuredTrip.next_stop_name : 'Sin asignación'"/>
+                                    </div>
+                                    <div class="tblr-item-sub">
+                                        <t t-if="state.featuredTrip">Quedan <t t-esc="state.featuredTrip.remaining_stops"/> paradas</t>
+                                        <t t-else="">En espera de ruta</t>
+                                    </div>
+                                </div>
+
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Velocidad Actual</span><i class="fa fa-tachometer text-muted"/></span>
+                                    <div class="drv-stat-val"><t t-esc="this.currentSpeedDisplay"/></div>
+                                    <div class="tblr-item-sub">Último reporte Traccar</div>
+                                </div>
+
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Distancia Recorrida</span><i class="fa fa-road text-muted"/></span>
+                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.distance_display : 'N/A'"/></div>
+                                    <div class="tblr-item-sub">Cálculo GPS real</div>
+                                </div>
+
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Tiempo Transcurrido</span><i class="fa fa-clock-o text-muted"/></span>
+                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.elapsed_display : 'Sin iniciar'"/></div>
+                                    <div class="tblr-item-sub">Hora oficial Ecuador</div>
+                                </div>
+
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Puntualidad</span><i class="fa fa-check-circle text-muted"/></span>
+                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.punctuality_label : 'N/A'"/></div>
+                                    <div class="tblr-item-sub">Evaluación del recorrido</div>
+                                </div>
+
+                                <div class="drv-stat-tile">
+                                    <span class="tblr-subheader"><span>Conexión GPS</span><span t-attf-class="tblr-status-dot #{this.gpsStatusInfo.dot}"/></span>
+                                    <div class="drv-stat-val"><t t-esc="this.gpsStatusInfo.label"/></div>
+                                    <div class="tblr-item-sub text-truncate"><t t-esc="this.gpsStatusInfo.lastFix"/></div>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Dotted Stop Progress Bar (ELLIBUS-inspired) -->
+                            <div class="drv-stop-progress-box">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="tblr-pretitle mb-0">PROGRESO DE PARADAS</span>
+                                    <strong class="small">
+                                        <t t-if="state.featuredTrip">
+                                            <t t-esc="state.featuredTrip.visited_stops"/> / <t t-esc="state.featuredTrip.total_stops"/> (<t t-esc="state.featuredTrip.progress_pct"/>%)
+                                        </t>
+                                        <t t-else="">0 / 0 (0%)</t>
+                                    </strong>
+                                </div>
+                                <div t-if="state.featuredTrip and state.featuredTrip.stops.length" class="drv-stop-dots mb-2">
+                                    <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
+                                        <button type="button"
+                                                t-attf-class="drv-stop-dot #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}"
+                                                t-att-title="st.order + '. ' + st.name"
+                                                t-on-click="() => this.focusStop(st)">
+                                            <t t-esc="st.order"/>
+                                        </button>
+                                    </t>
+                                </div>
+                                <div class="tblr-progress-sm">
+                                    <div t-attf-style="width: #{state.featuredTrip ? state.featuredTrip.progress_pct : 0}%;"/>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Non-intrusive Compact Animated Bus Rail -->
+                        <div class="tblr-vehicle-rail" aria-hidden="true">
+                            <svg class="tblr-vehicle-rail-svg" viewBox="0 0 1000 46" preserveAspectRatio="xMidYMid slice">
+                                <line x1="0" y1="35" x2="1000" y2="35" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="14 10" class="grx-road-dashes"/>
+                                <g class="grx-bus-ltr">
+                                    <g class="grx-bus-float">
+                                        <rect x="8" y="13" width="62" height="20" rx="5" fill="#182433"/>
+                                        <rect x="8" y="26" width="62" height="3" fill="#066fd1"/>
+                                        <rect x="14" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="29" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="44" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
+                                        <rect x="59" y="16" width="8" height="7" rx="1.5" fill="#93c5fd"/>
+                                        <circle cx="21" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+                                        <circle cx="57" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
+                                    </g>
+                                </g>
+                            </svg>
+                            <span class="tblr-rail-meta">
+                                Recorridos asignados: <strong><t t-esc="state.stats.total_trips"/></strong>
+                            </span>
+                            <span class="tblr-rail-meta">
+                                Finalizados: <strong><t t-esc="state.stats.completed_trips"/></strong>
+                            </span>
                         </div>
                     </div>
 
-                    <!-- Recent Incidents -->
-                    <div class="georutex-dh-panel flex-grow-1">
-                        <div class="georutex-dh-panel-head">
-                            <div>
-                                <h2><i class="fa fa-exclamation-triangle me-2 text-primary" aria-hidden="true"/>Mis Incidencias</h2>
+                    <!-- RIGHT: TABLER MAP DELIVERY TRACKER + INTERACTIVE STOP TIMELINE -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-map-marker text-primary" aria-hidden="true"/>
+                                Mapa de Ruta y Paradas
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.recenterMap()" title="Centrar mapa">
+                                    <i class="fa fa-crosshairs" aria-hidden="true"/>
+                                </button>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openLiveMap()">
+                                    Mapa completo <i class="fa fa-external-link" aria-hidden="true"/>
+                                </button>
                             </div>
-                            <button type="button" class="btn btn-sm btn-primary" t-on-click="() => this.openNewIncident(false)">
-                                <i class="fa fa-plus me-1" aria-hidden="true"/>Nueva
-                            </button>
                         </div>
 
-                        <div t-if="!state.incidents.length" class="georutex-dh-empty-compact">
-                            <i class="fa fa-check-circle mb-2" aria-hidden="true"/>
-                            <p class="mb-0">No has registrado incidencias operacionales todavía.</p>
+                        <!-- Tabler MapDeliveryTracker Map + Floating Overlay Card -->
+                        <div class="tblr-map-wrap" style="height: 270px;">
+                            <div t-ref="driverMapCanvas" class="tblr-map-canvas"/>
+                            <div t-if="state.featuredTrip" class="tblr-map-float-card">
+                                <div class="tblr-pretitle mb-1"><t t-esc="state.featuredTrip.name"/></div>
+                                <div class="fw-bold small text-truncate"><t t-esc="state.featuredTrip.next_stop_name"/></div>
+                                <div class="tblr-progress-sm mt-2">
+                                    <div t-attf-style="width: #{state.featuredTrip.progress_pct}%; background: #2fb344;"/>
+                                </div>
+                            </div>
+                            <div t-if="!this.hasMapPoints and !state.isLoading" class="tblr-map-empty-overlay">
+                                <strong>Sin coordenadas GPS o paradas activas</strong>
+                                <div>El trazado y tu unidad aparecerán aquí en cuanto tengas una ruta asignada o señal Traccar.</div>
+                            </div>
                         </div>
 
-                        <div t-else="" class="d-flex flex-column gap-2">
-                            <t t-foreach="state.incidents" t-as="inc" t-key="inc.id">
-                                <div class="georutex-dh-incident-row" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
-                                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
-                                        <strong class="text-dark"><t t-esc="inc.name"/></strong>
-                                        <span t-attf-class="badge rounded-pill #{getSeverityBadgeClass(inc.severity)}">
-                                            <t t-esc="inc.severity_label"/>
+                        <!-- Interactive Vertical Stop Timeline (click stop -> map.flyTo) -->
+                        <div class="tblr-card-header py-2">
+                            <span class="tblr-pretitle mb-0">LÍNEA DE TIEMPO DE PARADAS (CLIC PARA ENFOCAR)</span>
+                        </div>
+                        <div t-if="state.featuredTrip and state.featuredTrip.stops.length" class="tblr-list-scroll" style="max-height: 210px;">
+                            <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
+                                <div t-attf-class="tblr-list-item #{state.selectedStopId === st.id ? 'is-selected' : ''}"
+                                     role="button" tabindex="0"
+                                     t-on-click="() => this.focusStop(st)">
+                                    <div class="d-flex align-items-center gap-2 min-w-0">
+                                        <span t-attf-class="drv-tl-badge #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}">
+                                            <t t-esc="st.order"/>
                                         </span>
+                                        <div class="min-w-0">
+                                            <div class="tblr-item-title text-truncate"><t t-esc="st.name"/></div>
+                                            <div class="tblr-item-sub">
+                                                <t t-if="st.visited">Visitada · <t t-esc="st.arrival_local || 'Registrada'"/></t>
+                                                <t t-else="">Pendiente <t t-if="st.scheduled_local">· Previsto <t t-esc="st.scheduled_local"/></t></t>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="small fw-semibold text-primary"><t t-esc="inc.incident_type_label"/></div>
-                                    <div class="small text-muted">
-                                        <t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/>
+                                    <span t-if="st.visited" class="tblr-badge is-green">OK</span>
+                                    <span t-elif="st.order === state.featuredTrip.next_stop_order" class="tblr-badge is-blue">Siguiente</span>
+                                    <span t-else="" class="tblr-badge is-muted">Pendiente</span>
+                                </div>
+                            </t>
+                        </div>
+                        <div t-else="" class="tblr-empty py-3">
+                            <i class="fa fa-map-signs" aria-hidden="true"/>
+                            <p>Sin paradas activas en el recorrido seleccionado.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BOTTOM 2-COLUMN WORKSPACE: TRIP HISTORY + REPORTED INCIDENTS -->
+                <section class="tblr-mid-grid">
+                    <!-- Trip History -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-history text-primary" aria-hidden="true"/>
+                                Historial de Mis Recorridos
+                            </h2>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="tblr-btn-group" role="group">
+                                    <button type="button" t-att-class="state.tripFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'all'; }">Todos</button>
+                                    <button type="button" t-att-class="state.tripFilter === 'active' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'active'; }">Activos</button>
+                                    <button type="button" t-att-class="state.tripFilter === 'completed' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'completed'; }">Finalizados</button>
+                                </div>
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openMyTrips()">Ver todos</button>
+                            </div>
+                        </div>
+                        <div t-if="!this.filteredTrips.length" class="tblr-empty">
+                            <i class="fa fa-road" aria-hidden="true"/>
+                            <strong>Sin recorridos registrados</strong>
+                            <p>Aquí aparecerá tu historial completo de recorridos asignados y finalizados.</p>
+                        </div>
+                        <div t-else="" class="tblr-list-scroll">
+                            <t t-foreach="this.filteredTrips" t-as="trip" t-key="trip.id">
+                                <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openTripDetail(trip.id)">
+                                    <div class="min-w-0">
+                                        <div class="tblr-item-title text-truncate"><t t-esc="trip.name"/> · <t t-esc="trip.route_name"/></div>
+                                        <div class="tblr-item-sub"><t t-esc="trip.scheduled_start_local"/> · <t t-esc="trip.position_count"/> pts GPS</div>
                                     </div>
+                                    <span t-attf-class="tblr-badge #{this.getStateBadgeClass(trip.state)}"><t t-esc="trip.state_label"/></span>
                                 </div>
                             </t>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Reported Incidents -->
+                    <div class="tblr-card">
+                        <div class="tblr-card-header">
+                            <h2 class="tblr-card-title">
+                                <i class="fa fa-exclamation-triangle text-primary" aria-hidden="true"/>
+                                Mis Incidencias Reportadas
+                            </h2>
+                            <div class="d-flex gap-2">
+                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openAllIncidents()">Ver todas</button>
+                                <button type="button" class="tblr-btn tblr-btn--sm tblr-btn--primary" t-on-click="() => this.openNewIncident(false)">+ Nueva</button>
+                            </div>
+                        </div>
+                        <div t-if="!state.incidents.length" class="tblr-empty">
+                            <i class="fa fa-check-circle" aria-hidden="true"/>
+                            <strong>Sin incidencias reportadas</strong>
+                            <p>Si ocurre tráfico, bloqueo vial o novedad mecánica, repórtala desde aquí con un toque.</p>
+                        </div>
+                        <div t-else="" class="tblr-list-scroll">
+                            <t t-foreach="state.incidents" t-as="inc" t-key="inc.id">
+                                <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
+                                    <div class="min-w-0">
+                                        <div class="tblr-item-title text-truncate"><t t-esc="inc.name"/> · <t t-esc="inc.incident_type_label"/></div>
+                                        <div class="tblr-item-sub"><t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/></div>
+                                    </div>
+                                    <span t-attf-class="tblr-badge #{this.getSeverityBadgeClass(inc.severity)}"><t t-esc="inc.severity_label"/></span>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+                </section>
             </div>
         </div>
     </t>

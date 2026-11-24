@@ -2,17 +2,20 @@
 <templates xml:space="preserve">
     <t t-name="uta_transport_monitor.TransportDashboardAction" owl="1">
         <div class="georutex-dashboard-container">
-            <header class="georutex-dashboard-header">
-                <div class="georutex-dashboard-title">
-                    <h1>Monitoreo y métricas de transporte</h1>
-                    <span class="georutex-context-badge">Panel de Control</span>
+            <header class="tblr-page-header px-4 pt-3 pb-2 mb-0 bg-white">
+                <div>
+                    <div class="tblr-pretitle">ANALÍTICA ESTADÍSTICA · ISO/IEC 25010</div>
+                    <h1 class="tblr-page-title">Monitoreo y Métricas de Transporte (MT-01..08 · MCS-01..04)</h1>
                 </div>
-                <button type="button"
-                        class="btn georutex-button-light"
-                        t-on-click="openEvaluationsList"
-                        title="Consultar evaluaciones y sus parámetros guardados">
-                    <i class="fa fa-history me-1"/> Auditoría
-                </button>
+                <div class="tblr-header-right">
+                    <button type="button"
+                            class="tblr-btn"
+                            t-on-click="openEvaluationsList"
+                            title="Consultar evaluaciones y sus parámetros guardados">
+                        <i class="fa fa-history" aria-hidden="true"/>
+                        <span>Auditoría de Evaluaciones</span>
+                    </button>
+                </div>
             </header>
 
             <div class="georutex-dashboard-toolbar">
@@ -189,21 +192,41 @@
                     </button>
                 </section>
 
+                <!-- Interactive Apache ECharts Circular KPI Gauges (MT-01 & MT-02) -->
+                <section class="georutex-dashboard-section tblr-gauge-row" aria-label="Indicadores circulares de cumplimiento y puntualidad">
+                    <article class="georutex-surface-card">
+                        <div class="georutex-card-heading">
+                            <div>
+                                <h2>MT-01 · Cumplimiento de rutas</h2>
+                                <p>Progreso circular interactivo · fuente <t t-esc="state.filters.source_type"/></p>
+                            </div>
+                            <span class="tblr-badge is-blue">Meta ≥ 90%</span>
+                        </div>
+                        <div t-ref="mt01GaugeBox" class="tblr-echart-gauge"/>
+                    </article>
+                    <article class="georutex-surface-card">
+                        <div class="georutex-card-heading">
+                            <div>
+                                <h2>MT-02 · Puntualidad general</h2>
+                                <p>Salida y llegada evaluadas dentro de ventana</p>
+                            </div>
+                            <span class="tblr-badge is-green">Meta ≥ 85%</span>
+                        </div>
+                        <div t-ref="mt02GaugeBox" class="tblr-echart-gauge"/>
+                    </article>
+                </section>
+
                 <section class="georutex-dashboard-section georutex-main-grid">
                     <article class="georutex-surface-card">
                         <div class="georutex-card-heading">
                             <div>
-                                <h2>Cumplimiento y puntualidad</h2>
-                                <p>Tendencia diaria · porcentajes calculados sobre su muestra</p>
+                                <h2>Cumplimiento y puntualidad (Apache ECharts)</h2>
+                                <p>Tendencia diaria interactiva · porcentajes calculados sobre su muestra</p>
                             </div>
                             <i class="fa fa-line-chart text-primary" aria-hidden="true"/>
                         </div>
                         <t t-if="this.hasDailyTrendData">
-                            <div class="georutex-chart-area">
-                                <canvas t-ref="trendChartCanvas"
-                                        role="img"
-                                        aria-label="Gráfico de cumplimiento de rutas y puntualidad"/>
-                            </div>
+                            <div t-ref="trendChartCanvas" class="tblr-echart-box" role="img" aria-label="Gráfico interactivo de cumplimiento y puntualidad"/>
                         </t>
                         <t t-else="">
                             <div class="georutex-chart-empty">
@@ -347,6 +370,9 @@
                                         <p>Cumplimiento bruto y ajustado</p>
                                     </div>
                                 </div>
+                                <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
+                                    <div t-ref="routeChartBox" class="tblr-echart-box mb-3" style="height: 220px;"/>
+                                </t>
                                 <table class="georutex-data-table">
                                     <thead>
                                         <tr>
@@ -382,11 +408,7 @@
                                     </div>
                                 </div>
                                 <t t-if="this.hasIncidentChartData">
-                                    <div class="georutex-chart-area">
-                                        <canvas t-ref="incidentChartCanvas"
-                                                role="img"
-                                                aria-label="Incidencias agrupadas por tipo"/>
-                                    </div>
+                                    <div t-ref="incidentChartCanvas" class="tblr-echart-box" role="img" aria-label="Distribución de incidencias por tipo"/>
                                 </t>
                                 <t t-else="">
                                     <div class="georutex-empty-state">Sin incidencias registradas en este período.</div>

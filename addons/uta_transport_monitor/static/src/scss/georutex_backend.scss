@@ -1,0 +1,2084 @@
+// GeoRutex Editorial Light-Mode Home & Animated Vehicle Corridor Stylesheet
+// LibSass 3.6 compatible (never use mixed-unit min()/max() functions).
+
+$grx-ink: #1f1f61;
+$grx-ink-deep: #141446;
+$grx-blue: #2563eb;
+$grx-blue-hover: #1d4ed8;
+$grx-cyan: #0ea5e9;
+$grx-canvas: #f4f6fb;
+$grx-surface: #ffffff;
+$grx-border: rgba(31, 31, 97, 0.1);
+$grx-muted: #52607a;
+
+// Keyframes: Vehicle Motion, Road Parallax, GPS Radar & Marquee Ticker
+@keyframes grxBusDriveLtr {
+    0% {
+        transform: translateX(-180px);
+    }
+
+    100% {
+        transform: translateX(1320px);
+    }
+}
+
+@keyframes grxBusDriveRtl {
+    0% {
+        transform: translateX(1300px);
+    }
+
+    100% {
+        transform: translateX(-160px);
+    }
+}
+
+@keyframes grxBusFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-2.5px);
+    }
+}
+
+@keyframes grxRoadScroll {
+    0% {
+        stroke-dashoffset: 0;
+    }
+
+    100% {
+        stroke-dashoffset: 100;
+    }
+}
+
+@keyframes grxDashFlow {
+    0% {
+        stroke-dashoffset: 28;
+    }
+
+    100% {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes grxRadarPing {
+    0% {
+        transform: scale(0.45);
+        opacity: 0.7;
+    }
+
+    100% {
+        transform: scale(1.85);
+        opacity: 0;
+    }
+}
+
+@keyframes grxTickerScroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes grxPulseDot {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.45);
+    }
+
+    60% {
+        box-shadow: 0 0 0 8px rgba(22, 163, 74, 0);
+    }
+}
+
+// Clean Top-Right Systray: hide Odoo Chatter/Activities clutter for non-system users
+.o_web_client.o_georutex_no_apps_menu {
+    .o_main_navbar .o_menu_systray {
+        .o_MessagingMenu,
+        .o_ActivityMenuView,
+        .o_mail_systray_item {
+            display: none !important;
+        }
+    }
+}
+
+// Root Container for Admin & Driver Homes
+.grx-home {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem 2.5rem;
+    color: $grx-ink;
+    font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+// Hero Section + Animated SVG Vehicle Backdrop
+.grx-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 24px;
+    border: 1px solid $grx-border;
+    background: #eef4ff;
+    box-shadow: 0 18px 42px rgba(31, 31, 97, 0.08);
+    margin-bottom: 1.25rem;
+}
+
+.grx-fleet-stage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.grx-fleet-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.grx-road-dashes {
+    animation: grxRoadScroll 2.2s linear infinite;
+}
+
+.grx-svg-dash-flow {
+    animation: grxDashFlow 1.8s linear infinite;
+}
+
+.grx-bus-ltr {
+    animation: grxBusDriveLtr 16s linear infinite;
+    will-change: transform;
+}
+
+.grx-bus-rtl {
+    animation: grxBusDriveRtl 22s linear infinite;
+    will-change: transform;
+}
+
+.grx-bus-float {
+    animation: grxBusFloat 1.6s ease-in-out infinite;
+}
+
+.grx-bus-float-alt {
+    animation: grxBusFloat 1.9s ease-in-out infinite;
+}
+
+.grx-radar-ring {
+    fill: rgba(37, 99, 235, 0.25);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: grxRadarPing 2.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+.grx-radar-delay-1 {
+    animation-delay: 0.8s;
+}
+
+.grx-radar-delay-2 {
+    animation-delay: 1.6s;
+}
+
+.grx-beacon-ping {
+    fill: rgba(14, 165, 233, 0.45);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: grxRadarPing 1.8s ease-out infinite;
+}
+
+.grx-hero-inner {
+    position: relative;
+    z-index: 2;
+    padding: 1.6rem 2rem 4.6rem;
+    background: linear-gradient(180deg,
+            rgba(248, 251, 255, 0.92) 0%,
+            rgba(248, 251, 255, 0.78) 58%,
+            rgba(248, 251, 255, 0.12) 100%);
+}
+
+.grx-hero--driver .grx-hero-inner {
+    padding-bottom: 4rem;
+}
+
+// Top Editorial Eyebrow Bar
+.grx-hero-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding-bottom: 1rem;
+    margin-bottom: 1.35rem;
+    border-bottom: 1px solid rgba(31, 31, 97, 0.12);
+}
+
+.grx-brand-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+}
+
+.grx-hero-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1.5px solid rgba(37, 99, 235, 0.35);
+    background: #071633;
+}
+
+.grx-eyebrow-code {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    background: $grx-ink;
+    color: #ffffff;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.grx-eyebrow-sep {
+    width: 28px;
+    height: 1.5px;
+    background: rgba(31, 31, 97, 0.35);
+}
+
+.grx-eyebrow-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: $grx-ink;
+    text-transform: uppercase;
+}
+
+.grx-hero-clock {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.38rem 0.9rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid $grx-border;
+    font-size: 0.84rem;
+    color: $grx-ink;
+}
+
+.grx-live-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #94a3b8;
+    flex-shrink: 0;
+
+    &.is-online {
+        background: #16a34a;
+        animation: grxPulseDot 2s infinite;
+    }
+}
+
+// Hero Split Grid
+.grx-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+    gap: 1.75rem;
+    align-items: center;
+}
+
+.grx-driver-hero-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.grx-display-title {
+    margin: 0 0 0.75rem;
+    font-size: clamp(1.9rem, 3.1vw, 2.9rem);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+    color: $grx-ink;
+}
+
+.grx-hero-lead {
+    max-width: 640px;
+    margin: 0 0 1.35rem;
+    font-size: 0.98rem;
+    line-height: 1.55;
+    color: $grx-muted;
+}
+
+.grx-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.7rem;
+    align-items: center;
+}
+
+// MVP-Inspired Dual-Layer Roll-Up Hover Buttons
+.grx-roll-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 1.25rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+
+    &:disabled {
+        opacity: 0.65;
+        cursor: wait;
+    }
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+
+        .grx-roll-text:first-child {
+            transform: translateY(-135%);
+        }
+
+        .grx-roll-text.is-hover {
+            transform: translateY(0);
+        }
+    }
+}
+
+.grx-roll-btn--primary {
+    background: linear-gradient(135deg, $grx-blue 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.28);
+}
+
+.grx-roll-btn--navy {
+    background: $grx-ink;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(31, 31, 97, 0.24);
+}
+
+.grx-roll-inner {
+    position: relative;
+    display: block;
+    height: 22px;
+    line-height: 22px;
+    overflow: hidden;
+}
+
+.grx-roll-text {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+
+    &.is-hover {
+        position: absolute;
+        inset: 0;
+        transform: translateY(135%);
+    }
+}
+
+.grx-btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    padding: 0 1.15rem;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 31, 97, 0.22);
+    background: rgba(255, 255, 255, 0.92);
+    color: $grx-ink;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background-color 0.18s ease, transform 0.18s ease;
+
+    &:hover:not(:disabled) {
+        border-color: $grx-blue;
+        background: #ffffff;
+        color: $grx-blue;
+        transform: translateY(-1px);
+    }
+}
+
+.grx-btn-subtle {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.42rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid $grx-border;
+    background: #ffffff;
+    color: $grx-ink;
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+
+    &:hover {
+        border-color: $grx-blue;
+        color: $grx-blue;
+        background: #eff6ff;
+    }
+}
+
+// Floating MVP Hero Live Highlight Slider Card (01/04)
+.grx-hero-slider {
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(31, 31, 97, 0.12);
+    box-shadow: 0 16px 36px rgba(31, 31, 97, 0.11);
+    padding: 1.2rem 1.35rem;
+}
+
+.grx-slider-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.65rem;
+}
+
+.grx-slider-counter {
+    display: flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.grx-slider-current {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: $grx-ink;
+}
+
+.grx-slider-total {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: rgba(31, 31, 97, 0.45);
+}
+
+.grx-slider-nav {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.grx-slider-arrow {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    border: 1px solid $grx-border;
+    background: #ffffff;
+    color: $grx-ink;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.16s ease;
+
+    &:hover {
+        background: $grx-ink;
+        color: #ffffff;
+        border-color: $grx-ink;
+    }
+}
+
+.grx-slider-progress {
+    width: 100%;
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(31, 31, 97, 0.12);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.grx-slider-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, $grx-ink, $grx-blue, $grx-cyan);
+    transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.grx-slider-body {
+    cursor: pointer;
+
+    &:hover .grx-circle-arrow {
+        background: $grx-blue;
+        color: #ffffff;
+        transform: translateX(3px);
+    }
+}
+
+.grx-slider-eyebrow {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: $grx-blue;
+    margin-bottom: 0.3rem;
+}
+
+.grx-slider-title {
+    margin: 0 0 0.45rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $grx-ink;
+}
+
+.grx-slider-metric {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: $grx-ink;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.65rem;
+}
+
+.grx-slider-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: 0.82rem;
+    color: $grx-muted;
+}
+
+.grx-circle-arrow {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(31, 31, 97, 0.08);
+    color: $grx-ink;
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+// Infinite Operational Marquee Ticker
+.grx-ticker {
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    background: $grx-ink;
+    color: #ffffff;
+    padding: 0.68rem 0;
+    margin-bottom: 1.65rem;
+    box-shadow: 0 8px 20px rgba(31, 31, 97, 0.14);
+}
+
+.grx-ticker-track {
+    display: flex;
+    width: max-content;
+    animation: grxTickerScroll 34s linear infinite;
+
+    &:hover {
+        animation-play-state: paused;
+    }
+}
+
+.grx-ticker-group {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding-right: 1.25rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+
+    strong {
+        color: #7dd3fc;
+        font-weight: 800;
+    }
+}
+
+.grx-ticker-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #38bdf8;
+}
+
+// Section Headings
+.grx-section {
+    margin-bottom: 1.75rem;
+}
+
+.grx-section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.grx-section-eyebrow {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    color: $grx-blue;
+    text-transform: uppercase;
+    margin-bottom: 0.2rem;
+}
+
+.grx-section-title {
+    margin: 0;
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: $grx-ink;
+}
+
+// 6 Numbered Alternating Module Cards (MVP Services Grid)
+.grx-mvp-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.grx-mvp-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 204px;
+    padding: 1.35rem 1.4rem;
+    border-radius: 20px;
+    border: 1px solid $grx-border;
+    background: $grx-surface;
+    color: $grx-ink;
+    cursor: pointer;
+    box-shadow: 0 8px 22px rgba(31, 31, 97, 0.05);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        border-color: rgba(37, 99, 235, 0.35);
+        box-shadow: 0 18px 34px rgba(31, 31, 97, 0.12);
+
+        .grx-circle-arrow {
+            background: $grx-blue;
+            color: #ffffff;
+            transform: translateX(3px);
+        }
+    }
+
+    &.is-accent {
+        background: linear-gradient(145deg, $grx-ink 0%, #26267a 55%, #1d4ed8 100%);
+        color: #ffffff;
+        border-color: transparent;
+
+        .grx-mvp-num {
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        .grx-mvp-pill {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        .grx-mvp-title {
+            color: #ffffff;
+        }
+
+        .grx-mvp-desc,
+        .grx-mvp-foot {
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .grx-circle-arrow {
+            background: rgba(255, 255, 255, 0.16);
+            color: #ffffff;
+        }
+
+        &:hover .grx-circle-arrow {
+            background: #ffffff;
+            color: $grx-ink;
+        }
+    }
+}
+
+.grx-mvp-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.grx-mvp-num {
+    font-size: 1.7rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: rgba(31, 31, 97, 0.22);
+    font-variant-numeric: tabular-nums;
+}
+
+.grx-mvp-pill {
+    padding: 0.24rem 0.65rem;
+    border-radius: 999px;
+    background: #eff6ff;
+    color: $grx-blue;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.grx-mvp-title {
+    margin: 0 0 0.4rem;
+    font-size: 1.12rem;
+    font-weight: 800;
+    color: $grx-ink;
+}
+
+.grx-mvp-desc {
+    margin: 0 0 1rem;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    color: $grx-muted;
+}
+
+.grx-mvp-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: $grx-muted;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+// Driver KPI Strip
+.grx-kpi-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.grx-kpi-box {
+    position: relative;
+    padding: 1.15rem 1.25rem;
+    border-radius: 18px;
+    border: 1px solid $grx-border;
+    background: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(31, 31, 97, 0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px rgba(31, 31, 97, 0.1);
+    }
+
+    &.is-accent {
+        background: linear-gradient(135deg, $grx-ink 0%, $grx-blue 100%);
+        color: #ffffff;
+        border-color: transparent;
+
+        .grx-kpi-num-idx {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        .grx-kpi-val,
+        .grx-kpi-lbl {
+            color: #ffffff;
+        }
+    }
+}
+
+.grx-kpi-num-idx {
+    position: absolute;
+    top: 0.85rem;
+    right: 1rem;
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: rgba(31, 31, 97, 0.22);
+}
+
+.grx-kpi-val {
+    font-size: 1.95rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: $grx-ink;
+    font-variant-numeric: tabular-nums;
+    margin-bottom: 0.2rem;
+}
+
+.grx-kpi-lbl {
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: $grx-muted;
+}
+
+// Split Panels, Tables, Incident Cards & Stop Timeline
+.grx-split-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.95fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+.grx-panel {
+    background: #ffffff;
+    border: 1px solid $grx-border;
+    border-radius: 20px;
+    padding: 1.35rem 1.45rem;
+    box-shadow: 0 8px 24px rgba(31, 31, 97, 0.05);
+}
+
+.grx-panel-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.1rem;
+
+    h3 {
+        margin: 0;
+        font-size: 1.18rem;
+        font-weight: 800;
+        color: $grx-ink;
+    }
+}
+
+.grx-table-wrap {
+    overflow-x: auto;
+}
+
+.grx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+
+    th {
+        text-align: left;
+        padding: 0.65rem 0.75rem;
+        font-size: 0.74rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: $grx-muted;
+        border-bottom: 1px solid $grx-border;
+    }
+
+    td {
+        padding: 0.78rem 0.75rem;
+        border-bottom: 1px solid rgba(31, 31, 97, 0.06);
+        vertical-align: middle;
+    }
+}
+
+.grx-table-row {
+    cursor: pointer;
+    transition: background-color 0.14s ease;
+
+    &:hover {
+        background: #f8fbff;
+    }
+}
+
+.grx-sub {
+    font-size: 0.78rem;
+    color: $grx-muted;
+}
+
+.grx-num {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.grx-chip-sim {
+    display: inline-block;
+    padding: 0.08rem 0.45rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.grx-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.grx-badge--blue {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.grx-badge--cyan {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.grx-badge--green {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.grx-badge--muted {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+// Incident Cards with Left Severity Stripe
+.grx-inc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+
+.grx-inc-card,
+.grx-veh-card {
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    border: 1px solid $grx-border;
+    background: #f8fafd;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.grx-inc-card {
+    cursor: pointer;
+    border-left: 4px solid #3b82f6;
+
+    &:hover {
+        transform: translateX(2px);
+        border-color: rgba(37, 99, 235, 0.35);
+    }
+
+    &.is-critical,
+    &.is-high {
+        border-left-color: #dc2626;
+    }
+
+    &.is-medium {
+        border-left-color: #d97706;
+    }
+}
+
+.grx-inc-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.2rem;
+}
+
+.grx-inc-sev {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.16rem 0.55rem;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid $grx-border;
+    color: $grx-ink;
+}
+
+.grx-inc-type {
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: $grx-blue;
+    margin-bottom: 0.25rem;
+}
+
+.grx-inc-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    color: $grx-muted;
+}
+
+// Driver Featured Trip + Vertical Stop Timeline
+.grx-featured-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.95fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.grx-featured-meta {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.95rem 1.1rem;
+    border-radius: 14px;
+    background: #f8fbff;
+    border: 1px solid $grx-border;
+    font-size: 0.9rem;
+
+    i {
+        width: 18px;
+        text-align: center;
+        color: $grx-blue;
+        margin-right: 0.35rem;
+    }
+}
+
+.grx-progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.grx-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, $grx-ink, $grx-blue, $grx-cyan);
+    transition: width 0.35s ease;
+}
+
+.grx-timeline-box {
+    padding: 1rem 1.1rem;
+    border-radius: 16px;
+    background: #f8fbff;
+    border: 1px solid $grx-border;
+}
+
+.grx-stop-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.grx-stop-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    &.is-visited .grx-stop-node {
+        background: #16a34a;
+        color: #ffffff;
+        border-color: #16a34a;
+    }
+}
+
+.grx-stop-node {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 2px solid $grx-blue;
+    color: $grx-ink;
+    font-size: 0.74rem;
+    font-weight: 800;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+}
+
+.grx-stop-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+
+    strong {
+        font-size: 0.88rem;
+        color: $grx-ink;
+    }
+
+    small {
+        font-size: 0.76rem;
+        color: $grx-muted;
+    }
+}
+
+.grx-trip-cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.grx-trip-card {
+    padding: 1rem;
+    border-radius: 16px;
+    border: 1px solid $grx-border;
+    background: #f8fafd;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+
+    h4 {
+        margin: 0;
+        font-size: 0.98rem;
+        font-weight: 800;
+        color: $grx-ink;
+    }
+}
+
+.grx-trip-card-head,
+.grx-trip-card-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.grx-trip-card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.83rem;
+    color: $grx-ink;
+
+    i {
+        color: $grx-blue;
+        width: 16px;
+        text-align: center;
+    }
+}
+
+.grx-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: $grx-muted;
+
+    i {
+        font-size: 2rem;
+        color: $grx-blue;
+        margin-bottom: 0.5rem;
+    }
+
+    p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+}
+
+// Analyst Dashboard Editorial Hero Strip
+.grx-analyst-hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    border: 1px solid $grx-border;
+    background: #eef4ff;
+    margin-bottom: 1rem;
+    box-shadow: 0 12px 28px rgba(31, 31, 97, 0.07);
+}
+
+.grx-analyst-stage {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.grx-analyst-hero-inner {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 1.35rem 1.65rem 3.4rem;
+    background: linear-gradient(180deg,
+            rgba(248, 251, 255, 0.92) 0%,
+            rgba(248, 251, 255, 0.72) 65%,
+            rgba(248, 251, 255, 0.15) 100%);
+}
+
+.grx-analyst-title {
+    margin: 0;
+    font-size: clamp(1.45rem, 2.2vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: $grx-ink;
+}
+
+// Responsive Breakpoints
+@media (max-width: 1100px) {
+
+    .grx-hero-grid,
+    .grx-split-grid,
+    .grx-featured-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .grx-mvp-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .grx-kpi-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 680px) {
+    .grx-home {
+        padding: 0.85rem 0.9rem 2rem;
+    }
+
+    .grx-hero-inner {
+        padding: 1.15rem 1.1rem 4rem;
+    }
+
+    .grx-mvp-grid,
+    .grx-trip-cards {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .grx-bus-ltr,
+    .grx-bus-rtl,
+    .grx-bus-float,
+    .grx-bus-float-alt,
+    .grx-road-dashes,
+    .grx-svg-dash-flow,
+    .grx-radar-ring,
+    .grx-beacon-ping,
+    .grx-ticker-track,
+    .grx-live-dot {
+        animation: none !important;
+    }
+}
+
+// ============================================================================
+// UNIFIED GEORUTEX DESIGN SYSTEM — SHELL, ODOO VIEWS, DASHBOARD & LIVE MAP
+// ============================================================================
+.o_web_client {
+    --grx-ink: #{$grx-ink};
+    --grx-brand: #{$grx-blue};
+    --grx-brand-hover: #{$grx-blue-hover};
+    --grx-cyan: #{$grx-cyan};
+    --grx-canvas: #{$grx-canvas};
+    --grx-surface: #{$grx-surface};
+    --grx-surface-2: #f8fafd;
+    --grx-border: #{$grx-border};
+    --grx-muted: #{$grx-muted};
+    --georutex-navy: #{$grx-ink};
+    --georutex-blue: #{$grx-blue};
+    --georutex-canvas: #{$grx-canvas};
+    --georutex-border: rgba(31, 31, 97, 0.11);
+
+    font-size: 15px;
+    color: $grx-ink;
+    background: $grx-canvas;
+
+    // WCAG AA accessible focus ring across interactive controls
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 2.5px solid $grx-blue !important;
+        outline-offset: 2px;
+    }
+
+    // Translucent Glass Navbar
+    .o_main_navbar {
+        height: 60px;
+        min-height: 60px;
+        background: rgba(255, 255, 255, 0.92) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid $grx-border !important;
+        box-shadow: 0 4px 16px rgba(31, 31, 97, 0.04);
+
+        .o_menu_brand {
+            color: $grx-ink !important;
+            font-size: 1.08rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .dropdown-menu {
+            border: 1px solid $grx-border;
+            border-radius: 14px;
+            padding: 0.4rem;
+            box-shadow: 0 16px 36px rgba(31, 31, 97, 0.14);
+
+            .dropdown-item {
+                border-radius: 9px;
+                padding: 0.5rem 0.85rem;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: $grx-ink;
+
+                &:hover,
+                &:focus {
+                    background: #eff6ff;
+                    color: $grx-blue;
+                }
+            }
+        }
+    }
+
+    // Refined Control Panel (compact, proportional, crisp)
+    .o_control_panel {
+        background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid $grx-border;
+        padding: 0.35rem 0.5rem;
+
+        .o_cp_buttons .btn,
+        .o_cp_action_menus .btn {
+            min-height: 38px;
+            padding: 0.42rem 0.95rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .o_searchview {
+            min-height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(31, 31, 97, 0.16);
+            font-size: 0.88rem;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease;
+
+            &:focus-within {
+                border-color: $grx-blue;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+            }
+        }
+
+        .breadcrumb {
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+    }
+
+    // Native Odoo List Views — Card-Framed Tables
+    .o_list_view {
+        background: $grx-canvas;
+
+        .o_list_table {
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(31, 31, 97, 0.05);
+
+            thead th {
+                background: #f8fafd !important;
+                color: $grx-muted !important;
+                font-size: 0.74rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                border-bottom: 1px solid $grx-border !important;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            tbody tr.o_data_row {
+                transition: background-color 0.12s ease;
+
+                &:hover {
+                    background: #f5f9ff !important;
+                }
+
+                td {
+                    border-bottom-color: rgba(31, 31, 97, 0.06);
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+
+    // Native Odoo Form Views — Crisp Elevated Sheets
+    .o_form_view:not(.o_georutex_incident_form) {
+        .o_form_sheet_bg {
+            background: $grx-canvas;
+        }
+
+        .o_form_sheet {
+            border-radius: 20px;
+            border: 1px solid $grx-border;
+            box-shadow: 0 12px 32px rgba(31, 31, 97, 0.06);
+        }
+
+        .o_form_statusbar {
+            background: #ffffff;
+            border-bottom: 1px solid $grx-border;
+        }
+    }
+
+    // Native Odoo Modals
+    .modal-content {
+        border-radius: 20px;
+        border: 1px solid $grx-border;
+        box-shadow: 0 24px 56px rgba(31, 31, 97, 0.2);
+        overflow: hidden;
+
+        .modal-header {
+            background: #f8fafd;
+            border-bottom: 1px solid $grx-border;
+
+            .modal-title {
+                color: $grx-ink;
+                font-weight: 800;
+            }
+        }
+    }
+
+    // Harmonized Analyst Dashboard (MT-01..08 & MCS-01..04)
+    .georutex-dashboard-container {
+        background: $grx-canvas;
+        color: $grx-ink;
+        font-size: 15px;
+
+        .georutex-dashboard-toolbar {
+            min-height: 62px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 16px;
+            margin: 0 1.5rem 0.5rem;
+            border: 1px solid $grx-border;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(31, 31, 97, 0.04);
+        }
+
+        .georutex-period-button {
+            min-height: 36px;
+            padding: 0.4rem 0.95rem;
+            font-size: 0.86rem;
+            border-color: $grx-border;
+
+            &.active {
+                background: $grx-ink;
+                border-color: $grx-ink;
+                color: #ffffff;
+            }
+        }
+
+        .georutex-toolbar-actions .btn {
+            min-height: 36px;
+            font-size: 0.86rem;
+            border-radius: 999px;
+            padding: 0.4rem 0.95rem;
+        }
+
+        .georutex-summary-card,
+        .georutex-metric-card,
+        .georutex-surface-card {
+            border-radius: 18px;
+            border: 1px solid $grx-border;
+            box-shadow: 0 8px 22px rgba(31, 31, 97, 0.05);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .georutex-summary-card:hover,
+        .georutex-metric-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(37, 99, 235, 0.35);
+            box-shadow: 0 14px 30px rgba(31, 31, 97, 0.1);
+        }
+
+        .georutex-summary-value,
+        .georutex-metric-value {
+            color: $grx-ink;
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    // Harmonized Live Fleet Map Split View
+    .o_georutex_live_fleet_view {
+        height: calc(100vh - 60px);
+        background: $grx-canvas;
+
+        .o_georutex_live_sidebar {
+            width: 340px;
+            border-right: 1px solid $grx-border;
+            box-shadow: 6px 0 24px rgba(31, 31, 97, 0.05);
+        }
+
+        .o_georutex_sidebar_header {
+            background: #f8fafd;
+            border-bottom: 1px solid $grx-border;
+
+            h4 {
+                color: $grx-ink;
+                font-size: 1.08rem;
+                font-weight: 800;
+                letter-spacing: -0.015em;
+            }
+        }
+
+        .o_georutex_vehicle_card {
+            border-radius: 14px;
+            border: 1px solid $grx-border;
+            border-left: 4px solid $grx-blue;
+            padding: 0.85rem 0.95rem;
+            box-shadow: 0 4px 12px rgba(31, 31, 97, 0.04);
+
+            &:hover {
+                border-color: rgba(37, 99, 235, 0.45);
+                background: #f5f9ff;
+                transform: translateY(-1px);
+            }
+
+            &.active {
+                border-color: $grx-ink;
+                border-left-color: $grx-ink;
+                background: #eff6ff;
+            }
+        }
+
+        .o_georutex_vehicle_card_title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: $grx-ink;
+        }
+    }
+}
+
+@media (max-width: 900px) {
+    .o_web_client .o_georutex_live_fleet_view {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 60px);
+
+        .o_georutex_live_sidebar {
+            width: 100%;
+            min-width: 0;
+            max-height: 44vh;
+            border-right: 0;
+            border-bottom: 1px solid $grx-border;
+        }
+
+        .o_georutex_live_main {
+            min-height: 52vh;
+        }
+    }
+}
+
+
+// ============================================================================
+// UNIFIED GEORUTEX DESIGN SYSTEM — SHELL, ODOO VIEWS, DASHBOARD & LIVE MAP
+// ============================================================================
+.o_web_client {
+    --grx-ink: #{$grx-ink};
+    --grx-brand: #{$grx-blue};
+    --grx-brand-hover: #{$grx-blue-hover};
+    --grx-cyan: #{$grx-cyan};
+    --grx-canvas: #{$grx-canvas};
+    --grx-surface: #{$grx-surface};
+    --grx-surface-2: #f8fafd;
+    --grx-border: #{$grx-border};
+    --grx-muted: #{$grx-muted};
+    --georutex-navy: #{$grx-ink};
+    --georutex-blue: #{$grx-blue};
+    --georutex-canvas: #{$grx-canvas};
+    --georutex-border: rgba(31, 31, 97, 0.11);
+
+    font-size: 15px;
+    color: $grx-ink;
+    background: $grx-canvas;
+
+    // WCAG AA accessible focus ring across interactive controls
+    a:focus-visible,
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    [tabindex]:focus-visible {
+        outline: 2.5px solid $grx-blue !important;
+        outline-offset: 2px;
+    }
+
+    // Translucent Glass Navbar
+    .o_main_navbar {
+        height: 60px;
+        min-height: 60px;
+        background: rgba(255, 255, 255, 0.92) !important;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border-bottom: 1px solid $grx-border !important;
+        box-shadow: 0 4px 16px rgba(31, 31, 97, 0.04);
+
+        .o_menu_brand {
+            color: $grx-ink !important;
+            font-size: 1.08rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .dropdown-menu {
+            border: 1px solid $grx-border;
+            border-radius: 14px;
+            padding: 0.4rem;
+            box-shadow: 0 16px 36px rgba(31, 31, 97, 0.14);
+
+            .dropdown-item {
+                border-radius: 9px;
+                padding: 0.5rem 0.85rem;
+                font-size: 0.9rem;
+                font-weight: 600;
+                color: $grx-ink;
+
+                &:hover,
+                &:focus {
+                    background: #eff6ff;
+                    color: $grx-blue;
+                }
+            }
+        }
+    }
+
+    // Refined Control Panel (compact, proportional, crisp)
+    .o_control_panel {
+        background: rgba(255, 255, 255, 0.96);
+        border-bottom: 1px solid $grx-border;
+        padding: 0.35rem 0.5rem;
+
+        .o_cp_buttons .btn,
+        .o_cp_action_menus .btn {
+            min-height: 38px;
+            padding: 0.42rem 0.95rem;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .o_searchview {
+            min-height: 38px;
+            border-radius: 10px;
+            border: 1px solid rgba(31, 31, 97, 0.16);
+            font-size: 0.88rem;
+            transition: border-color 0.16s ease, box-shadow 0.16s ease;
+
+            &:focus-within {
+                border-color: $grx-blue;
+                box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+            }
+        }
+
+        .breadcrumb {
+            font-size: 1.02rem;
+            font-weight: 700;
+        }
+    }
+
+    // Native Odoo List Views — Card-Framed Tables
+    .o_list_view {
+        background: $grx-canvas;
+
+        .o_list_table {
+            background: #ffffff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(31, 31, 97, 0.05);
+
+            thead th {
+                background: #f8fafd !important;
+                color: $grx-muted !important;
+                font-size: 0.74rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                border-bottom: 1px solid $grx-border !important;
+                padding-top: 0.75rem;
+                padding-bottom: 0.75rem;
+            }
+
+            tbody tr.o_data_row {
+                transition: background-color 0.12s ease;
+
+                &:hover {
+                    background: #f5f9ff !important;
+                }
+
+                td {
+                    border-bottom-color: rgba(31, 31, 97, 0.06);
+                    font-size: 0.9rem;
+                }
+            }
+        }
+    }
+
+    // Native Odoo Form Views — Crisp Elevated Sheets
+    .o_form_view:not(.o_georutex_incident_form) {
+        .o_form_sheet_bg {
+            background: $grx-canvas;
+        }
+
+        .o_form_sheet {
+            border-radius: 20px;
+            border: 1px solid $grx-border;
+            box-shadow: 0 12px 32px rgba(31, 31, 97, 0.06);
+        }
+
+        .o_form_statusbar {
+            background: #ffffff;
+            border-bottom: 1px solid $grx-border;
+        }
+    }
+
+    // Native Odoo Modals
+    .modal-content {
+        border-radius: 20px;
+        border: 1px solid $grx-border;
+        box-shadow: 0 24px 56px rgba(31, 31, 97, 0.2);
+        overflow: hidden;
+
+        .modal-header {
+            background: #f8fafd;
+            border-bottom: 1px solid $grx-border;
+
+            .modal-title {
+                color: $grx-ink;
+                font-weight: 800;
+            }
+        }
+    }
+
+    // Harmonized Analyst Dashboard (MT-01..08 & MCS-01..04)
+    .georutex-dashboard-container {
+        background: $grx-canvas;
+        color: $grx-ink;
+        font-size: 15px;
+
+        .georutex-dashboard-toolbar {
+            min-height: 62px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 16px;
+            margin: 0 1.5rem 0.5rem;
+            border: 1px solid $grx-border;
+            background: #ffffff;
+            box-shadow: 0 6px 18px rgba(31, 31, 97, 0.04);
+        }
+
+        .georutex-period-button {
+            min-height: 36px;
+            padding: 0.4rem 0.95rem;
+            font-size: 0.86rem;
+            border-color: $grx-border;
+
+            &.active {
+                background: $grx-ink;
+                border-color: $grx-ink;
+                color: #ffffff;
+            }
+        }
+
+        .georutex-toolbar-actions .btn {
+            min-height: 36px;
+            font-size: 0.86rem;
+            border-radius: 999px;
+            padding: 0.4rem 0.95rem;
+        }
+
+        .georutex-summary-card,
+        .georutex-metric-card,
+        .georutex-surface-card {
+            border-radius: 18px;
+            border: 1px solid $grx-border;
+            box-shadow: 0 8px 22px rgba(31, 31, 97, 0.05);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        }
+
+        .georutex-summary-card:hover,
+        .georutex-metric-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(37, 99, 235, 0.35);
+            box-shadow: 0 14px 30px rgba(31, 31, 97, 0.1);
+        }
+
+        .georutex-summary-value,
+        .georutex-metric-value {
+            color: $grx-ink;
+            font-variant-numeric: tabular-nums;
+        }
+    }
+
+    // Harmonized Live Fleet Map Split View
+    .o_georutex_live_fleet_view {
+        height: calc(100vh - 60px);
+        background: $grx-canvas;
+
+        .o_georutex_live_sidebar {
+            width: 340px;
+            border-right: 1px solid $grx-border;
+            box-shadow: 6px 0 24px rgba(31, 31, 97, 0.05);
+        }
+
+        .o_georutex_sidebar_header {
+            background: #f8fafd;
+            border-bottom: 1px solid $grx-border;
+
+            h4 {
+                color: $grx-ink;
+                font-size: 1.08rem;
+                font-weight: 800;
+                letter-spacing: -0.015em;
+            }
+        }
+
+        .o_georutex_vehicle_card {
+            border-radius: 14px;
+            border: 1px solid $grx-border;
+            border-left: 4px solid $grx-blue;
+            padding: 0.85rem 0.95rem;
+            box-shadow: 0 4px 12px rgba(31, 31, 97, 0.04);
+
+            &:hover {
+                border-color: rgba(37, 99, 235, 0.45);
+                background: #f5f9ff;
+                transform: translateY(-1px);
+            }
+
+            &.active {
+                border-color: $grx-ink;
+                border-left-color: $grx-ink;
+                background: #eff6ff;
+            }
+        }
+
+        .o_georutex_vehicle_card_title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: $grx-ink;
+        }
+    }
+}
+
+@media (max-width: 900px) {
+    .o_web_client .o_georutex_live_fleet_view {
+        flex-direction: column;
+        height: auto;
+        min-height: calc(100vh - 60px);
+
+        .o_georutex_live_sidebar {
+            width: 100%;
+            min-width: 0;
+            max-height: 44vh;
+            border-right: 0;
+            border-bottom: 1px solid $grx-border;
+        }
+
+        .o_georutex_live_main {
+            min-height: 52vh;
+        }
+    }
+}
+
+// ============================================================================
+// SWISS-EDITORIAL MOBILITY OVERRIDES (UNIFIED WITH PUBLIC HOME IDENTITY)
+// Crisp architectural radii (3px-6px), 1px hairlines, obsidian #0b1120 + cobalt #1d4ed8
+// ============================================================================
+.o_web_client {
+    --grx-ink: #0b1120;
+    --grx-brand: #1d4ed8;
+    --grx-canvas: #f7f8fa;
+    --grx-border: #d8dce6;
+    background: #f7f8fa;
+    color: #0f172a;
+
+    .grx-hero,
+    .grx-analyst-hero {
+        border-radius: 4px;
+        border: 1px solid #d8dce6;
+        box-shadow: none;
+        background: #ffffff;
+    }
+
+    .grx-hero-slider,
+    .grx-mvp-card,
+    .grx-kpi-box,
+    .grx-panel,
+    .grx-inc-card,
+    .grx-veh-card,
+    .grx-trip-card,
+    .grx-timeline-box,
+    .grx-featured-meta {
+        border-radius: 4px;
+        border: 1px solid #d8dce6;
+        box-shadow: none;
+    }
+
+    .grx-mvp-card {
+        &:hover {
+            border-color: #0b1120;
+            box-shadow: 0 10px 24px rgba(11, 17, 32, 0.08);
+        }
+
+        &.is-accent {
+            background: #0b1120;
+            border-color: #0b1120;
+        }
+    }
+
+    .grx-kpi-box.is-accent {
+        background: #0b1120;
+        border-color: #0b1120;
+    }
+
+    .grx-roll-btn,
+    .grx-btn-outline,
+    .grx-btn-subtle,
+    .grx-ticker,
+    .grx-badge,
+    .grx-mvp-pill,
+    .grx-hero-clock {
+        border-radius: 3px;
+    }
+
+    .grx-roll-btn--primary {
+        background: #0b1120;
+        box-shadow: none;
+
+        &:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+    }
+
+    .grx-roll-btn--navy {
+        background: #1d4ed8;
+        box-shadow: none;
+    }
+
+    .grx-ticker {
+        background: #0b1120;
+        box-shadow: none;
+        letter-spacing: 0.1em;
+    }
+
+    .o_control_panel .o_cp_buttons .btn,
+    .o_control_panel .o_cp_action_menus .btn,
+    .o_control_panel .o_searchview,
+    .o_list_view .o_list_table,
+    .o_form_view:not(.o_georutex_incident_form) .o_form_sheet,
+    .modal-content,
+    .georutex-dashboard-container .georutex-dashboard-toolbar,
+    .georutex-dashboard-container .georutex-summary-card,
+    .georutex-dashboard-container .georutex-metric-card,
+    .georutex-dashboard-container .georutex-surface-card,
+    .o_georutex_live_fleet_view .o_georutex_vehicle_card {
+        border-radius: 4px;
+        box-shadow: none;
+        border-color: #d8dce6;
+    }
+
+    .georutex-dashboard-container .georutex-period-button,
+    .georutex-dashboard-container .georutex-toolbar-actions .btn {
+        border-radius: 3px;
+    }
+}
+
+// ============================================================================
+// SWISS-EDITORIAL MOBILITY OVERRIDES (UNIFIED WITH PUBLIC HOME IDENTITY)
+// Crisp architectural radii (3px-6px), 1px hairlines, obsidian #0b1120 + cobalt #1d4ed8
+// ============================================================================
+.o_web_client {
+    --grx-ink: #0b1120;
+    --grx-brand: #1d4ed8;
+    --grx-canvas: #f7f8fa;
+    --grx-border: #d8dce6;
+    background: #f7f8fa;
+    color: #0f172a;
+
+    .grx-hero,
+    .grx-analyst-hero {
+        border-radius: 4px;
+        border: 1px solid #d8dce6;
+        box-shadow: none;
+        background: #ffffff;
+    }
+
+    .grx-hero-slider,
+    .grx-mvp-card,
+    .grx-kpi-box,
+    .grx-panel,
+    .grx-inc-card,
+    .grx-veh-card,
+    .grx-trip-card,
+    .grx-timeline-box,
+    .grx-featured-meta {
+        border-radius: 4px;
+        border: 1px solid #d8dce6;
+        box-shadow: none;
+    }
+
+    .grx-mvp-card {
+        &:hover {
+            border-color: #0b1120;
+            box-shadow: 0 10px 24px rgba(11, 17, 32, 0.08);
+        }
+
+        &.is-accent {
+            background: #0b1120;
+            border-color: #0b1120;
+        }
+    }
+
+    .grx-kpi-box.is-accent {
+        background: #0b1120;
+        border-color: #0b1120;
+    }
+
+    .grx-roll-btn,
+    .grx-btn-outline,
+    .grx-btn-subtle,
+    .grx-ticker,
+    .grx-badge,
+    .grx-mvp-pill,
+    .grx-hero-clock {
+        border-radius: 3px;
+    }
+
+    .grx-roll-btn--primary {
+        background: #0b1120;
+        box-shadow: none;
+
+        &:hover:not(:disabled) {
+            background: #1d4ed8;
+        }
+    }
+
+    .grx-roll-btn--navy {
+        background: #1d4ed8;
+        box-shadow: none;
+    }
+
+    .grx-ticker {
+        background: #0b1120;
+        box-shadow: none;
+        letter-spacing: 0.1em;
+    }
+
+    .o_control_panel .o_cp_buttons .btn,
+    .o_control_panel .o_cp_action_menus .btn,
+    .o_control_panel .o_searchview,
+    .o_list_view .o_list_table,
+    .o_form_view:not(.o_georutex_incident_form) .o_form_sheet,
+    .modal-content,
+    .georutex-dashboard-container .georutex-dashboard-toolbar,
+    .georutex-dashboard-container .georutex-summary-card,
+    .georutex-dashboard-container .georutex-metric-card,
+    .georutex-dashboard-container .georutex-surface-card,
+    .o_georutex_live_fleet_view .o_georutex_vehicle_card {
+        border-radius: 4px;
+        box-shadow: none;
+        border-color: #d8dce6;
+    }
+
+    .georutex-dashboard-container .georutex-period-button,
+    .georutex-dashboard-container .georutex-toolbar-actions .btn {
+        border-radius: 3px;
+    }
+}

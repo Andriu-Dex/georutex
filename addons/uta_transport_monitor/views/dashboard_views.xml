@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="action_transport_admin_home" model="ir.actions.client">
+        <field name="name">Centro de Control GeoRutex</field>
+        <field name="tag">uta_transport_admin_home</field>
+        <field name="target">main</field>
+    </record>
+
     <record id="action_transport_dashboard" model="ir.actions.client">
         <field name="name">Panel de Control Gerencial</field>
         <field name="tag">uta_transport_dashboard</field>

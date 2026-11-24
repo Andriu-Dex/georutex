@@ -9,6 +9,50 @@ const sidebarHiddenKey = "georutex.sidebarHidden";
 let reopeningMenuXmlid = null;
 let syncScheduled = false;
 
+const MENU_XMLID_TO_CLEAN_PATH = {
+    "uta_transport_monitor.menu_georutex_admin_home": "/georutex/centro-control",
+    "uta_transport_monitor.menu_georutex_driver_home": "/georutex/inicio-conductor",
+    "uta_transport_monitor.menu_georutex_dashboard_main": "/georutex/dashboard",
+    "uta_transport_monitor.menu_georutex_my_trips": "/georutex/mis-recorridos",
+    "uta_transport_monitor.menu_georutex_live_fleet_map": "/georutex/mapa-en-vivo",
+    "uta_transport_monitor.menu_georutex_trips": "/georutex/recorridos",
+    "uta_transport_monitor.menu_georutex_incidents": "/georutex/incidencias",
+    "uta_transport_monitor.menu_georutex_evaluations": "/georutex/evaluaciones",
+    "uta_transport_monitor.menu_georutex_routes": "/georutex/rutas",
+    "uta_transport_monitor.menu_georutex_route_versions": "/georutex/versiones-ruta",
+    "uta_transport_monitor.menu_georutex_fleet": "/georutex/flota",
+    "uta_transport_monitor.menu_georutex_positions": "/georutex/telemetria",
+};
+
+function syncCleanBrowserUrl() {
+    if (!window.history || !window.history.replaceState) return;
+    const currentPath = window.location.pathname || "";
+    if (!currentPath.startsWith("/web") && !currentPath.startsWith("/georutex/")) {
+        return;
+    }
+    const selectedXmlid = window.sessionStorage.getItem(selectedMenuKey);
+    let cleanPath =
+        (selectedXmlid && MENU_XMLID_TO_CLEAN_PATH[selectedXmlid]) || null;
+    if (!cleanPath) {
+        if (document.querySelector(".grx-driver-home")) {
+            cleanPath = "/georutex/inicio-conductor";
+        } else if (document.querySelector(".grx-admin-home")) {
+            cleanPath = "/georutex/centro-control";
+        } else if (document.querySelector(".georutex-dashboard-container")) {
+            cleanPath = "/georutex/dashboard";
+        } else if (document.querySelector(".o_georutex_live_map")) {
+            cleanPath = "/georutex/mapa-en-vivo";
+        }
+    }
+    if (cleanPath && (window.location.pathname !== cleanPath || window.location.hash)) {
+        try {
+            window.history.replaceState(window.history.state, "", cleanPath);
+        } catch (_err) {
+            // Ignore restricted history updates
+        }
+    }
+}
+
 function getWebClient() {
     return document.querySelector(".o_web_client");
 }
@@ -192,6 +236,7 @@ function syncMenuState() {
 
     openRememberedMenu(menuSections);
     applySelectedMenu(menuSections);
+    syncCleanBrowserUrl();
 }
 
 function scheduleMenuSync() {

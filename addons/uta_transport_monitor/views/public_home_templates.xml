@@ -1,0 +1,473 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="georutex_public_home" name="GeoRutex — Home General Público">
+        <t t-call="web.layout">
+            <t t-set="title" t-value="'GeoRutex — Movilidad Universitaria Inteligente · UTA'"/>
+            <t t-set="body_classname" t-value="'grx-pub-editorial'"/>
+            <t t-set="head">
+                <meta name="viewport" content="width=device-width, initial-scale=1"/>
+                <link rel="icon" type="image/png" href="/uta_transport_monitor/static/src/img/georutex_logo.png"/>
+                <link rel="preconnect" href="https://fonts.googleapis.com"/>
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+                <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+                <t t-call-assets="uta_transport_monitor.assets_public_home" t-js="false"/>
+            </t>
+
+            <!-- MINIMAL TRANSLUCENT NAVIGATION -->
+            <header class="grx-nav">
+                <div class="grx-wrap grx-nav-inner">
+                    <a href="/georutex/inicio" class="grx-brand">
+                        <img src="/uta_transport_monitor/static/src/img/georutex_logo.png" alt="GeoRutex"/>
+                        <span>GeoRutex</span>
+                    </a>
+
+                    <nav class="grx-nav-links" aria-label="Navegación principal">
+                        <a href="#vision">Visión</a>
+                        <a href="#recorrido">El recorrido</a>
+                        <a href="#experiencia">Plataforma</a>
+                        <a href="#impacto">Impacto</a>
+                    </nav>
+
+                    <div class="grx-nav-actions">
+                        <t t-if="is_authenticated">
+                            <a t-att-href="panel_url" class="grx-cta grx-cta--dark grx-magnetic">
+                                <span>Ir a mi panel</span>
+                                <i class="fa fa-arrow-right" aria-hidden="true"/>
+                            </a>
+                            <a t-att-href="logout_url" class="grx-cta grx-cta--ghost">Cerrar sesión</a>
+                        </t>
+                        <t t-else="">
+                            <a t-att-href="login_url" class="grx-cta grx-cta--ghost">Iniciar sesión</a>
+                            <a t-att-href="signup_url" class="grx-cta grx-cta--dark grx-magnetic">
+                                <span>Crear cuenta</span>
+                                <i class="fa fa-arrow-right" aria-hidden="true"/>
+                            </a>
+                        </t>
+                    </div>
+                </div>
+            </header>
+
+            <main>
+                <!-- ACT 1: WARM DAYLIGHT EDITORIAL HERO + CINEMATIC BUS FRAME & LIVE ROUTE OVERLAY -->
+                <section class="grx-hero">
+                    <div class="grx-wrap">
+                        <div class="grx-hero-top">
+                            <div class="grx-hero-copy">
+                                <span class="grx-eyebrow gsap-hero-in">
+                                    <i class="grx-live-dot" aria-hidden="true"/>
+                                    Movilidad universitaria · Ambato
+                                </span>
+                                <h1 class="grx-hero-title gsap-split-hero">
+                                    El transporte universitario, visible en <em>cada kilómetro.</em>
+                                </h1>
+                            </div>
+
+                            <div class="grx-hero-side gsap-hero-in">
+                                <p>
+                                    GeoRutex conecta las unidades de la Universidad Técnica de Ambato con seguimiento GPS en vivo, control natural de paradas y evaluación continua del servicio.
+                                </p>
+                                <div class="grx-hero-btns">
+                                    <a t-att-href="is_authenticated and panel_url or login_url"
+                                       class="grx-cta grx-cta--primary grx-cta--lg grx-magnetic">
+                                        <span>
+                                            <t t-if="is_authenticated">Entrar a mi panel</t>
+                                            <t t-else="">Acceder a GeoRutex</t>
+                                        </span>
+                                        <i class="fa fa-arrow-right" aria-hidden="true"/>
+                                    </a>
+                                    <a href="#recorrido" class="grx-cta grx-cta--soft grx-cta--lg">
+                                        <span>Ver cómo funciona</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Large-Format Sunlit Campus Bus Frame + Preserved Animated Vehicle Route Strip -->
+                        <div class="grx-hero-stage gsap-hero-media">
+                            <figure class="grx-hero-photo">
+                                <img src="/uta_transport_monitor/static/src/img/public_hero_bus.jpg"
+                                     alt="Unidad de transporte universitario recorriendo el campus en Ambato"/>
+                            </figure>
+
+                            <!-- Subtle Living Route Trace & Animated Bus Bar -->
+                            <div class="grx-hero-corridor">
+                                <div class="grx-corridor-info">
+                                    <span class="grx-corridor-badge"><i class="grx-live-dot"/> En ruta</span>
+                                    <strong>Campus Huachi → Av. Los Chasquis → Ingahurco</strong>
+                                </div>
+                                <div class="grx-corridor-track" aria-hidden="true">
+                                    <svg viewBox="0 0 640 52" preserveAspectRatio="xMidYMid meet">
+                                        <path d="M 18 32 C 160 12, 270 46, 420 26 S 560 22, 622 28"
+                                              fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="2.5" stroke-dasharray="4 6"/>
+                                        <path id="heroLiveTrace"
+                                              d="M 18 32 C 160 12, 270 46, 420 26 S 560 22, 622 28"
+                                              fill="none" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+                                        <circle cx="18" cy="32" r="5" fill="#ffffff" stroke="#1d5bd6" stroke-width="2"/>
+                                        <circle cx="318" cy="34" r="4.5" fill="#ffffff" stroke="#1d5bd6" stroke-width="2"/>
+                                        <circle cx="622" cy="28" r="5" fill="#34d399" stroke="#ffffff" stroke-width="2"/>
+                                        <!-- Animated Bus Silhouette on MotionPath -->
+                                        <g id="heroLiveBus">
+                                            <rect x="-18" y="-9" width="36" height="16" rx="4" fill="#ffffff" stroke="#1d5bd6" stroke-width="1.6"/>
+                                            <rect x="-12" y="-5" width="7" height="5" rx="1" fill="#1d5bd6"/>
+                                            <rect x="-3" y="-5" width="7" height="5" rx="1" fill="#1d5bd6"/>
+                                            <rect x="6" y="-5" width="7" height="5" rx="1" fill="#60a5fa"/>
+                                        </g>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ACT 2: ASYMMETRIC EDITORIAL SPREAD + CODROPS CLIP-PATH IMAGE REVEAL -->
+                <section id="vision" class="grx-vision">
+                    <div class="grx-wrap grx-vision-grid">
+                        <div class="grx-vision-text">
+                            <span class="grx-kicker">Una ciudad universitaria conectada</span>
+                            <h2 class="grx-h2 gsap-split-heading">
+                                Movilidad pensada para las personas, respaldada por <em>evidencia real.</em>
+                            </h2>
+                            <p class="grx-lead">
+                                Cada mañana cientos de estudiantes y conductores recorren los corredores de Ambato. GeoRutex reúne ubicación GPS, horarios y reportes de ruta en una experiencia clara para tomar mejores decisiones sin fricción.
+                            </p>
+                            <div class="grx-vision-highlights">
+                                <div>
+                                    <strong>Seguimiento continuo</strong>
+                                    <span>Posiciones verificadas en hora local de Ecuador con separación transparente entre recorridos reales y simulados.</span>
+                                </div>
+                                <div>
+                                    <strong>Claridad en cada parada</strong>
+                                    <span>Comprobación automática de pasos, puntualidad y novedades reportadas en tiempo real.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grx-vision-media">
+                            <div class="grx-curtain-frame gsap-curtain-reveal">
+                                <img class="gsap-curtain-img"
+                                     src="/uta_transport_monitor/static/src/img/public_city_corridor.jpg"
+                                     alt="Corredor vial universitario con buses en movimiento en Ambato"/>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ACT 3: SCROLL-DRIVEN ROUTE STORYTELLING (PRESERVED VEHICLE + DRAWSVG + MOTIONPATH) -->
+                <section id="recorrido" class="grx-journey">
+                    <div class="grx-wrap">
+                        <div class="grx-journey-header">
+                            <span class="grx-kicker">Narrativa del recorrido</span>
+                            <h2 class="grx-h2 gsap-split-heading">
+                                Acompaña cada trayecto <em>de principio a fin.</em>
+                            </h2>
+                            <p class="grx-lead">
+                                Desplázate para seguir la unidad a lo largo de la ruta universitaria y descubrir cómo el sistema acompaña cada etapa.
+                            </p>
+                        </div>
+
+                        <div class="grx-journey-split">
+                            <!-- Sticky Warm Cartographic Map Canvas -->
+                            <div class="grx-journey-sticky">
+                                <div class="grx-map-canvas-card">
+                                    <div class="grx-map-card-top">
+                                        <span class="grx-map-pill">
+                                            <i class="grx-live-dot"/>
+                                            <span id="journeyStageLabel">Salida desde Campus Huachi</span>
+                                        </span>
+                                        <span id="journeyPct" class="grx-map-pct">0%</span>
+                                    </div>
+
+                                    <svg class="grx-journey-svg" viewBox="0 0 460 440" preserveAspectRatio="xMidYMid meet">
+                                        <!-- Warm minimalist urban map backdrop -->
+                                        <rect width="460" height="440" rx="14" fill="#f7f6f2"/>
+                                        <!-- Soft organic park & block shapes -->
+                                        <path d="M 32 40 L 145 40 L 165 110 L 32 120 Z" fill="#e7efe5"/>
+                                        <path d="M 290 140 L 428 125 L 428 245 L 305 255 Z" fill="#e7efe5"/>
+                                        <path d="M 42 290 L 175 275 L 185 395 L 42 402 Z" fill="#eceae3"/>
+                                        <path d="M 265 315 L 422 308 L 422 408 L 278 408 Z" fill="#e7efe5"/>
+                                        <!-- Subtle secondary streets -->
+                                        <g stroke="#e4e1d8" stroke-width="2" fill="none">
+                                            <path d="M 0 150 Q 210 128, 460 172"/>
+                                            <path d="M 0 280 Q 230 260, 460 296"/>
+                                            <path d="M 190 0 Q 208 220, 178 440"/>
+                                            <path d="M 328 0 Q 305 220, 344 440"/>
+                                        </g>
+
+                                        <!-- Route base ghost path -->
+                                        <path d="M 88 68 C 258 78, 344 134, 240 198 C 138 260, 140 318, 286 346 C 336 356, 356 378, 346 398"
+                                              fill="none" stroke="#d5d9e2" stroke-width="5" stroke-linecap="round"/>
+
+                                        <!-- Scroll-scrubbed DrawSVG active route -->
+                                        <path id="journeyRoutePath"
+                                              d="M 88 68 C 258 78, 344 134, 240 198 C 138 260, 140 318, 286 346 C 336 356, 356 378, 346 398"
+                                              fill="none" stroke="#1d5bd6" stroke-width="5" stroke-linecap="round"/>
+
+                                        <!-- 4 Living Campus Stop Pins -->
+                                        <g class="grx-stop-pin" data-step="0" transform="translate(88, 68)">
+                                            <circle r="11" fill="#ffffff" stroke="#1d5bd6" stroke-width="3"/>
+                                            <circle r="4" fill="#1d5bd6"/>
+                                            <text x="18" y="4" fill="#141923" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Campus Huachi</text>
+                                        </g>
+                                        <g class="grx-stop-pin" data-step="1" transform="translate(240, 198)">
+                                            <circle r="10" fill="#ffffff" stroke="#1d5bd6" stroke-width="2.5"/>
+                                            <circle r="3.5" fill="#1d5bd6"/>
+                                            <text x="18" y="4" fill="#141923" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Av. Los Chasquis</text>
+                                        </g>
+                                        <g class="grx-stop-pin" data-step="2" transform="translate(172, 294)">
+                                            <circle r="10" fill="#ffffff" stroke="#1d5bd6" stroke-width="2.5"/>
+                                            <circle r="3.5" fill="#1d5bd6"/>
+                                            <text x="18" y="4" fill="#141923" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Redondel Cumandá</text>
+                                        </g>
+                                        <g class="grx-stop-pin" data-step="3" transform="translate(346, 398)">
+                                            <circle r="11" fill="#1f9d55" stroke="#ffffff" stroke-width="3"/>
+                                            <text x="-136" y="4" fill="#141923" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Campus Ingahurco</text>
+                                        </g>
+
+                                        <!-- Preserved Animated GeoRutex Shuttle Bus following MotionPath -->
+                                        <g id="journeyBus">
+                                            <circle r="19" fill="rgba(29, 91, 214, 0.14)"/>
+                                            <rect x="-17" y="-9" width="34" height="18" rx="5" fill="#141923" stroke="#ffffff" stroke-width="2"/>
+                                            <rect x="-11" y="-5" width="7" height="5" rx="1" fill="#93c5fd"/>
+                                            <rect x="-2" y="-5" width="7" height="5" rx="1" fill="#93c5fd"/>
+                                            <rect x="7" y="-5" width="6" height="5" rx="1" fill="#60a5fa"/>
+                                        </g>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Flowing Human Chapters (Zero boxy cards) -->
+                            <div class="grx-journey-chapters">
+                                <article class="grx-chapter-item is-active" data-step="0">
+                                    <span class="grx-chapter-tag">Inicio de jornada</span>
+                                    <h3>Salida puntual desde Campus Huachi</h3>
+                                    <p>La unidad inicia su recorrido y transmite su posición GPS automáticamente. El equipo operativo confirma la salida en tiempo real sin registros manuales engorrosos.</p>
+                                </article>
+                                <article class="grx-chapter-item" data-step="1">
+                                    <span class="grx-chapter-tag">En trayecto</span>
+                                    <h3>Validación fluida en Av. Los Chasquis</h3>
+                                    <p>A medida que el bus avanza por la avenida, cada paso por las paradas planificadas queda verificado de forma silenciosa y precisa.</p>
+                                </article>
+                                <article class="grx-chapter-item" data-step="2">
+                                    <span class="grx-chapter-tag">Respuesta ágil</span>
+                                    <h3>Atención inmediata en Redondel Cumandá</h3>
+                                    <p>Ante congestión o un cierre vial, el conductor reporta la novedad en segundos desde su cabina móvil y el centro de control recibe la alerta contextualizada.</p>
+                                </article>
+                                <article class="grx-chapter-item" data-step="3">
+                                    <span class="grx-chapter-tag">Cierre y mejora continua</span>
+                                    <h3>Llegada a Campus Ingahurco y balance de calidad</h3>
+                                    <p>Al completar el viaje se calcula automáticamente el cumplimiento de paradas y la puntualidad, alimentando los tableros de análisis para mejorar las rutas día a día.</p>
+                                </article>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ACT 4: VISUAL INTERACTIVE PRODUCT SHOWCASE (Replaces Descriptive Table!) -->
+                <section id="experiencia" class="grx-showcase">
+                    <div class="grx-wrap">
+                        <div class="grx-showcase-head">
+                            <div>
+                                <span class="grx-kicker">La plataforma por dentro</span>
+                                <h2 class="grx-h2 gsap-split-heading">
+                                    Cuatro experiencias diseñadas para <em>trabajar en sintonía.</em>
+                                </h2>
+                            </div>
+                            <p class="grx-showcase-sub">
+                                Selecciona cada dimensión para descubrir cómo administradores, conductores y analistas comparten una misma plataforma sin saturación.
+                            </p>
+                        </div>
+
+                        <div class="grx-showcase-grid">
+                            <!-- Left: Interactive Accordion / Flip Feature Switcher -->
+                            <div class="grx-feature-tabs" id="grxFeatureTabs" role="tablist">
+                                <button type="button" class="grx-ftab is-active" data-feature="fleet" role="tab" aria-selected="true">
+                                    <div class="grx-ftab-head">
+                                        <span class="grx-ftab-icon"><i class="fa fa-map-marker" aria-hidden="true"/></span>
+                                        <strong>Mapa vivo de la flota</strong>
+                                        <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
+                                    </div>
+                                    <div class="grx-ftab-body">
+                                        <p>Supervisa todas las unidades en Ambato desde un centro de operaciones limpio: velocidad, frescura de señal y estado de cada bus en un solo vistazo.</p>
+                                    </div>
+                                </button>
+
+                                <button type="button" class="grx-ftab" data-feature="routes" role="tab" aria-selected="false">
+                                    <div class="grx-ftab-head">
+                                        <span class="grx-ftab-icon"><i class="fa fa-map-signs" aria-hidden="true"/></span>
+                                        <strong>Rutas y paradas inteligentes</strong>
+                                        <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
+                                    </div>
+                                    <div class="grx-ftab-body">
+                                        <p>Traza recorridos universitarios, configura controles geográficos y guarda versiones aprobadas para mantener consistencia histórica en cada evaluación.</p>
+                                    </div>
+                                </button>
+
+                                <button type="button" class="grx-ftab" data-feature="driver" role="tab" aria-selected="false">
+                                    <div class="grx-ftab-head">
+                                        <span class="grx-ftab-icon"><i class="fa fa-bus" aria-hidden="true"/></span>
+                                        <strong>Cabina ágil para conductores</strong>
+                                        <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
+                                    </div>
+                                    <div class="grx-ftab-body">
+                                        <p>Una vista móvil clara pensada para paradas seguras: próxima parada, progreso del trayecto, mapa interactivo y reporte rápido de incidencias.</p>
+                                    </div>
+                                </button>
+
+                                <button type="button" class="grx-ftab" data-feature="analytics" role="tab" aria-selected="false">
+                                    <div class="grx-ftab-head">
+                                        <span class="grx-ftab-icon"><i class="fa fa-line-chart" aria-hidden="true"/></span>
+                                        <strong>Analítica y mejora continua</strong>
+                                        <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
+                                    </div>
+                                    <div class="grx-ftab-body">
+                                        <p>Gráficos interactivos, indicadores circulares y comparativas por ruta alineadas a ISO/IEC 25010, separando siempre datos reales de simulados.</p>
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Right: Large-Format Dynamic Visual Preview Stage -->
+                            <div class="grx-feature-stage" id="grxFeatureStage">
+                                <div class="grx-stage-panel is-active" data-panel="fleet">
+                                    <img src="/uta_transport_monitor/static/src/img/public_city_corridor.jpg"
+                                         alt="Vista aérea del corredor de buses monitoreados en tiempo real"/>
+                                    <div class="grx-stage-caption">
+                                        <span class="grx-stage-pill"><i class="grx-live-dot"/> Centro de Operaciones</span>
+                                        <h3>Ubicación y estado en tiempo real</h3>
+                                        <p>Búsqueda instantánea de unidades, filtros de señal y enfoque suave sobre el mapa de Ambato.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grx-stage-panel" data-panel="routes">
+                                    <img src="/uta_transport_monitor/static/src/img/public_hero_bus.jpg"
+                                         alt="Bus universitario circulando por una ruta planificada"/>
+                                    <div class="grx-stage-caption">
+                                        <span class="grx-stage-pill">Diseño Geoespacial</span>
+                                        <h3>Paradas verificadas en cada corredor</h3>
+                                        <p>Versiones de ruta con tolerancias configurables y secuencia validada automáticamente.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grx-stage-panel" data-panel="driver">
+                                    <img src="/uta_transport_monitor/static/src/img/public_driver_tablet.jpg"
+                                         alt="Coordinadora revisando el mapa de ruta desde la cabina del bus"/>
+                                    <div class="grx-stage-caption">
+                                        <span class="grx-stage-pill">Experiencia Móvil</span>
+                                        <h3>Acompañamiento claro en cabina</h3>
+                                        <p>Próxima parada, avance visual y reporte de incidencias diseñado para consulta rápida y segura.</p>
+                                    </div>
+                                </div>
+
+                                <div class="grx-stage-panel" data-panel="analytics">
+                                    <div class="grx-stage-analytics-visual">
+                                        <div class="grx-mini-rings">
+                                            <div class="grx-mini-ring">
+                                                <svg viewBox="0 0 120 120">
+                                                    <circle cx="60" cy="60" r="48" fill="none" stroke="#e5e7eb" stroke-width="9"/>
+                                                    <circle cx="60" cy="60" r="48" fill="none" stroke="#1d5bd6" stroke-width="9"
+                                                            stroke-dasharray="302" stroke-dashoffset="36" stroke-linecap="round"
+                                                            transform="rotate(-90 60 60)"/>
+                                                </svg>
+                                                <strong>MT-01</strong>
+                                                <span>Cumplimiento</span>
+                                            </div>
+                                            <div class="grx-mini-ring">
+                                                <svg viewBox="0 0 120 120">
+                                                    <circle cx="60" cy="60" r="48" fill="none" stroke="#e5e7eb" stroke-width="9"/>
+                                                    <circle cx="60" cy="60" r="48" fill="none" stroke="#1f9d55" stroke-width="9"
+                                                            stroke-dasharray="302" stroke-dashoffset="48" stroke-linecap="round"
+                                                            transform="rotate(-90 60 60)"/>
+                                                </svg>
+                                                <strong>MT-02</strong>
+                                                <span>Puntualidad</span>
+                                            </div>
+                                        </div>
+                                        <div class="grx-stage-caption is-light-card">
+                                            <span class="grx-stage-pill">ISO/IEC 25010</span>
+                                            <h3>Indicadores verificables y auditables</h3>
+                                            <p>Métricas operativas y de calidad del software con tamaño de muestra visible y transparencia total.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ACT 5: HUMAN IMPACT + INVITING CLOSING BAND -->
+                <section id="impacto" class="grx-impact">
+                    <div class="grx-wrap grx-impact-grid">
+                        <div class="grx-impact-photo gsap-curtain-reveal">
+                            <img class="gsap-curtain-img"
+                                 src="/uta_transport_monitor/static/src/img/public_driver_tablet.jpg"
+                                 alt="Equipo de transporte universitario consultando GeoRutex"/>
+                        </div>
+
+                        <div class="grx-impact-content">
+                            <span class="grx-kicker">Respaldo y transparencia</span>
+                            <h2 class="grx-h2 gsap-split-heading">
+                                Calidad medible en <em>cada jornada.</em>
+                            </h2>
+                            <p class="grx-lead">
+                                Construido sobre Odoo 16 y Traccar GPS para ofrecer información confiable, privacidad por rol y trazabilidad completa del servicio universitario.
+                            </p>
+
+                            <div class="grx-impact-numbers">
+                                <div class="grx-impact-stat">
+                                    <strong class="gsap-counter" data-target="12">0</strong>
+                                    <span>Indicadores de desempeño y calidad</span>
+                                </div>
+                                <div class="grx-impact-stat">
+                                    <strong class="gsap-counter" data-target="3">0</strong>
+                                    <span>Espacios diseñados por rol</span>
+                                </div>
+                                <div class="grx-impact-stat">
+                                    <strong class="gsap-counter" data-target="100" data-suffix="%">0</strong>
+                                    <span>Separación real y simulada</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- CLOSING INVITATION -->
+                <section class="grx-closing">
+                    <div class="grx-wrap">
+                        <div class="grx-closing-card">
+                            <div>
+                                <span class="grx-kicker is-light">Universidad Técnica de Ambato</span>
+                                <h2 class="grx-closing-title gsap-split-heading">
+                                    Comienza a monitorear tus rutas con <em>claridad real.</em>
+                                </h2>
+                            </div>
+                            <div class="grx-closing-btns">
+                                <a t-att-href="is_authenticated and panel_url or login_url"
+                                   class="grx-cta grx-cta--white grx-cta--lg grx-magnetic">
+                                    <span>
+                                        <t t-if="is_authenticated">Ir a mi panel</t>
+                                        <t t-else="">Iniciar sesión</t>
+                                    </span>
+                                    <i class="fa fa-arrow-right" aria-hidden="true"/>
+                                </a>
+                                <a t-if="not is_authenticated"
+                                   t-att-href="signup_url"
+                                   class="grx-cta grx-cta--outline-white grx-cta--lg grx-magnetic">
+                                    <span>Registrarme como conductor</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="grx-footer">
+                <div class="grx-wrap grx-footer-inner">
+                    <span><strong>GeoRutex</strong> · Sistema de Monitoreo y Evaluación de Rutas UTA</span>
+                    <span>Ambato, Ecuador · Odoo 16 &amp; Traccar GPS</span>
+                </div>
+            </footer>
+
+            <!-- Self-Hosted GSAP 3.13.0 + Plugins via Hashed Odoo Asset Bundle -->
+            <t t-call-assets="uta_transport_monitor.assets_public_home" t-css="false"/>
+        </t>
+    </template>
+</odoo>

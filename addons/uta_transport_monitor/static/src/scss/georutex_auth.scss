@@ -23,6 +23,7 @@ $grx-danger: #dc2626;
         opacity: 0;
         transform: translateY(14px);
     }
+
     to {
         opacity: 1;
         transform: translateY(0);
@@ -30,18 +31,24 @@ $grx-danger: #dc2626;
 }
 
 @keyframes georutexFloatSlow {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translateY(0);
     }
+
     50% {
         transform: translateY(-7px);
     }
 }
 
 @keyframes georutexOrbDrift {
-    0%, 100% {
+
+    0%,
+    100% {
         transform: translate(0, 0) scale(1);
     }
+
     50% {
         transform: translate(16px, -12px) scale(1.06);
     }
@@ -52,10 +59,12 @@ $grx-danger: #dc2626;
         transform: scale(0.92);
         opacity: 0.72;
     }
+
     70% {
         transform: scale(1.22);
         opacity: 0;
     }
+
     100% {
         transform: scale(1.22);
         opacity: 0;
@@ -63,10 +72,13 @@ $grx-danger: #dc2626;
 }
 
 @keyframes georutexLiveBlink {
-    0%, 100% {
+
+    0%,
+    100% {
         opacity: 1;
         box-shadow: 0 0 0 0 rgba($grx-cyan-400, 0.7);
     }
+
     50% {
         opacity: 0.75;
         box-shadow: 0 0 0 7px rgba($grx-cyan-400, 0);
@@ -74,26 +86,52 @@ $grx-danger: #dc2626;
 }
 
 @keyframes georutexShake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-6px); }
-    40% { transform: translateX(6px); }
-    60% { transform: translateX(-4px); }
-    80% { transform: translateX(4px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-6px);
+    }
+
+    40% {
+        transform: translateX(6px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(4px);
+    }
 }
 
 @keyframes georutexCheckPop {
-    0% { transform: scale(0.8); }
-    60% { transform: scale(1.15); }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(0.8);
+    }
+
+    60% {
+        transform: scale(1.15);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 @keyframes georutexTitleShimmer {
     0% {
         background-position: 0% 50%;
     }
+
     50% {
         background-position: 100% 50%;
     }
+
     100% {
         background-position: 0% 50%;
     }
@@ -105,6 +143,7 @@ $grx-danger: #dc2626;
         letter-spacing: 0.1em;
         transform: translateY(8px);
     }
+
     to {
         opacity: 1;
         letter-spacing: -0.02em;
@@ -117,6 +156,7 @@ $grx-danger: #dc2626;
         transform: scaleX(0);
         opacity: 0;
     }
+
     to {
         transform: scaleX(1);
         opacity: 1;
@@ -175,8 +215,8 @@ body:has(.georutex-auth-brand) {
             background: $grx-surface;
             box-shadow: 0 20px 50px rgba($grx-navy-900, 0.1);
 
-            > .text-center.pb-3.border-bottom,
-            > .text-center.small.mt-4 {
+            >.text-center.pb-3.border-bottom,
+            >.text-center.small.mt-4 {
                 display: none !important;
             }
         }
@@ -352,14 +392,12 @@ body:has(.georutex-auth-brand) {
 
         span {
             display: inline-block;
-            background: linear-gradient(
-                90deg,
-                $grx-navy-900 0%,
-                $grx-royal-700 35%,
-                $grx-royal-500 55%,
-                $grx-royal-700 75%,
-                $grx-navy-900 100%
-            );
+            background: linear-gradient(90deg,
+                    $grx-navy-900 0%,
+                    $grx-royal-700 35%,
+                    $grx-royal-500 55%,
+                    $grx-royal-700 75%,
+                    $grx-navy-900 100%);
             background-size: 200% auto;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -798,6 +836,7 @@ body:has(.georutex-auth-brand) {
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     .georutex-orb,
     .georutex-logo-ring,
     .georutex-live-dot,
@@ -810,5 +849,37 @@ body:has(.georutex-auth-brand) {
     body:has(.georutex-auth-brand) .georutex-otp-form {
         animation: none !important;
         transition: none !important;
+    }
+}
+
+// Swiss-Editorial Mobility Cohesion for Auth Screens (preserves all Odoo auth forms & OTP)
+body.o_georutex_auth_body,
+.georutex-auth-page {
+    --grx-auth-obsidian: #0b1120;
+    --grx-auth-cobalt: #1d4ed8;
+    --grx-auth-hairline: #d8dce6;
+
+    .georutex-auth-card,
+    .oe_login_form,
+    .oe_signup_form,
+    .oe_reset_password_form {
+        border-radius: 4px !important;
+    }
+
+    .btn-primary,
+    button[type="submit"] {
+        border-radius: 3px !important;
+        letter-spacing: 0.04em;
+        transition: background-color 0.2s ease, transform 0.2s ease;
+    }
+
+    input.form-control {
+        border-radius: 3px !important;
+        border-color: #cbd5e1;
+
+        &:focus {
+            border-color: #1d4ed8;
+            box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.14);
+        }
     }
 }

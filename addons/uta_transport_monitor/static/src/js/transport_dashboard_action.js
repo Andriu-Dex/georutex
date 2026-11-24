@@ -14,10 +14,17 @@ export class TransportDashboardAction extends Component {
 
         this.trendChartRef = useRef("trendChartCanvas");
         this.incidentChartRef = useRef("incidentChartCanvas");
+        this.mt01GaugeRef = useRef("mt01GaugeBox");
+        this.mt02GaugeRef = useRef("mt02GaugeBox");
+        this.routeChartRef = useRef("routeChartBox");
         this.mapPreviewRef = useRef("mapPreviewCanvas");
 
         this.trendChart = null;
         this.incidentChart = null;
+        this.mt01Gauge = null;
+        this.mt02Gauge = null;
+        this.routeChart = null;
+        this._onWindowResize = () => this._resizeEcharts();
         this.mapPreview = null;
         this.mapPreviewMarkers = null;
         this.mapPreviewHasInitialView = false;
@@ -56,9 +63,11 @@ export class TransportDashboardAction extends Component {
             this.mapRefreshTimer = setInterval(() => {
                 this.loadLiveMapPositions();
             }, 30000);
+            window.addEventListener("resize", this._onWindowResize);
         });
 
         onWillUnmount(() => {
+            window.removeEventListener("resize", this._onWindowResize);
             if (this.mapRefreshTimer) {
                 clearInterval(this.mapRefreshTimer);
                 this.mapRefreshTimer = null;
@@ -344,138 +353,215 @@ export class TransportDashboardAction extends Component {
         }
     }
 
+    _resizeEcharts() {
+        [this.trendChart, this.incidentChart, this.mt01Gauge, this.mt02Gauge, this.routeChart].forEach((c) => {
+            if (c && typeof c.resize === "function") c.resize();
+        });
+    }
+
     destroyCharts() {
-        if (this.trendChart) {
-            this.trendChart.destroy();
-            this.trendChart = null;
-        }
-        if (this.incidentChart) {
-            this.incidentChart.destroy();
-            this.incidentChart = null;
-        }
+        [
+            ["trendChart", this.trendChart],
+            ["incidentChart", this.incidentChart],
+            ["mt01Gauge", this.mt01Gauge],
+            ["mt02Gauge", this.mt02Gauge],
+            ["routeChart", this.routeChart],
+        ].forEach(([key, inst]) => {
+            if (inst) {
+                if (typeof inst.dispose === "function") inst.dispose();
+                else if (typeof inst.destroy === "function") inst.destroy();
+                this[key] = null;
+            }
+        });
+    }
+
+    _initGaugeChart(el, metric, accentColor, subtitle) {
+        if (!el || !window.echarts) return null;
+        const isNa = !metric || metric.is_na || metric.value === null || metric.value === undefined;
+        const val = isNa ? 0 : Math.max(0, Math.min(100, Number(metric.value) || 0));
+        const chart = window.echarts.init(el);
+        chart.setOption({
+            tooltip: {
+                trigger: "item",
+                formatter: () =>
+                    `${subtitle}<br/>Valor: <b>${isNa ? "N/A" : val.toFixed(1) + "%"}</b><br/>Muestra n = ${(metric && metric.sample_size) || 0}`,
+            },
+            series: [
+                {
+                    type: "gauge",
+                    startAngle: 210,
+                    endAngle: -30,
+                    min: 0,
+                    max: 100,
+                    radius: "92%",
+                    progress: {
+                        show: !isNa,
+                        width: 12,
+                        roundCap: true,
+                        itemStyle: { color: accentColor },
+                    },
+                    pointer: { show: false },
+                    axisLine: { lineStyle: { width: 12, color: [[1, "#e9eef5"]] } },
+                    axisTick: { show: false },
+                    splitLine: { show: false },
+                    axisLabel: { show: false },
+                    title: {
+                        show: true,
+                        offsetCenter: [0, "34%"],
+                        fontSize: 11,
+                        color: "#667382",
+                    },
+                    detail: {
+                        valueAnimation: true,
+                        offsetCenter: [0, "-4%"],
+                        fontSize: 22,
+                        fontWeight: 700,
+                        color: "#182433",
+                        formatter: () => (isNa ? "N/A" : `${val.toFixed(1)}%`),
+                    },
+                    data: [{ value: val, name: `n = ${(metric && metric.sample_size) || 0}` }],
+                },
+            ],
+        });
+        return chart;
     }
 
     renderCharts() {
         this.destroyCharts();
-        if (!window.Chart) {
-            console.warn("Chart.js not available in window context.");
+        if (!window.echarts) {
+            console.warn("Apache ECharts not available in window context.");
             return;
         }
 
+        // 1. Circular Gauge Rings for MT-01 & MT-02
+        this.mt01Gauge = this._initGaugeChart(
+            this.mt01GaugeRef.el,
+            this.state.kpis["MT-01"],
+            "#066fd1",
+            "MT-01 Cumplimiento de rutas"
+        );
+        this.mt02Gauge = this._initGaugeChart(
+            this.mt02GaugeRef.el,
+            this.state.kpis["MT-02"],
+            "#2fb344",
+            "MT-02 Puntualidad general"
+        );
+
+        // 2. Interactive Daily Trend Line/Area Chart
         if (this.trendChartRef.el && this.hasDailyTrendData) {
             const trends = this.state.charts.daily_trends;
-            const ctx = this.trendChartRef.el.getContext("2d");
-            this.trendChart = new window.Chart(ctx, {
-                type: "line",
-                data: {
-                    labels: trends.labels,
-                    datasets: [
-                        {
-                            label: "Cumplimiento de rutas",
-                            data: trends.gross_compliance,
-                            borderColor: "#243d70",
-                            backgroundColor: "rgba(29, 78, 216, 0.08)",
-                            pointBackgroundColor: "#243d70",
-                            pointRadius: 3,
-                            fill: true,
-                            lineTension: 0.35,
-                            spanGaps: false,
-                        },
-                        {
-                            label: "Puntualidad",
-                            data: trends.punctuality,
-                            borderColor: "#246c38",
-                            backgroundColor: "transparent",
-                            pointBackgroundColor: "#246c38",
-                            pointRadius: 3,
-                            lineTension: 0.35,
-                            spanGaps: false,
-                        },
-                    ],
+            this.trendChart = window.echarts.init(this.trendChartRef.el);
+            this.trendChart.setOption({
+                tooltip: {
+                    trigger: "axis",
+                    backgroundColor: "#182433",
+                    borderColor: "#182433",
+                    textStyle: { color: "#ffffff", fontSize: 12 },
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        xAxes: [{
-                            ticks: {
-                                fontSize: 13,
-                                fontColor: "#64748b",
-                            },
-                        }],
-                        yAxes: [{
-                            ticks: {
-                                min: 0,
-                                max: 100,
-                                fontSize: 13,
-                                fontColor: "#64748b",
-                                callback: (val) => val + "%",
-                            },
-                            scaleLabel: {
-                                display: true,
-                                labelString: "Porcentaje",
-                            },
-                        }],
-                    },
-                    legend: {
-                        position: "top",
-                        labels: { usePointStyle: true, boxWidth: 10, fontSize: 14 },
-                    },
-                    tooltips: {
-                        mode: "index",
-                        intersect: false,
-                        titleFontSize: 14,
-                        bodyFontSize: 14,
-                        callbacks: {
-                            label: (item, chartData) => {
-                                const label = chartData.datasets[item.datasetIndex].label || "";
-                                return item.yLabel === null || item.yLabel === undefined
-                                    ? `${label}: Sin muestra`
-                                    : `${label}: ${item.yLabel}%`;
-                            },
-                        },
-                    },
+                legend: {
+                    top: 0,
+                    data: ["Cumplimiento MT-01", "Puntualidad MT-02"],
+                    textStyle: { color: "#475569", fontSize: 12 },
                 },
+                grid: { left: 42, right: 18, top: 36, bottom: 28 },
+                xAxis: {
+                    type: "category",
+                    boundaryGap: false,
+                    data: trends.labels,
+                    axisLine: { lineStyle: { color: "#dce2ec" } },
+                    axisLabel: { color: "#667382", fontSize: 11 },
+                },
+                yAxis: {
+                    type: "value",
+                    min: 0,
+                    max: 100,
+                    axisLabel: { color: "#667382", fontSize: 11, formatter: "{value}%" },
+                    splitLine: { lineStyle: { color: "#eef2f7" } },
+                },
+                series: [
+                    {
+                        name: "Cumplimiento MT-01",
+                        type: "line",
+                        smooth: 0.3,
+                        symbolSize: 6,
+                        data: trends.gross_compliance,
+                        itemStyle: { color: "#066fd1" },
+                        areaStyle: { color: "rgba(6, 111, 209, 0.1)" },
+                    },
+                    {
+                        name: "Puntualidad MT-02",
+                        type: "line",
+                        smooth: 0.3,
+                        symbolSize: 6,
+                        data: trends.punctuality,
+                        itemStyle: { color: "#2fb344" },
+                    },
+                ],
             });
         }
 
+        // 3. Interactive Route Comparison Horizontal Bar Chart
+        const routeComp = this.state.charts.route_comparison || [];
+        if (this.routeChartRef.el && routeComp.length) {
+            this.routeChart = window.echarts.init(this.routeChartRef.el);
+            this.routeChart.setOption({
+                tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+                legend: { top: 0, data: ["Bruto %", "Ajustado %"], textStyle: { fontSize: 11 } },
+                grid: { left: 110, right: 20, top: 32, bottom: 22 },
+                xAxis: { type: "value", max: 100, axisLabel: { formatter: "{value}%", fontSize: 11 } },
+                yAxis: {
+                    type: "category",
+                    data: routeComp.map((r) => r.route_name),
+                    axisLabel: { fontSize: 11, width: 96, overflow: "truncate" },
+                },
+                series: [
+                    {
+                        name: "Bruto %",
+                        type: "bar",
+                        barMaxWidth: 14,
+                        itemStyle: { color: "#066fd1", borderRadius: [0, 3, 3, 0] },
+                        data: routeComp.map((r) => r.compliance_gross_pct ?? 0),
+                    },
+                    {
+                        name: "Ajustado %",
+                        type: "bar",
+                        barMaxWidth: 14,
+                        itemStyle: { color: "#2fb344", borderRadius: [0, 3, 3, 0] },
+                        data: routeComp.map((r) => r.compliance_adj_pct ?? 0),
+                    },
+                ],
+            });
+        }
+
+        // 4. Interactive Incidents Distribution Donut Chart
         if (this.incidentChartRef.el && this.hasIncidentChartData) {
             const inc = this.state.charts.incidents_by_type;
-            const ctx = this.incidentChartRef.el.getContext("2d");
-            const colors = [
-                "#dc2626", "#f59e0b", "#7c3aed", "#243d70",
-                "#246c38", "#0ea5e9", "#db2777", "#78716c",
-            ];
-
-            this.incidentChart = new window.Chart(ctx, {
-                type: "doughnut",
-                data: {
-                    labels: inc.labels,
-                    datasets: [
-                        {
-                            data: inc.counts,
-                            backgroundColor: colors.slice(0, inc.labels.length),
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    legend: {
-                        position: "right",
-                        labels: { usePointStyle: true, boxWidth: 10, fontSize: 13 },
+            const palette = ["#d63939", "#f59f00", "#4263eb", "#066fd1", "#2fb344", "#0ca678"];
+            this.incidentChart = window.echarts.init(this.incidentChartRef.el);
+            this.incidentChart.setOption({
+                tooltip: { trigger: "item", formatter: "{b}: <b>{c}</b> ({d}%)" },
+                legend: { orient: "vertical", right: 6, top: "middle", textStyle: { fontSize: 11 } },
+                color: palette,
+                series: [
+                    {
+                        name: "Incidencias",
+                        type: "pie",
+                        radius: ["48%", "76%"],
+                        center: ["36%", "50%"],
+                        itemStyle: { borderColor: "#ffffff", borderWidth: 2 },
+                        label: { show: false },
+                        data: inc.labels.map((lbl, idx) => ({
+                            name: lbl,
+                            value: inc.counts[idx] || 0,
+                        })),
                     },
-                },
+                ],
             });
         }
     }
 
     onDetailsToggle() {
-        window.setTimeout(() => {
-            if (this.incidentChart) {
-                this.incidentChart.resize();
-            }
-        }, 0);
+        window.setTimeout(() => this._resizeEcharts(), 60);
     }
 
     async onSourceTypeChange(type) {
