@@ -1,76 +1,107 @@
-/* GeoRutex Public Home — Brand Motion Language, Interactive Route & Real Product Demos
- * Self-hosted GSAP 3.13.0 + lazy-loaded Leaflet & Apache ECharts (zero private API calls)
+/* GeoRutex Public Home — Organization-Agnostic GSAP 3.13.0 Motion & Interactive Previews
+ * Reads presentation labels and sample coordinates exclusively from #grxPublicHomeConfig.
  */
 (function () {
     "use strict";
 
-    const JOURNEY_STAGES = [
-        {
-            label: "Salida desde Campus Huachi",
-            meta: "Etapa 1 de 4 · Inicio de ruta",
-            state: "Salida registrada y vinculada al recorrido programado",
-            tone: "is-info",
-            progress: 0.0,
+    const FALLBACK_CONFIG = {
+        stages: [
+            {
+                pill: "Inicio en punto de origen",
+                meta: "Etapa 1 de 4 · Inicio del recorrido",
+                state: "Unidad en marcha y vinculada a su jornada asignada",
+                tone: "is-info",
+                progress: 0.0,
+            },
+            {
+                pill: "Paso verificado en Parada 01",
+                meta: "Etapa 2 de 4 · Verificación de paradas",
+                state: "Cumplimiento de parada registrado automáticamente",
+                tone: "is-info",
+                progress: 0.36,
+            },
+            {
+                pill: "Novedad registrada en Parada 02",
+                meta: "Etapa 3 de 4 · Gestión de novedades",
+                state: "Reporte compartido desde el espacio del conductor",
+                tone: "is-amber",
+                progress: 0.68,
+            },
+            {
+                pill: "Llegada al punto de destino",
+                meta: "Etapa 4 de 4 · Llegada y evaluación",
+                state: "Recorrido completado y listo para análisis de servicio",
+                tone: "is-green",
+                progress: 1.0,
+            },
+        ],
+        map: {
+            center: [-1.2555, -78.6262],
+            corridor: [
+                [-1.2692, -78.6256],
+                [-1.2625, -78.6243],
+                [-1.2562, -78.6254],
+                [-1.2506, -78.6272],
+                [-1.2421, -78.6284],
+            ],
+            origin_label: "Punto de origen",
+            destination_label: "Punto de destino",
+            units: {
+                unit01: {
+                    name: "Unidad 01",
+                    status: "fresh",
+                    statusLabel: "En ruta",
+                    coords: [-1.2562, -78.6254],
+                    detail: "Ruta A · Tramo hacia Parada 01",
+                    color: "#15803d",
+                },
+                unit02: {
+                    name: "Unidad 02",
+                    status: "fresh",
+                    statusLabel: "En ruta",
+                    coords: [-1.2506, -78.6272],
+                    detail: "Ruta B · Tramo hacia Parada 02",
+                    color: "#0bbcd7",
+                },
+                unit03: {
+                    name: "Unidad 03",
+                    status: "stale",
+                    statusLabel: "En espera",
+                    coords: [-1.2421, -78.6284],
+                    detail: "Ruta C · En punto de destino",
+                    color: "#d97706",
+                },
+            },
         },
-        {
-            label: "En ruta por Av. Los Chasquis",
-            meta: "Etapa 2 de 4 · Geocerca intermedia",
-            state: "Paso verificado automáticamente dentro del corredor vial",
-            tone: "is-info",
-            progress: 0.36,
-        },
-        {
-            label: "Novedad en Redondel Cumandá",
-            meta: "Etapa 3 de 4 · Gestión de incidencia",
-            state: "Congestión reportada desde cabina y enviada a revisión",
-            tone: "is-amber",
-            progress: 0.68,
-        },
-        {
-            label: "Llegada a Campus Ingahurco",
-            meta: "Etapa 4 de 4 · Cierre evaluado",
-            state: "Cumplimiento y puntualidad calculados con parámetros guardados",
-            tone: "is-green",
-            progress: 1.0,
-        },
-    ];
-
-    const SAMPLE_MAP_UNITS = {
-        uta01: {
-            name: "Unidad UTA-01",
-            status: "fresh",
-            statusLabel: "En vivo",
-            coords: [-1.2584, -78.6248],
-            detail: "Av. Los Chasquis · Corredor Huachi – Ingahurco",
-            color: "#15803d",
-        },
-        uta02: {
-            name: "Unidad UTA-02",
-            status: "fresh",
-            statusLabel: "En vivo",
-            coords: [-1.2506, -78.6272],
-            detail: "Redondel Cumandá · Corredor Sur – Huachi",
-            color: "#0bbcd7",
-        },
-        uta03: {
-            name: "Unidad UTA-03",
-            status: "stale",
-            statusLabel: "Reciente",
-            coords: [-1.2421, -78.6284],
-            detail: "Estación Campus Ingahurco · En espera",
-            color: "#d97706",
+        analytics: {
+            routes: ["Ruta A", "Ruta B", "Ruta C"],
+            series_labels: ["Cumplimiento base", "Con novedades revisadas"],
+            source_notes: {
+                combined: "Vista general · Ejemplo ilustrativo",
+                real: "Operación diaria · Ejemplo ilustrativo",
+                simulated: "Escenarios de prueba · Separados de la operación",
+                empty: "Sin recorridos evaluables en el período",
+            },
         },
     };
 
-    const SAMPLE_CORRIDOR = [
-        [-1.2692, -78.6256],
-        [-1.2625, -78.6243],
-        [-1.2562, -78.6254],
-        [-1.2506, -78.6272],
-        [-1.2421, -78.6284],
-    ];
+    function readPublicConfig() {
+        const el = document.getElementById("grxPublicHomeConfig");
+        const raw = el ? (el.dataset.config || el.textContent || "") : "";
+        if (!raw) return FALLBACK_CONFIG;
+        try {
+            const parsed = JSON.parse(raw);
+            return {
+                stages: Array.isArray(parsed.stages) && parsed.stages.length ? parsed.stages : FALLBACK_CONFIG.stages,
+                map: parsed.map && parsed.map.units ? parsed.map : FALLBACK_CONFIG.map,
+                analytics: parsed.analytics && parsed.analytics.routes ? parsed.analytics : FALLBACK_CONFIG.analytics,
+            };
+        } catch (_err) {
+            return FALLBACK_CONFIG;
+        }
+    }
 
-    // On-demand lazy loader for already-vendored Leaflet & Apache ECharts (protects Hero LCP)
+    // On-demand lazy loader for interactive map and chart libraries (keeps Hero fast)
     const loadedAssets = {};
     function loadScriptOnce(src) {
         if (loadedAssets[src]) return loadedAssets[src];
@@ -138,7 +169,6 @@
         };
 
         if (ScrollTrigger && navLinks.length) {
-            // Clear underline cleanly when back at the top Hero section
             const heroSec = document.querySelector(".grx-hero");
             if (heroSec) {
                 ScrollTrigger.create({
@@ -171,8 +201,8 @@
             document.querySelectorAll(".grx-brand").forEach((brandEl) => {
                 const mark = brandEl.querySelector(".gsap-brand-mark");
                 if (!mark) return;
-                const onEnter = () => gsap.to(mark, { scale: 1.07, rotation: -5, duration: 0.28, ease: "power3.out" });
-                const onLeave = () => gsap.to(mark, { scale: 1, rotation: 0, duration: 0.34, ease: "power3.out" });
+                const onEnter = () => gsap.to(mark, { scale: 1.07, rotation: -5, duration: 0.26, ease: "power3.out" });
+                const onLeave = () => gsap.to(mark, { scale: 1, rotation: 0, duration: 0.32, ease: "power3.out" });
                 brandEl.addEventListener("mouseenter", onEnter);
                 brandEl.addEventListener("mouseleave", onLeave);
                 brandEl.addEventListener("focus", onEnter);
@@ -254,8 +284,8 @@
         return () => cleanups.forEach((fn) => fn());
     }
 
-    // 3. Interactive Product Views (Ops filter, Real Leaflet Map, Route Editor layers, Flip Mobile Morph, Real ECharts)
-    function initProductShowcase(gsap, Flip, DrawSVGPlugin, reduceMotion) {
+    // 3. Interactive Product Views (Config-Driven Map, Route Editor, Flip Mobile Morph, Interactive Chart)
+    function initProductShowcase(gsap, Flip, DrawSVGPlugin, reduceMotion, cfg) {
         const tabs = Array.from(document.querySelectorAll("#grxFeatureTabs .grx-ftab"));
         const panels = Array.from(document.querySelectorAll("#grxFeatureStage .grx-ui-panel"));
         const browser = document.getElementById("grxProductBrowser");
@@ -266,7 +296,6 @@
 
         let activeKey = tabs[0].dataset.feature;
         let leafletMap = null;
-        let leafletMarkers = {};
         let echartInstance = null;
 
         // 3A. Operations Center inline filter
@@ -287,7 +316,7 @@
             cleanups.push(() => btn.removeEventListener("click", onClick));
         });
 
-        // 3B. Lazy Real Leaflet Map (reuses static/lib/leaflet)
+        // 3B. Lazy Interactive Map (driven completely by cfg.map)
         const ensureLeafletMap = () => {
             const mapEl = document.getElementById("grxPublicLeafletMap");
             if (!mapEl) return;
@@ -300,8 +329,11 @@
                 .then(() => {
                     const L = window.L;
                     if (!L || leafletMap) return;
+                    const corridor = cfg.map.corridor || FALLBACK_CONFIG.map.corridor;
+                    const center = cfg.map.center || FALLBACK_CONFIG.map.center;
+
                     leafletMap = L.map(mapEl, {
-                        center: [-1.2555, -78.6262],
+                        center,
                         zoom: 14,
                         zoomControl: true,
                         attributionControl: true,
@@ -312,41 +344,41 @@
                         attribution: "&copy; OpenStreetMap",
                     }).addTo(leafletMap);
 
-                    L.polyline(SAMPLE_CORRIDOR, {
+                    L.polyline(corridor, {
                         color: "#1a56db",
                         weight: 4,
                         opacity: 0.85,
                     }).addTo(leafletMap);
 
-                    // Campus origin & destination circles
-                    L.circleMarker([-1.2692, -78.6256], { radius: 6, color: "#15803d", fillColor: "#ffffff", fillOpacity: 1, weight: 3 })
-                        .bindTooltip("Campus Huachi")
-                        .addTo(leafletMap);
-                    L.circleMarker([-1.2421, -78.6284], { radius: 6, color: "#fc0154", fillColor: "#ffffff", fillOpacity: 1, weight: 3 })
-                        .bindTooltip("Campus Ingahurco")
-                        .addTo(leafletMap);
+                    if (corridor.length >= 2) {
+                        L.circleMarker(corridor[0], { radius: 6, color: "#15803d", fillColor: "#ffffff", fillOpacity: 1, weight: 3 })
+                            .bindTooltip(cfg.map.origin_label || "Punto de origen")
+                            .addTo(leafletMap);
+                        L.circleMarker(corridor[corridor.length - 1], { radius: 6, color: "#fc0154", fillColor: "#ffffff", fillOpacity: 1, weight: 3 })
+                            .bindTooltip(cfg.map.destination_label || "Punto de destino")
+                            .addTo(leafletMap);
+                    }
 
-                    Object.entries(SAMPLE_MAP_UNITS).forEach(([id, u]) => {
-                        const marker = L.circleMarker(u.coords, {
+                    Object.values(cfg.map.units || {}).forEach((u) => {
+                        L.circleMarker(u.coords, {
                             radius: 9,
                             color: "#ffffff",
                             weight: 3,
-                            fillColor: u.color,
+                            fillColor: u.color || "#1a56db",
                             fillOpacity: 1,
-                        }).addTo(leafletMap);
-                        marker.bindTooltip(`${u.name} (${u.statusLabel})`);
-                        leafletMarkers[id] = marker;
+                        })
+                            .bindTooltip(`${u.name} (${u.statusLabel})`)
+                            .addTo(leafletMap);
                     });
                     window.setTimeout(() => leafletMap && leafletMap.invalidateSize(), 220);
                 })
                 .catch(() => {});
         };
 
-        // Live Map unit selection & filter buttons
         const focusCard = document.getElementById("grxMapFocusCard");
         document.querySelectorAll("#grxLiveUnitList .grx-mock-vitem").forEach((btn) => {
             const onClick = () => {
-                const unit = SAMPLE_MAP_UNITS[btn.dataset.unit];
+                const unit = (cfg.map.units || {})[btn.dataset.unit];
                 if (!unit) return;
                 document.querySelectorAll("#grxLiveUnitList .grx-mock-vitem").forEach((b) => b.classList.toggle("is-selected", b === btn));
                 if (focusCard) {
@@ -372,7 +404,7 @@
             cleanups.push(() => btn.removeEventListener("click", onClick));
         });
 
-        // 3C. Route Editor interactive corridor/geofence toggles & stop selection
+        // 3C. Route Editor interactive corridor/control-area toggles & stop selection
         document.querySelectorAll(".grx-ed-toggle").forEach((btn) => {
             const onClick = () => {
                 const isOn = !btn.classList.contains("is-on");
@@ -404,20 +436,15 @@
             cleanups.push(() => btn.removeEventListener("click", onClick));
         });
 
-        // 3D. Lazy Real Apache ECharts (reuses static/lib/echarts, zero invented production metrics!)
+        // 3D. Lazy Interactive Analytics Chart (organization-neutral sample)
         const renderEChart = (sourceMode) => {
             const chartEl = document.getElementById("grxPublicEChart");
             const emptyEl = document.getElementById("grxPublicEChartEmpty");
             const noteEl = document.getElementById("grxChartSourceNote");
             if (!chartEl) return;
 
-            const labels = {
-                combined: "Origen: Combinado · Bruto y ajustado",
-                real: "Origen: Solo real · Recorridos externos",
-                simulated: "Origen: Solo simulado · Separado de telemetría real",
-                empty: "Origen: Consulta sin recorridos evaluables (N/A)",
-            };
-            if (noteEl) noteEl.textContent = labels[sourceMode] || labels.combined;
+            const notes = cfg.analytics.source_notes || FALLBACK_CONFIG.analytics.source_notes;
+            if (noteEl) noteEl.textContent = notes[sourceMode] || notes.combined;
 
             if (sourceMode === "empty") {
                 if (emptyEl) emptyEl.removeAttribute("hidden");
@@ -432,12 +459,13 @@
                     if (!echartInstance) {
                         echartInstance = window.echarts.init(chartEl);
                     }
-                    // Structural reference bars clearly framed as illustrative interface preview
                     const seriesData = {
                         combined: { a: [4, 4, 3], b: [4, 4, 4] },
                         real: { a: [3, 4, 3], b: [4, 4, 3] },
                         simulated: { a: [4, 3, 4], b: [4, 4, 4] },
                     }[sourceMode] || { a: [4, 4, 3], b: [4, 4, 4] };
+                    const labels = cfg.analytics.series_labels || FALLBACK_CONFIG.analytics.series_labels;
+                    const routes = cfg.analytics.routes || FALLBACK_CONFIG.analytics.routes;
 
                     echartInstance.setOption({
                         animationDuration: reduceMotion ? 0 : 520,
@@ -445,7 +473,7 @@
                             trigger: "axis",
                             formatter: (params) => {
                                 const head = params[0] ? params[0].axisValue : "";
-                                const lines = params.map((p) => `${p.marker} ${p.seriesName}: ${p.value} / 4 paradas`);
+                                const lines = params.map((p) => `${p.marker} ${p.seriesName}: ${p.value} controles`);
                                 return `<strong>${head}</strong><br/>${lines.join("<br/>")}<br/><small style="color:#64748b">Ejemplo ilustrativo</small>`;
                             },
                         },
@@ -453,7 +481,7 @@
                         grid: { left: 36, right: 16, top: 18, bottom: 34 },
                         xAxis: {
                             type: "category",
-                            data: ["Ruta Huachi–Ingahurco", "Ruta Querochaca", "Ruta Norte"],
+                            data: routes,
                             axisLine: { lineStyle: { color: "#cbd5e1" } },
                             axisLabel: { color: "#475569", fontSize: 11 },
                         },
@@ -467,14 +495,14 @@
                         },
                         series: [
                             {
-                                name: "Paradas verificadas (bruto)",
+                                name: labels[0],
                                 type: "bar",
                                 barMaxWidth: 26,
                                 itemStyle: { color: "#1a56db", borderRadius: [6, 6, 0, 0] },
                                 data: seriesData.a,
                             },
                             {
-                                name: "Con justificación aprobada (ajustado)",
+                                name: labels[1],
                                 type: "bar",
                                 barMaxWidth: 26,
                                 itemStyle: { color: "#0bbcd7", borderRadius: [6, 6, 0, 0] },
@@ -503,7 +531,7 @@
         window.addEventListener("resize", onResizeChart);
         cleanups.push(() => window.removeEventListener("resize", onResizeChart));
 
-        // 3E. Differentiated GSAP Scene Transitions + Desktop <-> Mobile Flip Morph!
+        // 3E. Differentiated GSAP Scene Transitions + Desktop <-> Mobile Flip Morph
         const animateViewEntrance = (key, panel) => {
             if (key === "map") ensureLeafletMap();
             if (key === "analytics") renderEChart("combined");
@@ -547,7 +575,7 @@
             if (browser) {
                 const isMobile = tab.dataset.mode === "mobile";
                 browser.classList.toggle("is-mobile-mode", isMobile);
-                if (modeLabel) modeLabel.textContent = isMobile ? "Cabina móvil" : "Vista escritorio";
+                if (modeLabel) modeLabel.textContent = isMobile ? "Vista móvil" : "Vista escritorio";
             }
 
             let targetPanel = null;
@@ -612,9 +640,9 @@
         return () => cleanups.forEach((fn) => fn());
     }
 
-    // 4. Interactive Route Journey UI Sync (Clean 0% -> 100%, zero 97% truncation!)
-    function applyJourneyStageUI(idx, rawProgress) {
-        const stage = JOURNEY_STAGES[idx] || JOURNEY_STAGES[0];
+    // 4. Interactive Route Journey UI Sync (0% -> 100%, driven by centralized stages)
+    function applyJourneyStageUI(stages, idx, rawProgress) {
+        const stage = stages[idx] || stages[0];
         const pctEl = document.getElementById("journeyPct");
         const labelEl = document.getElementById("journeyStageLabel");
         const pillEl = document.getElementById("journeyStatusPill");
@@ -622,20 +650,19 @@
         const stateEl = document.getElementById("journeyCheckpointState");
         const fillEl = document.getElementById("journeyProgressFill");
 
-        // Snap cleanly to 0% at start and 100% at end so progress reflects exact sequence completion
         let normalized = Math.max(0, Math.min(1, rawProgress));
         if (normalized < 0.02) normalized = 0;
-        if (normalized > 0.96 || idx === JOURNEY_STAGES.length - 1 && normalized > 0.92) normalized = 1;
+        if (normalized > 0.96 || (idx === stages.length - 1 && normalized > 0.92)) normalized = 1;
 
         if (pctEl) pctEl.textContent = `${Math.round(normalized * 100)}%`;
-        if (labelEl) labelEl.textContent = stage.label;
+        if (labelEl) labelEl.textContent = stage.pill;
         if (metaEl) metaEl.textContent = stage.meta;
         if (stateEl) stateEl.textContent = stage.state;
         if (fillEl) fillEl.style.transform = `scaleX(${Math.max(0.04, normalized)})`;
 
         if (pillEl) {
             pillEl.classList.remove("is-info", "is-amber", "is-green");
-            pillEl.classList.add(stage.tone);
+            pillEl.classList.add(stage.tone || "is-info");
         }
 
         document.querySelectorAll(".grx-chapter-item").forEach((c, i) => {
@@ -664,6 +691,9 @@
         const plugins = [ScrollTrigger, SplitText, DrawSVGPlugin, MotionPathPlugin, Flip].filter(Boolean);
         gsap.registerPlugin(...plugins);
 
+        const cfg = readPublicConfig();
+        const stages = cfg.stages;
+
         const mm = gsap.matchMedia();
         mm.add(
             {
@@ -676,20 +706,20 @@
 
                 const cleanupNav = initNavigation(gsap, ScrollTrigger, reduceMotion);
                 const cleanupMagnetic = initMagnetic(gsap, reduceMotion);
-                const cleanupShowcase = initProductShowcase(gsap, Flip, DrawSVGPlugin, reduceMotion);
+                const cleanupShowcase = initProductShowcase(gsap, Flip, DrawSVGPlugin, reduceMotion, cfg);
                 const journeyCleanups = [];
 
                 let journeyTrigger = null;
                 let journeyManualTween = null;
 
                 const goToJourneyStage = (idx) => {
-                    const stage = JOURNEY_STAGES[idx];
+                    const stage = stages[idx];
                     if (!stage) return;
                     if (journeyTrigger && isDesktop && !reduceMotion) {
                         const targetY = journeyTrigger.start + (journeyTrigger.end - journeyTrigger.start) * stage.progress;
                         window.scrollTo({ top: targetY, behavior: "smooth" });
                     } else {
-                        applyJourneyStageUI(idx, stage.progress);
+                        applyJourneyStageUI(stages, idx, stage.progress);
                         if (!reduceMotion && DrawSVGPlugin && MotionPathPlugin) {
                             if (journeyManualTween) journeyManualTween.kill();
                             journeyManualTween = gsap.timeline({ defaults: { duration: 0.72, ease: "power2.inOut" } });
@@ -738,11 +768,11 @@
                 };
 
                 if (reduceMotion) {
-                    applyJourneyStageUI(0, 0);
+                    applyJourneyStageUI(stages, 0, 0);
                     return cleanupAll;
                 }
 
-                // 1. HERO COORDINATED 6-STEP GSAP TIMELINE (Fast, Crisp, Zero Hidden Blank Paint)
+                // 1. HERO COORDINATED 6-STEP GSAP TIMELINE
                 const runHeroTimeline = () => {
                     const heroTl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
@@ -798,7 +828,7 @@
                     runHeroTimeline();
                 }
 
-                // Continuous preserved hero bus loop (pauses off-screen for GPU efficiency)
+                // Continuous preserved hero vehicle loop (pauses off-screen)
                 if (MotionPathPlugin) {
                     const heroBusTween = gsap.to("#heroLiveBus", {
                         duration: 9.5,
@@ -858,9 +888,8 @@
                     );
                 }
 
-                // 2. REVERSIBLE VIEWPORT ANIMATIONS (Section 10: Enter, LeaveBack & Reappear cleanly!)
+                // 2. REVERSIBLE VIEWPORT ANIMATIONS
                 if (ScrollTrigger) {
-                    // Editorial curtain image reveals (reversible on scroll back up)
                     document.querySelectorAll(".gsap-curtain-reveal").forEach((frame) => {
                         const img = frame.querySelector(".gsap-curtain-img");
                         const tl = gsap.timeline({
@@ -882,7 +911,6 @@
                         }
                     });
 
-                    // Vision rail items: staggered entrance + reversible exit when scrolling above section
                     const railItems = gsap.utils.toArray(".gsap-rail-item");
                     if (railItems.length) {
                         gsap.fromTo(
@@ -903,7 +931,6 @@
                         );
                     }
 
-                    // Quality pillars: batched viewport entrance + subtle reversible cadence
                     ScrollTrigger.batch(".gsap-pillar", {
                         start: "top 96%",
                         onEnter: (batch) => {
@@ -919,7 +946,7 @@
                     });
                 }
 
-                // 3. SECTION HEADINGS SPLITTEXT REVEALS (Play on Enter, clean visibility)
+                // 3. SECTION HEADINGS SPLITTEXT REVEALS
                 if (SplitText && ScrollTrigger) {
                     document.querySelectorAll(".gsap-split-heading").forEach((h) => {
                         const sp = SplitText.create(h, { type: "words" });
@@ -943,7 +970,7 @@
                     });
                 }
 
-                // 4. ACT 3: SCROLL-SCRUBBED INTERACTIVE ROUTE JOURNEY (Ends cleanly at 100%)
+                // 4. ACT 3: SCROLL-SCRUBBED INTERACTIVE ROUTE JOURNEY (0% -> 100%)
                 if (ScrollTrigger && DrawSVGPlugin && MotionPathPlugin) {
                     const journeyTl = gsap.timeline({
                         scrollTrigger: {
@@ -954,7 +981,7 @@
                             onUpdate: (self) => {
                                 const p = self.progress;
                                 const idx = p < 0.24 ? 0 : p < 0.54 ? 1 : p < 0.84 ? 2 : 3;
-                                applyJourneyStageUI(idx, p);
+                                applyJourneyStageUI(stages, idx, p);
                             },
                         },
                     });

@@ -2,7 +2,10 @@
 <odoo>
     <template id="georutex_public_home" name="GeoRutex — Home General Público">
         <t t-call="web.layout">
-            <t t-set="title" t-value="'GeoRutex — Movilidad Universitaria Inteligente · UTA'"/>
+            <t t-set="brand_name" t-value="(public_config or {}).get('brand_name', 'GeoRutex')"/>
+            <t t-set="brand_descriptor" t-value="(public_config or {}).get('brand_descriptor', 'Inteligencia para la movilidad')"/>
+            <t t-set="stages" t-value="(public_config or {}).get('stages', [])"/>
+            <t t-set="title" t-value="brand_name + ' — ' + brand_descriptor"/>
             <t t-set="body_classname" t-value="'grx-pub-editorial'"/>
             <t t-set="head">
                 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -25,9 +28,9 @@
                             <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
                                  width="38" height="38" alt="Isotipo de GeoRutex"/>
                         </picture>
-                        <span class="grx-brand-lockup" translate="no">
-                            <strong>GeoRutex</strong>
-                            <small>Movilidad UTA</small>
+                        <span class="grx-brand-lockup">
+                            <strong translate="no"><t t-esc="brand_name"/></strong>
+                            <small><t t-esc="brand_descriptor"/></small>
                         </span>
                     </a>
 
@@ -70,10 +73,10 @@
                 <div class="grx-mobile-drawer" id="grxMobileDrawer" hidden="hidden" aria-label="Menú móvil">
                     <div class="grx-mobile-drawer-inner">
                         <nav class="grx-mobile-nav-list">
-                            <a href="#vision" class="grx-mobile-link">Enfoque operativo</a>
-                            <a href="#recorrido" class="grx-mobile-link">Narrativa del recorrido</a>
-                            <a href="#plataforma" class="grx-mobile-link">La plataforma por dentro</a>
-                            <a href="#respaldo" class="grx-mobile-link">Análisis de calidad</a>
+                            <a href="#vision" class="grx-mobile-link">Enfoque</a>
+                            <a href="#recorrido" class="grx-mobile-link">El recorrido</a>
+                            <a href="#plataforma" class="grx-mobile-link">Plataforma</a>
+                            <a href="#respaldo" class="grx-mobile-link">Calidad</a>
                         </nav>
                         <div class="grx-mobile-auth">
                             <t t-if="is_authenticated">
@@ -91,23 +94,23 @@
             </header>
 
             <main id="contenido-principal">
-                <!-- ACT 1: EDITORIAL DAYLIGHT HERO + COORDINATED GSAP TIMELINE -->
+                <!-- ACT 1: EDITORIAL DAYLIGHT HERO (PRODUCT-FIRST, ADAPTABLE) -->
                 <section class="grx-hero" aria-labelledby="hero-title">
                     <div class="grx-wrap">
                         <div class="grx-hero-top">
                             <div class="grx-hero-copy">
                                 <span class="grx-eyebrow gsap-hero-eyebrow">
                                     <i class="grx-brand-pin-dot" aria-hidden="true"/>
-                                    Universidad Técnica de Ambato · Movilidad universitaria
+                                    <t t-esc="brand_descriptor"/>
                                 </span>
                                 <h1 id="hero-title" class="grx-hero-title gsap-split-hero">
-                                    El transporte universitario, visible en <em>cada kilómetro.</em>
+                                    Tu operación, visible en <em>cada kilómetro.</em>
                                 </h1>
                             </div>
 
                             <div class="grx-hero-side">
                                 <p class="gsap-hero-desc">
-                                    GeoRutex conecta las unidades de transporte con seguimiento geográfico, control automático de paradas y evaluación transparente del servicio para la comunidad universitaria.
+                                    GeoRutex conecta vehículos, organiza recorridos y reúne información del servicio para facilitar la gestión y mejorar la movilidad.
                                 </p>
                                 <div class="grx-hero-btns gsap-hero-ctas">
                                     <a t-att-href="is_authenticated and panel_url or login_url"
@@ -134,16 +137,15 @@
                                          src="/uta_transport_monitor/static/src/img/public_hero_bus.jpg"
                                          width="1376" height="768"
                                          fetchpriority="high" decoding="async"
-                                         alt="Escena ilustrativa de una unidad de transporte universitario recorriendo un corredor andino arbolado"/>
+                                         alt="Representación ilustrativa de una unidad de transporte institucional circulando por una avenida arbolada"/>
                                 </picture>
                             </figure>
 
                             <div class="grx-hero-overlay-top gsap-hero-overlay">
                                 <span class="grx-geo-chip">
                                     <i class="fa fa-map-marker" aria-hidden="true"/>
-                                    <span>Ambato · Corredor universitario</span>
+                                    <span>Seguimiento vehicular y gestión de recorridos</span>
                                 </span>
-                                <span class="grx-geo-coords" aria-hidden="true">Ecuador · Hora local</span>
                             </div>
 
                             <svg class="grx-hero-route-arc" viewBox="0 0 1200 160" preserveAspectRatio="none" aria-hidden="true">
@@ -163,14 +165,14 @@
                                 <circle cx="1010" cy="70" r="4.5" fill="#fc0154" stroke="#ffffff" stroke-width="2"/>
                             </svg>
 
-                            <!-- Preserved Animated Bus & Route Trace Bar -->
+                            <!-- Preserved Animated Vehicle & Generic Route Strip -->
                             <div class="grx-hero-corridor gsap-hero-overlay">
                                 <div class="grx-corridor-info">
                                     <span class="grx-corridor-badge">
                                         <i class="grx-live-dot" aria-hidden="true"/>
                                         Recorrido ilustrativo
                                     </span>
-                                    <strong>Campus Huachi → Av. Los Chasquis → Campus Ingahurco</strong>
+                                    <strong>Punto de origen → Parada 01 → Parada 02 → Punto de destino</strong>
                                 </div>
                                 <div class="grx-corridor-track" aria-hidden="true">
                                     <svg viewBox="0 0 640 52" preserveAspectRatio="xMidYMid meet">
@@ -205,38 +207,38 @@
                     </div>
                 </section>
 
-                <!-- ACT 2: ENFOQUE Y VISIÓN -->
+                <!-- ACT 2: ENFOQUE -->
                 <section id="vision" class="grx-vision" aria-labelledby="vision-title">
                     <div class="grx-wrap grx-vision-grid">
                         <div class="grx-vision-text">
-                            <span class="grx-kicker">Enfoque operativo</span>
+                            <span class="grx-kicker">Enfoque</span>
                             <h2 id="vision-title" class="grx-h2 gsap-split-heading">
-                                Claridad diaria para planificar, conducir y evaluar cada ruta.
+                                Una mejor forma de gestionar la movilidad.
                             </h2>
                             <p class="grx-lead">
-                                Coordinar los traslados entre los campus universitarios requiere información oportuna sobre las unidades, el cumplimiento de paradas y las novedades en vía.
+                                Coordina vehículos, organiza recorridos, verifica paradas y conoce el desempeño del servicio desde un solo entorno.
                             </p>
 
                             <ul class="grx-vision-rail" aria-label="Capacidades principales de GeoRutex">
                                 <li class="gsap-rail-item">
                                     <span class="grx-rail-node" aria-hidden="true"/>
                                     <div>
-                                        <strong>Seguimiento geográfico y gestión de recorridos</strong>
-                                        <span>Organiza vehículos, versiones de ruta y asignaciones diarias desde un centro de control unificado.</span>
+                                        <strong>Seguimiento vehicular y gestión de recorridos</strong>
+                                        <span>Visualiza tus unidades en ruta y organiza las jornadas diarias con claridad.</span>
                                     </div>
                                 </li>
                                 <li class="gsap-rail-item">
                                     <span class="grx-rail-node" aria-hidden="true"/>
                                     <div>
-                                        <strong>Verificación de paradas y registro de incidencias</strong>
-                                        <span>Comprueba el paso por cada punto de control y documenta desvíos o contratiempos conservando el evento original.</span>
+                                        <strong>Control de paradas y gestión de incidencias</strong>
+                                        <span>Verifica el paso por cada punto planificado y atiende novedades durante el servicio.</span>
                                     </div>
                                 </li>
                                 <li class="gsap-rail-item">
                                     <span class="grx-rail-node is-accent" aria-hidden="true"/>
                                     <div>
-                                        <strong>Evaluación clara de puntualidad y calidad</strong>
-                                        <span>Mide cumplimiento y puntualidad en hora local de Ecuador con criterios visibles para cada jornada.</span>
+                                        <strong>Evaluación de puntualidad y análisis del servicio</strong>
+                                        <span>Consulta información confiable de cada trayecto para mejorar la operación continua.</span>
                                     </div>
                                 </li>
                             </ul>
@@ -250,26 +252,26 @@
                                          src="/uta_transport_monitor/static/src/img/public_city_corridor.jpg"
                                          width="1376" height="768"
                                          loading="lazy" decoding="async"
-                                         alt="Vista aérea ilustrativa de un corredor urbano arbolado con unidades de transporte universitario"/>
+                                         alt="Representación ilustrativa de corredores viales urbanos con buses en movimiento"/>
                                 </picture>
                             </div>
                             <p class="grx-media-caption">
-                                Vista ilustrativa del corredor universitario y las vías de conexión entre campus.
+                                Escena ilustrativa de corredores viales y enlaces de transporte.
                             </p>
                         </div>
                     </div>
                 </section>
 
-                <!-- ACT 3: NARRATIVA INTERACTIVA DEL RECORRIDO -->
+                <!-- ACT 3: NARRATIVA INTERACTIVA INDEPENDIENTE DE RUTAS FIJAS -->
                 <section id="recorrido" class="grx-journey" aria-labelledby="journey-title">
                     <div class="grx-wrap">
                         <div class="grx-journey-header">
-                            <span class="grx-kicker">Narrativa del recorrido</span>
+                            <span class="grx-kicker">El recorrido</span>
                             <h2 id="journey-title" class="grx-h2 gsap-split-heading">
-                                Del <em>Campus Huachi</em> al cierre de jornada, paso a paso.
+                                Del <em>punto de origen</em> a la evaluación final, paso a paso.
                             </h2>
                             <p class="grx-lead">
-                                Desplázate o selecciona cualquier punto de control para seguir de forma ilustrativa cómo GeoRutex acompaña un trayecto completo.
+                                Desplázate o selecciona cada etapa para conocer cómo GeoRutex acompaña una jornada completa de transporte.
                             </p>
                         </div>
 
@@ -279,7 +281,7 @@
                                     <div class="grx-map-card-top">
                                         <span id="journeyStatusPill" class="grx-map-pill is-info" aria-live="polite">
                                             <i class="grx-live-dot" aria-hidden="true"/>
-                                            <span id="journeyStageLabel">Salida desde Campus Huachi</span>
+                                            <span id="journeyStageLabel"><t t-esc="stages and stages[0]['pill'] or 'Inicio en punto de origen'"/></span>
                                         </span>
                                         <span class="grx-map-demo-badge">Secuencia ilustrativa</span>
                                     </div>
@@ -289,26 +291,19 @@
                                     </div>
 
                                     <div class="grx-journey-stepper" role="group" aria-label="Etapas interactivas del recorrido">
-                                        <button type="button" class="grx-step-btn is-active" data-step="0" aria-pressed="true">
-                                            <span class="grx-step-num">1</span>
-                                            <span>Huachi</span>
-                                        </button>
-                                        <button type="button" class="grx-step-btn" data-step="1" aria-pressed="false">
-                                            <span class="grx-step-num">2</span>
-                                            <span>Los Chasquis</span>
-                                        </button>
-                                        <button type="button" class="grx-step-btn" data-step="2" aria-pressed="false">
-                                            <span class="grx-step-num">3</span>
-                                            <span>Cumandá</span>
-                                        </button>
-                                        <button type="button" class="grx-step-btn" data-step="3" aria-pressed="false">
-                                            <span class="grx-step-num">4</span>
-                                            <span>Ingahurco</span>
-                                        </button>
+                                        <t t-foreach="stages" t-as="st">
+                                            <button type="button"
+                                                    t-attf-class="grx-step-btn #{st_index == 0 and 'is-active' or ''}"
+                                                    t-att-data-step="st_index"
+                                                    t-att-aria-pressed="st_index == 0 and 'true' or 'false'">
+                                                <span class="grx-step-num"><t t-esc="st_index + 1"/></span>
+                                                <span><t t-esc="st['short']"/></span>
+                                            </button>
+                                        </t>
                                     </div>
 
                                     <svg class="grx-journey-svg" viewBox="0 0 460 440" preserveAspectRatio="xMidYMid meet"
-                                         role="img" aria-label="Mapa ilustrativo interactivo del recorrido entre Campus Huachi y Campus Ingahurco">
+                                         role="img" aria-label="Mapa ilustrativo interactivo de un recorrido general con origen, paradas y destino">
                                         <rect width="460" height="440" rx="14" fill="#f7f6f1"/>
                                         <path d="M 32 40 L 145 40 L 165 110 L 32 120 Z" fill="#e6efe4"/>
                                         <path d="M 290 140 L 428 125 L 428 245 L 305 255 Z" fill="#e6efe4"/>
@@ -331,33 +326,33 @@
                                               d="M 88 68 C 258 78, 344 134, 240 198 C 138 260, 140 318, 286 346 C 336 356, 356 378, 346 398"
                                               fill="none" stroke="#1a56db" stroke-width="5" stroke-linecap="round"/>
 
-                                        <g class="grx-stop-pin is-active" data-step="0" transform="translate(88, 68)" role="button" tabindex="0" aria-label="Etapa 1: Campus Huachi">
+                                        <g class="grx-stop-pin is-active" data-step="0" transform="translate(88, 68)" role="button" tabindex="0" aria-label="Etapa 1: Punto de origen">
                                             <circle class="grx-pin-pulse" r="24" fill="none" stroke="#0bbcd7" stroke-width="1.5" stroke-dasharray="3 3"/>
                                             <circle class="grx-pin-halo" r="18" fill="rgba(26, 86, 219, 0.14)"/>
                                             <circle class="grx-pin-ring" r="11" fill="#ffffff" stroke="#1a56db" stroke-width="3"/>
                                             <circle class="grx-pin-core" r="4" fill="#1a56db"/>
-                                            <text class="grx-pin-label" x="-4" y="-22" fill="#111827" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Campus Huachi</text>
+                                            <text class="grx-pin-label" x="-4" y="-22" fill="#111827" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif"><t t-esc="stages and stages[0]['pin'] or 'Punto de origen'"/></text>
                                         </g>
-                                        <g class="grx-stop-pin" data-step="1" transform="translate(240, 198)" role="button" tabindex="0" aria-label="Etapa 2: Av. Los Chasquis">
+                                        <g class="grx-stop-pin" data-step="1" transform="translate(240, 198)" role="button" tabindex="0" aria-label="Etapa 2: Parada 01">
                                             <circle class="grx-pin-pulse" r="23" fill="none" stroke="#0bbcd7" stroke-width="1.5" stroke-dasharray="3 3"/>
                                             <circle class="grx-pin-halo" r="18" fill="rgba(11, 188, 215, 0.16)"/>
                                             <circle class="grx-pin-ring" r="10.5" fill="#ffffff" stroke="#64748b" stroke-width="2.5"/>
                                             <circle class="grx-pin-core" r="3.5" fill="#64748b"/>
-                                            <text class="grx-pin-label" x="20" y="4" fill="#111827" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Av. Los Chasquis</text>
+                                            <text class="grx-pin-label" x="20" y="4" fill="#111827" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif"><t t-esc="len(stages) &gt; 1 and stages[1]['pin'] or 'Parada 01'"/></text>
                                         </g>
-                                        <g class="grx-stop-pin" data-step="2" transform="translate(172, 294)" role="button" tabindex="0" aria-label="Etapa 3: Redondel Cumandá">
+                                        <g class="grx-stop-pin" data-step="2" transform="translate(172, 294)" role="button" tabindex="0" aria-label="Etapa 3: Parada 02">
                                             <circle class="grx-pin-pulse" r="23" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 3"/>
                                             <circle class="grx-pin-halo" r="18" fill="rgba(245, 158, 11, 0.18)"/>
                                             <circle class="grx-pin-ring" r="10.5" fill="#ffffff" stroke="#64748b" stroke-width="2.5"/>
                                             <circle class="grx-pin-core" r="3.5" fill="#64748b"/>
-                                            <text class="grx-pin-label" x="20" y="4" fill="#111827" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif">Redondel Cumandá</text>
+                                            <text class="grx-pin-label" x="20" y="4" fill="#111827" font-size="12" font-weight="600" font-family="Plus Jakarta Sans, sans-serif"><t t-esc="len(stages) &gt; 2 and stages[2]['pin'] or 'Parada 02'"/></text>
                                         </g>
-                                        <g class="grx-stop-pin" data-step="3" transform="translate(346, 398)" role="button" tabindex="0" aria-label="Etapa 4: Campus Ingahurco">
+                                        <g class="grx-stop-pin" data-step="3" transform="translate(346, 398)" role="button" tabindex="0" aria-label="Etapa 4: Punto de destino">
                                             <circle class="grx-pin-pulse" r="24" fill="none" stroke="#fc0154" stroke-width="1.5" stroke-dasharray="3 3"/>
                                             <circle class="grx-pin-halo" r="18" fill="rgba(252, 1, 84, 0.14)"/>
                                             <circle class="grx-pin-ring" r="11" fill="#ffffff" stroke="#15803d" stroke-width="3"/>
                                             <circle class="grx-pin-core" r="4" fill="#15803d"/>
-                                            <text class="grx-pin-label" x="-140" y="4" fill="#111827" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif">Campus Ingahurco</text>
+                                            <text class="grx-pin-label" x="-126" y="4" fill="#111827" font-size="12" font-weight="700" font-family="Plus Jakarta Sans, sans-serif"><t t-esc="len(stages) &gt; 3 and stages[3]['pin'] or 'Punto de destino'"/></text>
                                         </g>
 
                                         <g id="journeyBus">
@@ -371,8 +366,8 @@
 
                                     <div class="grx-map-card-foot">
                                         <div>
-                                            <span id="journeyCheckpointMeta" class="grx-checkpoint-meta">Etapa 1 de 4 · Inicio de ruta</span>
-                                            <strong id="journeyCheckpointState" class="grx-checkpoint-state">Salida registrada y vinculada al recorrido programado</strong>
+                                            <span id="journeyCheckpointMeta" class="grx-checkpoint-meta"><t t-esc="stages and stages[0]['meta'] or 'Etapa 1 de 4 · Inicio del recorrido'"/></span>
+                                            <strong id="journeyCheckpointState" class="grx-checkpoint-state"><t t-esc="stages and stages[0]['state'] or 'Unidad en marcha y vinculada a su jornada asignada'"/></strong>
                                         </div>
                                         <div class="grx-pct-wrap">
                                             <small>Avance</small>
@@ -383,58 +378,37 @@
                             </div>
 
                             <div class="grx-journey-chapters">
-                                <article class="grx-chapter-item is-active" data-step="0" tabindex="0" role="button" aria-label="Seleccionar etapa 1: Salida desde Campus Huachi">
-                                    <div class="grx-chapter-meta">
-                                        <span class="grx-chapter-tag">Etapa 1 · Inicio de jornada</span>
-                                        <span class="grx-chapter-state-dot is-blue">Salida</span>
-                                    </div>
-                                    <h3>Salida confirmada desde Campus Huachi</h3>
-                                    <p>Al iniciar el recorrido programado, la unidad transmite su posición en tiempo real y cada lectura queda asociada únicamente al viaje activo.</p>
-                                </article>
-
-                                <article class="grx-chapter-item" data-step="1" tabindex="0" role="button" aria-label="Seleccionar etapa 2: Validación en Av. Los Chasquis">
-                                    <div class="grx-chapter-meta">
-                                        <span class="grx-chapter-tag">Etapa 2 · En trayecto</span>
-                                        <span class="grx-chapter-state-dot is-cyan">Parada</span>
-                                    </div>
-                                    <h3>Validación automática en Av. Los Chasquis</h3>
-                                    <p>Al ingresar en el área definida para cada parada intermedia, GeoRutex registra el paso y comprueba el cumplimiento del corredor vial vigente.</p>
-                                </article>
-
-                                <article class="grx-chapter-item" data-step="2" tabindex="0" role="button" aria-label="Seleccionar etapa 3: Reporte en Redondel Cumandá">
-                                    <div class="grx-chapter-meta">
-                                        <span class="grx-chapter-tag">Etapa 3 · Gestión de novedades</span>
-                                        <span class="grx-chapter-state-dot is-amber">Incidencia</span>
-                                    </div>
-                                    <h3>Reporte contextual en Redondel Cumandá</h3>
-                                    <p>Ante congestión o desvíos, el conductor informa la novedad desde su panel móvil. La revisión administrativa decide su justificación sin alterar el evento original.</p>
-                                </article>
-
-                                <article class="grx-chapter-item" data-step="3" tabindex="0" role="button" aria-label="Seleccionar etapa 4: Llegada a Campus Ingahurco">
-                                    <div class="grx-chapter-meta">
-                                        <span class="grx-chapter-tag">Etapa 4 · Cierre y evaluación</span>
-                                        <span class="grx-chapter-state-dot is-green">Evaluado</span>
-                                    </div>
-                                    <h3>Llegada a Campus Ingahurco y evaluación final</h3>
-                                    <p>Al concluir el viaje se calcula automáticamente el cumplimiento de paradas y la puntualidad, guardando las reglas aplicadas para trazabilidad posterior.</p>
-                                </article>
+                                <t t-foreach="stages" t-as="st">
+                                    <article t-attf-class="grx-chapter-item #{st_index == 0 and 'is-active' or ''}"
+                                             t-att-data-step="st_index"
+                                             tabindex="0"
+                                             role="button"
+                                             t-att-aria-label="'Seleccionar ' + st['title']">
+                                        <div class="grx-chapter-meta">
+                                            <span class="grx-chapter-tag"><t t-esc="st['tag']"/></span>
+                                            <span t-attf-class="grx-chapter-state-dot #{st['badge_class']}"><t t-esc="st['badge']"/></span>
+                                        </div>
+                                        <h3><t t-esc="st['title']"/></h3>
+                                        <p><t t-esc="st['description']"/></p>
+                                    </article>
+                                </t>
                             </div>
                         </div>
                     </div>
                 </section>
 
-                <!-- ACT 4: PRESENTACIÓN INTERACTIVA DEL PRODUCTO — SIN RUTAS TÉCNICAS -->
+                <!-- ACT 4: PRESENTACIÓN DEL PRODUCTO (100% ORIENTADA AL CLIENTE Y ADAPTABLE) -->
                 <section id="plataforma" class="grx-showcase" aria-labelledby="showcase-title">
                     <div class="grx-wrap">
                         <div class="grx-showcase-head">
                             <div>
-                                <span class="grx-kicker">La plataforma por dentro</span>
+                                <span class="grx-kicker">Plataforma</span>
                                 <h2 id="showcase-title" class="grx-h2 gsap-split-heading">
                                     Toda la operación, conectada.
                                 </h2>
                             </div>
                             <p class="grx-showcase-sub">
-                                Recorre los cinco espacios de GeoRutex para supervisar la flota, seguir cada ruta en el mapa, configurar paradas, acompañar al conductor y analizar el desempeño del servicio.
+                                Cinco espacios diseñados para que administradores, conductores y analistas dispongan de las herramientas necesarias en cada etapa de la jornada.
                             </p>
                         </div>
 
@@ -446,26 +420,26 @@
                                         <span class="grx-ftab-icon"><i class="fa fa-th-large" aria-hidden="true"/></span>
                                         <div class="grx-ftab-titles">
                                             <strong>Centro de operaciones</strong>
-                                            <small>Supervisión general de flota</small>
+                                            <small>Supervisión general del servicio</small>
                                         </div>
                                         <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
                                     </div>
                                     <div class="grx-ftab-body">
-                                        <p>Reúne el estado de señal GPS, resumen de unidades, mapa activo, incidencias abiertas y programación de recorridos desde un panel central.</p>
+                                        <p>Supervisa vehículos, recorridos, incidencias y el estado general del transporte desde un mismo lugar.</p>
                                     </div>
                                 </button>
 
-                                <button type="button" id="tab-map" class="grx-ftab" data-feature="map" data-title="Seguimiento geográfico" data-mode="desktop" role="tab" aria-selected="false" aria-controls="panel-map">
+                                <button type="button" id="tab-map" class="grx-ftab" data-feature="map" data-title="Mapa en tiempo real" data-mode="desktop" role="tab" aria-selected="false" aria-controls="panel-map">
                                     <div class="grx-ftab-head">
                                         <span class="grx-ftab-icon"><i class="fa fa-map-marker" aria-hidden="true"/></span>
                                         <div class="grx-ftab-titles">
-                                            <strong>Seguimiento geográfico</strong>
-                                            <small>Mapa GPS en vivo</small>
+                                            <strong>Mapa en tiempo real</strong>
+                                            <small>Seguimiento vehicular</small>
                                         </div>
                                         <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
                                     </div>
                                     <div class="grx-ftab-body">
-                                        <p>Selecciona unidades para enfocar la cámara sobre su ubicación, filtra por estado de señal y visualiza el corredor y las paradas en tiempo real.</p>
+                                        <p>Consulta la ubicación y el estado de las unidades mediante un mapa interactivo con enfoque rápido por vehículo.</p>
                                     </div>
                                 </button>
 
@@ -474,40 +448,40 @@
                                         <span class="grx-ftab-icon"><i class="fa fa-map-signs" aria-hidden="true"/></span>
                                         <div class="grx-ftab-titles">
                                             <strong>Gestión de rutas y paradas</strong>
-                                            <small>Editor de corredores y controles</small>
+                                            <small>Recorridos y puntos de control</small>
                                         </div>
                                         <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
                                     </div>
                                     <div class="grx-ftab-body">
-                                        <p>Define origen, controles intermedios y destino, ajusta radios de proximidad y corredor de tolerancia, y aprueba versiones trazables de cada ruta.</p>
+                                        <p>Organiza los recorridos, sus puntos de control y horarios con versiones claras para cada operación.</p>
                                     </div>
                                 </button>
 
-                                <button type="button" id="tab-driver" class="grx-ftab" data-feature="driver" data-title="Tu jornada desde el móvil" data-mode="mobile" role="tab" aria-selected="false" aria-controls="panel-driver">
+                                <button type="button" id="tab-driver" class="grx-ftab" data-feature="driver" data-title="Espacio del conductor" data-mode="mobile" role="tab" aria-selected="false" aria-controls="panel-driver">
                                     <div class="grx-ftab-head">
                                         <span class="grx-ftab-icon"><i class="fa fa-mobile" aria-hidden="true"/></span>
                                         <div class="grx-ftab-titles">
-                                            <strong>Tu jornada desde el móvil</strong>
-                                            <small>Panel del conductor</small>
+                                            <strong>Espacio del conductor</strong>
+                                            <small>Organización de jornadas en móvil</small>
                                         </div>
                                         <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
                                     </div>
                                     <div class="grx-ftab-body">
-                                        <p>Presenta el recorrido asignado, la próxima parada, la línea de tiempo y el reporte rápido de incidencias en una vista diseñada para consulta segura.</p>
+                                        <p>Consulta la jornada asignada, las próximas paradas y reporta novedades desde una interfaz adaptable al móvil.</p>
                                     </div>
                                 </button>
 
-                                <button type="button" id="tab-analyst" class="grx-ftab" data-feature="analytics" data-title="Análisis de calidad" data-mode="desktop" role="tab" aria-selected="false" aria-controls="panel-analytics">
+                                <button type="button" id="tab-analyst" class="grx-ftab" data-feature="analytics" data-title="Análisis del servicio" data-mode="desktop" role="tab" aria-selected="false" aria-controls="panel-analytics">
                                     <div class="grx-ftab-head">
                                         <span class="grx-ftab-icon"><i class="fa fa-line-chart" aria-hidden="true"/></span>
                                         <div class="grx-ftab-titles">
-                                            <strong>Análisis de calidad</strong>
-                                            <small>Dashboard del analista</small>
+                                            <strong>Análisis del servicio</strong>
+                                            <small>Evaluación y desempeño</small>
                                         </div>
                                         <i class="fa fa-angle-right grx-ftab-arrow" aria-hidden="true"/>
                                     </div>
                                     <div class="grx-ftab-body">
-                                        <p>Permite filtrar por origen real o simulado, comparar cumplimiento bruto y ajustado por ruta y revisar indicadores con manejo explícito de evidencia insuficiente.</p>
+                                        <p>Comprende el desempeño del transporte mediante indicadores, gráficos y herramientas de análisis por período.</p>
                                     </div>
                                 </button>
                             </div>
@@ -522,7 +496,7 @@
                                         <div class="grx-browser-brand">
                                             <img src="/uta_transport_monitor/static/src/img/georutex_favicon.png" width="16" height="16" alt="" aria-hidden="true"/>
                                             <span class="grx-browser-title-pill">
-                                                <span translate="no">GeoRutex</span>
+                                                <span translate="no"><t t-esc="brand_name"/></span>
                                                 <i class="fa fa-angle-right" aria-hidden="true"/>
                                                 <strong id="grxBrowserTitle">Centro de operaciones</strong>
                                             </span>
@@ -536,46 +510,46 @@
                                             <div class="grx-mock-app">
                                                 <div class="grx-mock-topbar grx-ui-anim">
                                                     <div>
-                                                        <span class="grx-mock-pretitle">CENTRO DE OPERACIONES · GEORUTEX</span>
-                                                        <h4>Panel operativo de flota</h4>
+                                                        <span class="grx-mock-pretitle">CENTRO DE OPERACIONES</span>
+                                                        <h4>Estado general de la flota</h4>
                                                     </div>
                                                     <div class="grx-mock-actions">
-                                                        <span class="grx-mock-chip"><i class="grx-live-dot"/> Señal GPS activa</span>
-                                                        <span class="grx-mock-btn-soft"><i class="fa fa-refresh" aria-hidden="true"/> Sincronizar GPS</span>
+                                                        <span class="grx-mock-chip"><i class="grx-live-dot"/> Seguimiento activo</span>
+                                                        <span class="grx-mock-btn-soft"><i class="fa fa-refresh" aria-hidden="true"/> Actualizar</span>
                                                         <span class="grx-mock-btn-primary">+ Nuevo recorrido</span>
                                                     </div>
                                                 </div>
 
                                                 <div class="grx-mock-kpis grx-ui-anim">
                                                     <div class="grx-mock-kpi">
-                                                        <span>Flota activa</span>
-                                                        <strong>En línea</strong>
-                                                        <small>Unidades vinculadas</small>
+                                                        <span>Vehículos</span>
+                                                        <strong>En servicio</strong>
+                                                        <small>Flota conectada</small>
                                                     </div>
                                                     <div class="grx-mock-kpi">
-                                                        <span>Rutas y paradas</span>
-                                                        <strong>Vigentes</strong>
-                                                        <small>Versiones aprobadas</small>
+                                                        <span>Rutas</span>
+                                                        <strong>Activas</strong>
+                                                        <small>Recorridos vigentes</small>
                                                     </div>
                                                     <div class="grx-mock-kpi">
-                                                        <span>Recorridos del día</span>
-                                                        <strong>En operación</strong>
-                                                        <small>Seguimiento continuo</small>
+                                                        <span>Jornada</span>
+                                                        <strong>En curso</strong>
+                                                        <small>Control continuo</small>
                                                     </div>
                                                     <div class="grx-mock-kpi">
                                                         <span>Incidencias</span>
-                                                        <strong>Trazables</strong>
-                                                        <small>Revisión autorizada</small>
+                                                        <strong>En seguimiento</strong>
+                                                        <small>Atención oportuna</small>
                                                     </div>
                                                 </div>
 
                                                 <div class="grx-mock-ops-grid">
                                                     <div class="grx-mock-card grx-ui-anim">
                                                         <div class="grx-mock-card-head">
-                                                            <span><i class="fa fa-map-marker" aria-hidden="true"/> Mapa de flota en tiempo real</span>
+                                                            <span><i class="fa fa-map-marker" aria-hidden="true"/> Ubicación de unidades</span>
                                                             <div class="grx-inline-filter" role="group" aria-label="Filtrar unidades en vista previa">
-                                                                <button type="button" class="is-on" data-ops-filter="all">Todos</button>
-                                                                <button type="button" data-ops-filter="live">En vivo</button>
+                                                                <button type="button" class="is-on" data-ops-filter="all">Todas</button>
+                                                                <button type="button" data-ops-filter="live">En ruta</button>
                                                                 <button type="button" data-ops-filter="wait">En espera</button>
                                                             </div>
                                                         </div>
@@ -605,8 +579,8 @@
                                                                 </g>
                                                             </svg>
                                                             <div class="grx-mock-map-legend">
-                                                                <span><i class="dot-g"/> En vivo</span>
-                                                                <span><i class="dot-a"/> Reciente</span>
+                                                                <span><i class="dot-g"/> En ruta</span>
+                                                                <span><i class="dot-a"/> En espera</span>
                                                                 <span><i class="dot-r"/> Sin señal</span>
                                                             </div>
                                                         </div>
@@ -616,26 +590,26 @@
                                                         <div class="grx-mock-card">
                                                             <div class="grx-mock-card-head"><span>Resumen de unidades</span></div>
                                                             <div class="grx-mock-unit-2x2">
-                                                                <div class="u-green"><small>EN LÍNEA</small><b>Activas</b></div>
-                                                                <div class="u-amber"><small>RECIENTE</small><b>En espera</b></div>
-                                                                <div class="u-red"><small>SIN SEÑAL</small><b>Alertas</b></div>
-                                                                <div class="u-blue"><small>SIMULADAS</small><b>Separadas</b></div>
+                                                                <div class="u-green"><small>EN RUTA</small><b>Activas</b></div>
+                                                                <div class="u-amber"><small>EN ESPERA</small><b>Recientes</b></div>
+                                                                <div class="u-red"><small>SIN SEÑAL</small><b>Avisos</b></div>
+                                                                <div class="u-blue"><small>PRUEBAS</small><b>Separadas</b></div>
                                                             </div>
                                                         </div>
                                                         <div class="grx-mock-card">
                                                             <div class="grx-mock-card-head"><span>Unidades en servicio</span></div>
                                                             <div class="grx-mock-list">
                                                                 <div class="grx-mock-row" data-ops-row="live">
-                                                                    <span><i class="dot-g"/> Unidad UTA-01</span>
-                                                                    <small>Huachi – Ingahurco</small>
+                                                                    <span><i class="dot-g"/> Unidad 01</span>
+                                                                    <small>Ruta A</small>
                                                                 </div>
                                                                 <div class="grx-mock-row" data-ops-row="live">
-                                                                    <span><i class="dot-g"/> Unidad UTA-02</span>
-                                                                    <small>Querochaca – Huachi</small>
+                                                                    <span><i class="dot-g"/> Unidad 02</span>
+                                                                    <small>Ruta B</small>
                                                                 </div>
                                                                 <div class="grx-mock-row" data-ops-row="wait">
-                                                                    <span><i class="dot-a"/> Unidad UTA-03</span>
-                                                                    <small>En estación</small>
+                                                                    <span><i class="dot-a"/> Unidad 03</span>
+                                                                    <small>En base</small>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -644,52 +618,52 @@
                                             </div>
                                         </div>
 
-                                        <!-- VIEW 2: SEGUIMIENTO GEOGRÁFICO (MAPA INTERACTIVO REAL) -->
+                                        <!-- VIEW 2: MAPA EN TIEMPO REAL (CONFIGURABLE, GENERIC UNITS) -->
                                         <div id="panel-map" class="grx-ui-panel" data-panel="map" role="tabpanel" aria-labelledby="tab-map">
                                             <div class="grx-mock-app grx-mock-live-layout">
                                                 <aside class="grx-mock-live-sidebar grx-ui-anim">
                                                     <div class="grx-mock-live-head">
-                                                        <strong><i class="fa fa-map-marker" aria-hidden="true"/> Seguimiento geográfico</strong>
-                                                        <small>Selecciona una unidad para enfocar</small>
+                                                        <strong><i class="fa fa-map-marker" aria-hidden="true"/> Mapa en tiempo real</strong>
+                                                        <small>Elige una unidad para centrar la vista</small>
                                                         <div class="grx-inline-filter is-full" role="group" aria-label="Filtrar unidades en mapa">
-                                                            <button type="button" class="is-on" data-map-filter="all">Todos</button>
-                                                            <button type="button" data-map-filter="fresh">En vivo</button>
-                                                            <button type="button" data-map-filter="stale">Reciente</button>
+                                                            <button type="button" class="is-on" data-map-filter="all">Todas</button>
+                                                            <button type="button" data-map-filter="fresh">En ruta</button>
+                                                            <button type="button" data-map-filter="stale">En espera</button>
                                                         </div>
                                                     </div>
                                                     <div class="grx-mock-live-cards" id="grxLiveUnitList">
-                                                        <button type="button" class="grx-mock-vitem is-selected" data-unit="uta01" data-status="fresh">
+                                                        <button type="button" class="grx-mock-vitem is-selected" data-unit="unit01" data-status="fresh">
                                                             <div>
-                                                                <b>Unidad UTA-01</b>
-                                                                <span class="grx-badge-ok">En vivo</span>
+                                                                <b>Unidad 01</b>
+                                                                <span class="grx-badge-ok">En ruta</span>
                                                             </div>
-                                                            <small>Corredor Huachi – Ingahurco</small>
-                                                            <div class="grx-mock-vfoot"><span>Av. Los Chasquis</span><span>En ruta</span></div>
+                                                            <small>Ruta A · Hacia Parada 01</small>
+                                                            <div class="grx-mock-vfoot"><span>En movimiento</span><span>Activa</span></div>
                                                         </button>
-                                                        <button type="button" class="grx-mock-vitem" data-unit="uta02" data-status="fresh">
+                                                        <button type="button" class="grx-mock-vitem" data-unit="unit02" data-status="fresh">
                                                             <div>
-                                                                <b>Unidad UTA-02</b>
-                                                                <span class="grx-badge-ok">En vivo</span>
+                                                                <b>Unidad 02</b>
+                                                                <span class="grx-badge-ok">En ruta</span>
                                                             </div>
-                                                            <small>Corredor Sur – Campus Huachi</small>
-                                                            <div class="grx-mock-vfoot"><span>Redondel Cumandá</span><span>En ruta</span></div>
+                                                            <small>Ruta B · Hacia Parada 02</small>
+                                                            <div class="grx-mock-vfoot"><span>En movimiento</span><span>Activa</span></div>
                                                         </button>
-                                                        <button type="button" class="grx-mock-vitem" data-unit="uta03" data-status="stale">
+                                                        <button type="button" class="grx-mock-vitem" data-unit="unit03" data-status="stale">
                                                             <div>
-                                                                <b>Unidad UTA-03</b>
-                                                                <span class="grx-badge-warn">Reciente</span>
+                                                                <b>Unidad 03</b>
+                                                                <span class="grx-badge-warn">En espera</span>
                                                             </div>
-                                                            <small>Estación Campus Ingahurco</small>
-                                                            <div class="grx-mock-vfoot"><span>En espera</span><span>Detenida</span></div>
+                                                            <small>Ruta C · Punto de destino</small>
+                                                            <div class="grx-mock-vfoot"><span>Detenida</span><span>Disponible</span></div>
                                                         </button>
                                                     </div>
                                                 </aside>
 
                                                 <div class="grx-mock-live-map grx-ui-anim">
-                                                    <div id="grxPublicLeafletMap" class="grx-leaflet-canvas" aria-label="Mapa geográfico interactivo de Ambato"/>
+                                                    <div id="grxPublicLeafletMap" class="grx-leaflet-canvas" aria-label="Mapa interactivo ilustrativo de seguimiento vehicular"/>
                                                     <div class="grx-mock-popup" id="grxMapFocusCard">
-                                                        <strong>Unidad UTA-01 · En vivo</strong>
-                                                        <span>Av. Los Chasquis · Corredor Huachi – Ingahurco</span>
+                                                        <strong>Unidad 01 · En ruta</strong>
+                                                        <span>Ruta A · Tramo hacia Parada 01</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -701,12 +675,12 @@
                                                 <div class="grx-mock-editor-bar grx-ui-anim">
                                                     <div class="grx-mock-editor-left">
                                                         <strong><i class="fa fa-map-o" aria-hidden="true"/> Gestión de rutas y paradas</strong>
-                                                        <span class="grx-badge-blue">Borrador editable</span>
-                                                        <span class="grx-badge-ok">4 controles definidos</span>
+                                                        <span class="grx-badge-blue">Edición visual</span>
+                                                        <span class="grx-badge-ok">Controles configurables</span>
                                                     </div>
                                                     <div class="grx-mock-editor-tools">
-                                                        <button type="button" class="grx-ed-toggle is-on" data-ed-layer="corridor" aria-pressed="true">Corredor (150 m)</button>
-                                                        <button type="button" class="grx-ed-toggle is-on" data-ed-layer="geofences" aria-pressed="true">Geocercas</button>
+                                                        <button type="button" class="grx-ed-toggle is-on" data-ed-layer="corridor" aria-pressed="true">Corredor de ruta</button>
+                                                        <button type="button" class="grx-ed-toggle is-on" data-ed-layer="geofences" aria-pressed="true">Áreas de control</button>
                                                     </div>
                                                 </div>
 
@@ -738,112 +712,112 @@
                                                     </div>
 
                                                     <div class="grx-mock-editor-stops grx-ui-anim">
-                                                        <div class="grx-mock-card-head"><span>Puntos de control (4)</span></div>
+                                                        <div class="grx-mock-card-head"><span>Puntos de control</span></div>
                                                         <button type="button" class="grx-mock-stop-item is-origin is-selected" data-ed-stop="0">
-                                                            <b>#1 Campus Huachi</b>
-                                                            <span>Origen · Radio 80 m</span>
+                                                            <b>Punto de origen</b>
+                                                            <span>Salida programada</span>
                                                         </button>
                                                         <button type="button" class="grx-mock-stop-item" data-ed-stop="1">
-                                                            <b>#2 Av. Los Chasquis</b>
-                                                            <span>Control · Radio 75 m</span>
+                                                            <b>Parada 01</b>
+                                                            <span>Control intermedio</span>
                                                         </button>
                                                         <button type="button" class="grx-mock-stop-item" data-ed-stop="2">
-                                                            <b>#3 Redondel Cumandá</b>
-                                                            <span>Control · Radio 75 m</span>
+                                                            <b>Parada 02</b>
+                                                            <span>Control intermedio</span>
                                                         </button>
                                                         <button type="button" class="grx-mock-stop-item is-dest" data-ed-stop="3">
-                                                            <b>#4 Campus Ingahurco</b>
-                                                            <span>Destino · Radio 80 m</span>
+                                                            <b>Punto de destino</b>
+                                                            <span>Llegada y cierre</span>
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- VIEW 4: TU JORNADA DESDE EL MÓVIL (PANEL DEL CONDUCTOR) -->
+                                        <!-- VIEW 4: ESPACIO DEL CONDUCTOR (MOBILE MORPH VIA GSAP FLIP) -->
                                         <div id="panel-driver" class="grx-ui-panel" data-panel="driver" role="tabpanel" aria-labelledby="tab-driver">
                                             <div class="grx-mobile-cockpit">
                                                 <div class="grx-phone-status grx-ui-anim" aria-hidden="true">
-                                                    <span>Tu jornada · Cabina móvil</span>
+                                                    <span>Espacio del conductor</span>
                                                     <span><i class="fa fa-signal"/> <i class="fa fa-map-marker"/></span>
                                                 </div>
 
                                                 <div class="grx-mock-route-banner grx-ui-anim">
                                                     <div>
-                                                        <small>RECORRIDO ASIGNADO · EN CURSO</small>
-                                                        <strong>Campus Huachi → Ingahurco</strong>
+                                                        <small>JORNADA ASIGNADA · EN CURSO</small>
+                                                        <strong>Punto de origen → Punto de destino</strong>
                                                     </div>
-                                                    <span class="grx-badge-ok">GPS activo</span>
+                                                    <span class="grx-badge-ok">En ruta</span>
                                                 </div>
 
                                                 <div class="grx-mock-driver-tiles grx-ui-anim">
-                                                    <div><small>Próxima parada</small><b>Redondel Cumandá</b></div>
-                                                    <div><small>Avance de paradas</small><b>2 de 4 visitadas</b></div>
+                                                    <div><small>Próxima parada</small><b>Parada 02</b></div>
+                                                    <div><small>Estado de jornada</small><b>En progreso</b></div>
                                                 </div>
 
                                                 <div class="grx-mock-tl grx-ui-anim">
                                                     <div class="grx-mock-tl-row is-done">
                                                         <span>1</span>
-                                                        <div><b>Campus Huachi</b><small>Salida confirmada</small></div>
-                                                        <em>OK</em>
+                                                        <div><b>Punto de origen</b><small>Salida confirmada</small></div>
+                                                        <em>Completada</em>
                                                     </div>
                                                     <div class="grx-mock-tl-row is-done">
                                                         <span>2</span>
-                                                        <div><b>Av. Los Chasquis</b><small>Paso validado</small></div>
-                                                        <em>OK</em>
+                                                        <div><b>Parada 01</b><small>Paso verificado</small></div>
+                                                        <em>Completada</em>
                                                     </div>
                                                     <div class="grx-mock-tl-row is-next">
                                                         <span>3</span>
-                                                        <div><b>Redondel Cumandá</b><small>Siguiente control</small></div>
+                                                        <div><b>Parada 02</b><small>Siguiente punto de control</small></div>
                                                         <em>Siguiente</em>
                                                     </div>
                                                     <div class="grx-mock-tl-row">
                                                         <span>4</span>
-                                                        <div><b>Campus Ingahurco</b><small>Destino final</small></div>
+                                                        <div><b>Punto de destino</b><small>Cierre del recorrido</small></div>
                                                         <em>Pendiente</em>
                                                     </div>
                                                 </div>
 
                                                 <div class="grx-driver-actions-bar grx-ui-anim">
-                                                    <span class="grx-mock-btn-primary"><i class="fa fa-exclamation-triangle" aria-hidden="true"/> Reportar incidencia</span>
+                                                    <span class="grx-mock-btn-primary"><i class="fa fa-exclamation-triangle" aria-hidden="true"/> Reportar novedad</span>
                                                     <span class="grx-mock-btn-soft">Finalizar</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <!-- VIEW 5: ANÁLISIS DE CALIDAD (DASHBOARD DEL ANALISTA) -->
+                                        <!-- VIEW 5: ANÁLISIS DEL SERVICIO (INTERACTIVE CHART, ZERO INTERNAL CODES) -->
                                         <div id="panel-analytics" class="grx-ui-panel" data-panel="analytics" role="tabpanel" aria-labelledby="tab-analyst">
                                             <div class="grx-mock-app">
                                                 <div class="grx-mock-topbar grx-ui-anim">
                                                     <div>
-                                                        <span class="grx-mock-pretitle">ANÁLISIS DE CALIDAD · EVALUACIÓN DEL SERVICIO</span>
-                                                        <h4>Cumplimiento y puntualidad por ruta</h4>
+                                                        <span class="grx-mock-pretitle">ANÁLISIS DEL SERVICIO</span>
+                                                        <h4>Desempeño por recorrido</h4>
                                                     </div>
-                                                    <div class="grx-inline-filter" role="group" aria-label="Filtrar origen de datos en vista analítica">
-                                                        <button type="button" class="is-on" data-chart-source="combined">Combinado</button>
-                                                        <button type="button" data-chart-source="real">Solo real</button>
-                                                        <button type="button" data-chart-source="simulated">Simulado</button>
-                                                        <button type="button" data-chart-source="empty">Sin muestra</button>
+                                                    <div class="grx-inline-filter" role="group" aria-label="Filtrar vista de ejemplo">
+                                                        <button type="button" class="is-on" data-chart-source="combined">General</button>
+                                                        <button type="button" data-chart-source="real">Operación</button>
+                                                        <button type="button" data-chart-source="simulated">Pruebas</button>
+                                                        <button type="button" data-chart-source="empty">Sin datos</button>
                                                     </div>
                                                 </div>
 
                                                 <div class="grx-mock-card grx-ui-anim">
                                                     <div class="grx-mock-card-head">
-                                                        <span id="grxChartHeading">Comparativa ilustrativa por ruta</span>
-                                                        <small id="grxChartSourceNote">Origen: Combinado · Bruto y ajustado</small>
+                                                        <span id="grxChartHeading">Comparativa ilustrativa de cumplimiento</span>
+                                                        <small id="grxChartSourceNote">Vista general · Ejemplo ilustrativo</small>
                                                     </div>
                                                     <div class="grx-echart-stage">
                                                         <div id="grxPublicEChart" class="grx-echart-canvas"/>
                                                         <div id="grxPublicEChartEmpty" class="grx-echart-empty" hidden="hidden">
-                                                            <strong>Estado N/A · Evidencia insuficiente</strong>
-                                                            <span>Cuando una consulta no dispone de recorridos evaluables, GeoRutex declara N/A en lugar de fabricar cumplimiento.</span>
+                                                            <strong>Sin datos suficientes</strong>
+                                                            <span>Cuando no existen recorridos evaluables en el período consultado, la plataforma lo informa con transparencia en lugar de estimar resultados.</span>
                                                         </div>
                                                     </div>
                                                     <div class="grx-mock-metric-strip">
-                                                        <span><b>MT-01</b> Cumplimiento</span>
-                                                        <span><b>MT-02</b> Puntualidad</span>
-                                                        <span><b>MT-06</b> Cobertura GPS</span>
-                                                        <span><b>MCS-01..04</b> Calidad del servicio</span>
+                                                        <span><b>Cumplimiento</b> de paradas</span>
+                                                        <span><b>Puntualidad</b> de horarios</span>
+                                                        <span><b>Cobertura</b> de señal</span>
+                                                        <span><b>Seguimiento</b> de novedades</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -851,7 +825,7 @@
                                     </div>
 
                                     <div class="grx-browser-footnote">
-                                        <span>Vista interactiva de ejemplo basada en las pantallas implementadas de GeoRutex · Sin acceso a datos operativos privados ni información personal.</span>
+                                        <span>Representación interactiva ilustrativa de GeoRutex · El acceso a la operación real requiere iniciar sesión.</span>
                                     </div>
                                 </div>
                             </div>
@@ -859,7 +833,7 @@
                     </div>
                 </section>
 
-                <!-- ACT 5: ANÁLISIS DE CALIDAD Y TRAZABILIDAD -->
+                <!-- ACT 5: CALIDAD DEL SERVICIO (REFORMULADA PARA EL CLIENTE) -->
                 <section id="respaldo" class="grx-impact" aria-labelledby="respaldo-title">
                     <div class="grx-wrap grx-impact-grid">
                         <div class="grx-impact-photo gsap-curtain-reveal">
@@ -869,42 +843,35 @@
                                      src="/uta_transport_monitor/static/src/img/public_driver_tablet.jpg"
                                      width="1200" height="896"
                                      loading="lazy" decoding="async"
-                                     alt="Escena ilustrativa de supervisión del mapa de rutas desde la cabina de una unidad"/>
+                                     alt="Representación ilustrativa de consulta de recorridos desde la cabina de una unidad"/>
                             </picture>
                         </div>
 
                         <div class="grx-impact-content">
-                            <span class="grx-kicker">Análisis de calidad</span>
+                            <span class="grx-kicker">Calidad del servicio</span>
                             <h2 id="respaldo-title" class="grx-h2 gsap-split-heading">
-                                <em>Trazabilidad</em> verificable en cada evaluación.
+                                Mejores recorridos. <em>Mejores decisiones.</em>
                             </h2>
                             <p class="grx-lead">
-                                Diseñado para brindar visibilidad auditable, privacidad por perfil y criterios transparentes que respalden la mejora continua del transporte universitario.
+                                Información confiable y accesos personalizados para que cada equipo coordine la movilidad con mayor orden y claridad.
                             </p>
-
-                            <div class="grx-spec-pills" aria-label="Capacidades verificadas de evaluación">
-                                <span class="grx-spec-pill gsap-pillar">Indicadores operativos MT-01 a MT-08</span>
-                                <span class="grx-spec-pill gsap-pillar">Métricas de calidad MCS-01 a MCS-04</span>
-                                <span class="grx-spec-pill gsap-pillar">Tres perfiles con control de acceso</span>
-                                <span class="grx-spec-pill gsap-pillar">Criterios alineados con ISO/IEC 25010</span>
-                            </div>
 
                             <div class="grx-pillars-grid">
                                 <article class="grx-pillar-card gsap-pillar">
-                                    <strong>Privacidad y control por perfil</strong>
-                                    <p>Administradores, conductores y analistas operan únicamente sobre sus permisos; ninguna justificación de incidencia puede ser autoaprobada.</p>
+                                    <strong>Puntualidad</strong>
+                                    <p>Conoce el cumplimiento de los horarios y detecta oportunidades de mejora en cada recorrido.</p>
                                 </article>
                                 <article class="grx-pillar-card gsap-pillar">
-                                    <strong>Origen real y simulado separado</strong>
-                                    <p>Cada recorrido conserva su origen explícito en los registros, paneles y reportes para diferenciar telemetría externa de escenarios simulados.</p>
+                                    <strong>Recorridos bajo control</strong>
+                                    <p>Supervisa trayectos, paradas y novedades durante toda la jornada desde un mismo entorno.</p>
                                 </article>
                                 <article class="grx-pillar-card gsap-pillar">
-                                    <strong>Manejo transparente de evidencia</strong>
-                                    <p>Cuando un trayecto carece de señal GPS suficiente, el sistema declara estado N/A en lugar de asumir cumplimiento o incumplimiento.</p>
+                                    <strong>Acceso seguro</strong>
+                                    <p>Cada usuario dispone de las herramientas correspondientes a sus responsabilidades dentro de la operación.</p>
                                 </article>
                                 <article class="grx-pillar-card gsap-pillar">
-                                    <strong>Reglas guardadas por evaluación</strong>
-                                    <p>Cada evaluación congela la versión de ruta y las tolerancias vigentes en ese momento para respaldar auditorías y comparaciones históricas.</p>
+                                    <strong>Mejora continua</strong>
+                                    <p>Utiliza la información de los recorridos para comprender el servicio y optimizar decisiones futuras.</p>
                                 </article>
                             </div>
                         </div>
@@ -922,13 +889,13 @@
                                         <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark_mono.png"
                                              width="34" height="34" loading="lazy" alt="" aria-hidden="true"/>
                                     </picture>
-                                    <span class="grx-kicker is-light">Universidad Técnica de Ambato</span>
+                                    <span class="grx-kicker is-light" translate="no"><t t-esc="brand_name"/></span>
                                 </div>
                                 <h2 id="closing-title" class="grx-closing-title gsap-split-heading">
-                                    Opera y evalúa las rutas universitarias desde un mismo lugar.
+                                    Una mejor forma de gestionar el transporte.
                                 </h2>
                                 <p class="grx-closing-desc">
-                                    Ingresa con tu cuenta institucional para acceder al panel de tu rol, o completa el registro de conductores con verificación por correo electrónico.
+                                    Accede a GeoRutex y encuentra las herramientas necesarias para tu jornada.
                                 </p>
                                 <div class="grx-closing-btns">
                                     <a t-att-href="is_authenticated and panel_url or login_url"
@@ -975,7 +942,7 @@
                 </section>
             </main>
 
-            <!-- PROFESSIONAL MULTI-COLUMN FOOTER (TECHNICAL REFERENCES PRESERVED HERE) -->
+            <!-- CUSTOMER-ORIENTED FOOTER WITH CONFIGURABLE CONTEXT & DISCREET ORIGIN MARK -->
             <footer class="grx-footer" aria-label="Pie de página de GeoRutex">
                 <div class="grx-wrap">
                     <div class="grx-footer-grid">
@@ -986,23 +953,23 @@
                                     <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
                                          width="38" height="38" loading="lazy" alt="Isotipo principal de GeoRutex"/>
                                 </picture>
-                                <span class="grx-brand-lockup" translate="no">
-                                    <strong>GeoRutex</strong>
-                                    <small>Movilidad Universitaria · UTA</small>
+                                <span class="grx-brand-lockup">
+                                    <strong translate="no"><t t-esc="brand_name"/></strong>
+                                    <small><t t-esc="brand_descriptor"/></small>
                                 </span>
                             </a>
                             <p>
-                                Plataforma de monitoreo GPS, gestión de recorridos y evaluación del servicio de transporte universitario en Ambato, Ecuador.
+                                Plataforma de monitoreo GPS, gestión de recorridos y evaluación del transporte.
                             </p>
                         </div>
 
                         <div class="grx-footer-col">
                             <h3>Explorar</h3>
                             <ul>
-                                <li><a href="#vision">Enfoque operativo</a></li>
-                                <li><a href="#recorrido">Narrativa del recorrido</a></li>
-                                <li><a href="#plataforma">La plataforma por dentro</a></li>
-                                <li><a href="#respaldo">Análisis de calidad</a></li>
+                                <li><a href="#vision">Enfoque</a></li>
+                                <li><a href="#recorrido">El recorrido</a></li>
+                                <li><a href="#plataforma">Plataforma</a></li>
+                                <li><a href="#respaldo">Calidad</a></li>
                             </ul>
                         </div>
 
@@ -1022,12 +989,11 @@
                         </div>
 
                         <div class="grx-footer-col">
-                            <h3>Base tecnológica</h3>
+                            <h3>Información</h3>
                             <ul class="grx-footer-meta-list">
-                                <li>Universidad Técnica de Ambato</li>
-                                <li>Odoo 16 Community · Fleet</li>
-                                <li>Traccar GPS · Leaflet · ECharts</li>
-                                <li>Alineación ISO/IEC 25010</li>
+                                <li t-if="(public_config or {}).get('org_name')"><t t-esc="public_config['org_name']"/></li>
+                                <li t-if="(public_config or {}).get('org_sector')"><t t-esc="public_config['org_sector']"/></li>
+                                <li t-if="(public_config or {}).get('org_location')"><t t-esc="public_config['org_location']"/></li>
                             </ul>
                         </div>
                     </div>
@@ -1036,13 +1002,16 @@
                         <div class="grx-origin-badge">
                             <img src="/uta_transport_monitor/static/src/img/georutex_logo.png"
                                  width="24" height="24" loading="lazy"
-                                 alt="Emblema histórico inicial del proyecto GeoRutex"/>
-                            <span>GeoRutex · Origen académico del proyecto de gestión y calidad de rutas universitarias.</span>
+                                 alt="Emblema inicial del proyecto GeoRutex"/>
+                            <span>GeoRutex · Emblema inicial del proyecto.</span>
                         </div>
-                        <span>Las vistas públicas muestran ejemplos ilustrativos; los datos operativos requieren acceso autenticado.</span>
+                        <span>Las vistas públicas muestran ejemplos ilustrativos; la operación real requiere inicio de sesión.</span>
                     </div>
                 </div>
             </footer>
+
+            <!-- Centralized Non-Sensitive Presentation Config for Animations & Interactive Previews -->
+            <div id="grxPublicHomeConfig" hidden="hidden" t-att-data-config="public_config_json or '{}'"/>
 
             <!-- Self-Hosted GSAP 3.13.0 + Plugins via Hashed Odoo Asset Bundle -->
             <t t-call-assets="uta_transport_monitor.assets_public_home" t-css="false"/>

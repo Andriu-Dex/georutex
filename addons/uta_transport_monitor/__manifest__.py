@@ -15,7 +15,7 @@ Módulo Odoo 16 Community para:
 - Dashboard gerencial interactivo y cálculo de métricas MT-01..08 y MCS-01..04.
 - Pruebas integrales extremo a extremo y evaluación de calidad ISO/IEC 25010.
     """,
-    "version": "16.0.9.4.0",
+    "version": "16.0.9.5.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",

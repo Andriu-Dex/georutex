@@ -1,5 +1,6 @@
 """Representative GeoRutex Spanish endpoints, OTP verification, and validations."""
 
+import json
 import logging
 import socket
 
@@ -171,6 +172,168 @@ class GeoRutexAuthController(AuthSignupHome):
             return "/web"
         return super()._login_redirect(uid, redirect=redirect)
 
+    def _get_public_home_config(self):
+        """Return centralized, organization-adaptable public presentation config.
+
+        Reads optional non-sensitive ``ir.config_parameter`` overrides so the
+        public Home can adapt to any institution or company without editing
+        QWeb templates, CSS, or GSAP animation code, while never querying
+        private operational transport records.
+        """
+        params = request.env["ir.config_parameter"].sudo()
+        org_name = (
+            params.get_param("georutex.public.org_name")
+            or "Universidad Técnica de Ambato"
+        ).strip()
+        org_sector = (
+            params.get_param("georutex.public.org_sector")
+            or "Movilidad institucional"
+        ).strip()
+        org_location = (
+            params.get_param("georutex.public.org_location")
+            or "Ambato, Ecuador"
+        ).strip()
+        try:
+            map_lat = float(params.get_param("georutex.public.map_lat") or -1.2555)
+            map_lng = float(params.get_param("georutex.public.map_lng") or -78.6262)
+        except (TypeError, ValueError):
+            map_lat, map_lng = -1.2555, -78.6262
+
+        stages = [
+            {
+                "short": "Origen",
+                "pin": "Punto de origen",
+                "tag": "Etapa 1 · Inicio",
+                "badge": "Salida",
+                "badge_class": "is-blue",
+                "title": "Inicio del recorrido",
+                "description": (
+                    "La unidad inicia su jornada y comienza el seguimiento "
+                    "continuo de su trayectoria."
+                ),
+                "pill": "Inicio en punto de origen",
+                "meta": "Etapa 1 de 4 · Inicio del recorrido",
+                "state": "Unidad en marcha y vinculada a su jornada asignada",
+                "tone": "is-info",
+                "progress": 0.0,
+            },
+            {
+                "short": "Parada 01",
+                "pin": "Parada 01",
+                "tag": "Etapa 2 · En trayecto",
+                "badge": "Control",
+                "badge_class": "is-cyan",
+                "title": "Verificación de paradas",
+                "description": (
+                    "El sistema comprueba el cumplimiento de los puntos de "
+                    "control definidos para el recorrido."
+                ),
+                "pill": "Paso verificado en Parada 01",
+                "meta": "Etapa 2 de 4 · Verificación de paradas",
+                "state": "Cumplimiento de parada registrado automáticamente",
+                "tone": "is-info",
+                "progress": 0.36,
+            },
+            {
+                "short": "Parada 02",
+                "pin": "Parada 02",
+                "tag": "Etapa 3 · Seguimiento",
+                "badge": "Novedad",
+                "badge_class": "is-amber",
+                "title": "Gestión de novedades",
+                "description": (
+                    "Las incidencias pueden registrarse y consultarse para "
+                    "facilitar el seguimiento oportuno del servicio."
+                ),
+                "pill": "Novedad registrada en Parada 02",
+                "meta": "Etapa 3 de 4 · Gestión de novedades",
+                "state": "Reporte compartido desde el espacio del conductor",
+                "tone": "is-amber",
+                "progress": 0.68,
+            },
+            {
+                "short": "Destino",
+                "pin": "Punto de destino",
+                "tag": "Etapa 4 · Cierre",
+                "badge": "Evaluado",
+                "badge_class": "is-green",
+                "title": "Llegada y evaluación",
+                "description": (
+                    "Al finalizar el recorrido, la información permite evaluar "
+                    "su cumplimiento y el desempeño del servicio."
+                ),
+                "pill": "Llegada al punto de destino",
+                "meta": "Etapa 4 de 4 · Llegada y evaluación",
+                "state": "Recorrido completado y listo para análisis de servicio",
+                "tone": "is-green",
+                "progress": 1.0,
+            },
+        ]
+
+        corridor = [
+            [round(map_lat - 0.0137, 5), round(map_lng + 0.0006, 5)],
+            [round(map_lat - 0.0070, 5), round(map_lng + 0.0019, 5)],
+            [round(map_lat - 0.0007, 5), round(map_lng + 0.0008, 5)],
+            [round(map_lat + 0.0049, 5), round(map_lng - 0.0010, 5)],
+            [round(map_lat + 0.0134, 5), round(map_lng - 0.0022, 5)],
+        ]
+
+        units = {
+            "unit01": {
+                "name": "Unidad 01",
+                "status": "fresh",
+                "statusLabel": "En ruta",
+                "coords": corridor[2],
+                "detail": "Ruta A · Tramo hacia Parada 01",
+                "color": "#15803d",
+            },
+            "unit02": {
+                "name": "Unidad 02",
+                "status": "fresh",
+                "statusLabel": "En ruta",
+                "coords": corridor[3],
+                "detail": "Ruta B · Tramo hacia Parada 02",
+                "color": "#0bbcd7",
+            },
+            "unit03": {
+                "name": "Unidad 03",
+                "status": "stale",
+                "statusLabel": "En espera",
+                "coords": corridor[4],
+                "detail": "Ruta C · En punto de destino",
+                "color": "#d97706",
+            },
+        }
+
+        return {
+            "brand_name": "GeoRutex",
+            "brand_descriptor": "Inteligencia para la movilidad",
+            "org_name": org_name,
+            "org_sector": org_sector,
+            "org_location": org_location,
+            "stages": stages,
+            "map": {
+                "center": [map_lat, map_lng],
+                "corridor": corridor,
+                "origin_label": "Punto de origen",
+                "destination_label": "Punto de destino",
+                "units": units,
+            },
+            "analytics": {
+                "routes": ["Ruta A", "Ruta B", "Ruta C"],
+                "series_labels": [
+                    "Cumplimiento base",
+                    "Con novedades revisadas",
+                ],
+                "source_notes": {
+                    "combined": "Vista general · Ejemplo ilustrativo",
+                    "real": "Operación diaria · Ejemplo ilustrativo",
+                    "simulated": "Escenarios de prueba · Separados de la operación",
+                    "empty": "Sin recorridos evaluables en el período",
+                },
+            },
+        }
+
     def _render_public_home(self):
         """Render the public GSAP-powered GeoRutex landing page before login."""
         ensure_db()
@@ -181,6 +344,7 @@ class GeoRutexAuthController(AuthSignupHome):
                 user_name = request.env.user.name or ""
             except Exception:
                 user_name = ""
+        public_config = self._get_public_home_config()
         response = request.render(
             "uta_transport_monitor.georutex_public_home",
             {
@@ -190,6 +354,10 @@ class GeoRutexAuthController(AuthSignupHome):
                 "signup_url": GEORUTEX_SIGNUP_ROUTE,
                 "panel_url": GEORUTEX_PANEL_ROUTE,
                 "logout_url": GEORUTEX_LOGOUT_ROUTE,
+                "public_config": public_config,
+                "public_config_json": json.dumps(
+                    public_config, ensure_ascii=False
+                ),
             },
         )
         response = _security_headers(response)
