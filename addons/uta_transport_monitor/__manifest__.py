@@ -15,7 +15,7 @@ Módulo Odoo 16 Community para:
 - Dashboard gerencial interactivo y cálculo de métricas MT-01..08 y MCS-01..04.
 - Pruebas integrales extremo a extremo y evaluación de calidad ISO/IEC 25010.
     """,
-    "version": "16.0.9.1.0",
+    "version": "16.0.9.4.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",
@@ -58,6 +58,7 @@ Módulo Odoo 16 Community para:
         ],
         "uta_transport_monitor.assets_public_home": [
             "web/static/src/libs/fontawesome/css/font-awesome.css",
+            "uta_transport_monitor/static/src/css/georutex_tokens.css",
             "uta_transport_monitor/static/src/css/georutex_public_home.css",
             "uta_transport_monitor/static/lib/gsap/gsap.min.js",
             "uta_transport_monitor/static/lib/gsap/ScrollTrigger.min.js",

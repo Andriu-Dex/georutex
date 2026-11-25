@@ -1,0 +1,87 @@
+/* GeoRutex Brand Design Tokens — Reusable Foundation
+ * Shared semantic tokens for Public Home, Auth, and future internal workspaces.
+ * Direction: Warm Editorial Daylight + Corporate Cobalt + Controlled Turquoise & Magenta Brand Accents.
+ */
+:root {
+    /* 1. Brand Identity Colors */
+    --grx-brand-primary: #1a56db;
+    --grx-brand-deep: #1341ad;
+    --grx-brand-tint: #ebf2ff;
+    --grx-brand-turquoise: #0bbcd7;
+    --grx-brand-turquoise-soft: rgba(11, 188, 215, 0.14);
+    --grx-brand-magenta: #fc0154;
+    --grx-brand-magenta-ink: #c80b49;
+    --grx-brand-magenta-soft: rgba(252, 1, 84, 0.11);
+
+    /* 2. Surface Hierarchy */
+    --grx-surface-canvas: #f9f8f4;
+    --grx-surface-stone: #f1efe9;
+    --grx-surface-elevated: #ffffff;
+    --grx-surface-ink: #111827;
+    --grx-surface-ink-soft: #192235;
+
+    /* 3. Ink Hierarchy (WCAG AA/AAA verified on light surfaces) */
+    --grx-ink-primary: #111827;
+    --grx-ink-secondary: #475569;
+    --grx-ink-subtle: #64748b;
+    --grx-ink-inverse: #ffffff;
+    --grx-ink-inverse-muted: rgba(255, 255, 255, 0.78);
+
+    /* 4. Functional Status Colors */
+    --grx-signal-live: #15803d;
+    --grx-signal-live-dot: #22c55e;
+    --grx-signal-live-soft: #dcfce7;
+    --grx-signal-amber: #b45309;
+    --grx-signal-amber-dot: #f59e0b;
+    --grx-signal-amber-soft: #fef3c7;
+    --grx-signal-danger: #dc2626;
+    --grx-signal-danger-soft: #fee2e2;
+
+    /* 5. Borders & Elevation */
+    --grx-border: rgba(17, 24, 39, 0.09);
+    --grx-border-strong: rgba(17, 24, 39, 0.18);
+    --grx-shadow-sm: 0 6px 18px rgba(17, 24, 39, 0.05);
+    --grx-shadow-md: 0 16px 40px rgba(17, 24, 39, 0.08);
+    --grx-shadow-stage: 0 26px 60px rgba(17, 24, 39, 0.13);
+
+    /* 6. Typography Families & Fluid Scales */
+    --grx-font-display: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+    --grx-font-editorial: "Instrument Serif", Georgia, serif;
+    --grx-font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+    --grx-font-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace;
+
+    --grx-text-xs: 0.75rem;
+    --grx-text-sm: 0.875rem;
+    --grx-text-base: 1rem;
+    --grx-text-lead: 1.0625rem;
+    --grx-text-h3: clamp(1.18rem, 1.8vw, 1.38rem);
+    --grx-text-h2: clamp(1.75rem, 3.3vw, 2.95rem);
+    --grx-text-hero: clamp(2.15rem, 4.9vw, 4.35rem);
+
+    /* 7. Spacing, Layout & Radii */
+    --grx-container-max: 1400px;
+    --grx-container-pad: clamp(1rem, 3vw, 2.75rem);
+    --grx-nav-height: 74px;
+    --grx-sp-1: 0.25rem;
+    --grx-sp-2: 0.5rem;
+    --grx-sp-3: 0.75rem;
+    --grx-sp-4: 1rem;
+    --grx-sp-6: 1.5rem;
+    --grx-sp-8: 2rem;
+    --grx-sp-12: 3rem;
+    --grx-section-pad: clamp(4.25rem, 6.8vw, 6.5rem);
+
+    --grx-radius-sm: 10px;
+    --grx-radius-md: 16px;
+    --grx-radius-lg: 22px;
+    --grx-radius-xl: 28px;
+    --grx-radius-pill: 999px;
+
+    /* 8. GeoRutex Motion Language */
+    --grx-dur-micro: 180ms;
+    --grx-dur-ui: 340ms;
+    --grx-dur-reveal: 560ms;
+    --grx-dur-scene: 780ms;
+    --grx-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --grx-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+}
