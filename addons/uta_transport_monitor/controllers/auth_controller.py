@@ -3,10 +3,11 @@
 import json
 import logging
 import socket
+from datetime import timedelta
 
 from werkzeug.urls import url_encode
 
-from odoo import http
+from odoo import fields, http
 from odoo.addons.auth_signup.controllers.main import AuthSignupHome
 from odoo.addons.web.controllers.session import Session
 from odoo.addons.web.controllers.utils import ensure_db, is_user_internal
@@ -581,16 +582,18 @@ class GeoRutexAuthController(AuthSignupHome):
             return response
 
         response = super().web_login(redirect=redirect, **kw)
-        if (
-            request.httprequest.args.get("verified") == "1"
-            and hasattr(response, "qcontext")
-            and isinstance(response.qcontext, dict)
-        ):
-            response.qcontext["message"] = (
-                "¡Correo verificado correctamente! Tu cuenta de conductor "
-                "ya está activa. Inicia sesión para entrar a GeoRutex."
-            )
-        return response
+        if hasattr(response, "qcontext") and isinstance(response.qcontext, dict):
+            if request.httprequest.args.get("verified") == "1":
+                response.qcontext["message"] = (
+                    "Correo verificado correctamente. Tu cuenta de conductor "
+                    "ya está activa. Inicia sesión para continuar."
+                )
+            elif request.httprequest.args.get("reset_done") == "1":
+                response.qcontext["message"] = (
+                    "Tu contraseña se actualizó correctamente. "
+                    "Inicia sesión con tus nuevas credenciales."
+                )
+        return _security_headers(response)
 
     def _render_login_state(
         self, error=None, message=None, verify_email=None, redirect=None
@@ -681,8 +684,7 @@ class GeoRutexAuthController(AuthSignupHome):
             if not _is_email_domain_resolvable(email):
                 qcontext["error"] = (
                     "El dominio del correo electrónico no existe o no puede "
-                    "recibir correos por SMTP. Use un correo real "
-                    "(ej. @gmail.com, @hotmail.com, @outlook.com o @uta.edu.ec)."
+                    "recibir mensajes. Verifica la dirección e inténtalo nuevamente."
                 )
                 qcontext["name"] = name
                 qcontext["login"] = email
@@ -698,7 +700,7 @@ class GeoRutexAuthController(AuthSignupHome):
             if existing:
                 if existing.active:
                     qcontext["error"] = (
-                        "Ya existe una cuenta activa registrada con este correo "
+                        "Ya existe una cuenta registrada con este correo "
                         "electrónico. Inicia sesión o recupera tu acceso."
                     )
                     qcontext["name"] = name
@@ -706,11 +708,11 @@ class GeoRutexAuthController(AuthSignupHome):
                     return _security_headers(
                         request.render("auth_signup.signup", qcontext)
                     )
-                # Pending unverified account: refresh password, name, and resend OTP
+                # Pending unverified account: refresh credentials and issue OTP
                 existing.write({"name": name, "password": password})
-                request.env["transport.email.verification"].create_and_send_otp(
-                    existing, email, name
-                )
+                otp_model = request.env["transport.email.verification"].sudo()
+                if otp_model.get_resend_cooldown_seconds(email) == 0:
+                    otp_model.create_and_send_otp(existing, email, name)
                 return request.redirect(
                     _build_url_with_query(
                         GEORUTEX_VERIFY_ROUTE, {"email": email}
@@ -743,16 +745,27 @@ class GeoRutexAuthController(AuthSignupHome):
                     ),
                     code=303,
                 )
+            except UserError as exc:
+                _logger.warning("GeoRutex signup validation error for %s", mask_email(email))
+                qcontext["error"] = exc.args[0] if exc.args else "No se pudo completar el registro."
+                qcontext["name"] = name
+                qcontext["login"] = email
+                return _security_headers(
+                    request.render("auth_signup.signup", qcontext)
+                )
             except Exception as exc:
-                _logger.error("GeoRutex signup error: %s", exc)
-                qcontext["error"] = str(exc) or "No se pudo completar el registro."
+                _logger.error("GeoRutex signup error for %s: %s", mask_email(email), exc)
+                qcontext["error"] = (
+                    "No fue posible completar el registro en este momento. "
+                    "Inténtalo nuevamente en unos instantes."
+                )
                 qcontext["name"] = name
                 qcontext["login"] = email
                 return _security_headers(
                     request.render("auth_signup.signup", qcontext)
                 )
 
-        return super().web_auth_signup(*args, **kw)
+        return _security_headers(super().web_auth_signup(*args, **kw))
 
     @http.route(
         GEORUTEX_VERIFY_ROUTE,
@@ -775,13 +788,19 @@ class GeoRutexAuthController(AuthSignupHome):
             if normalized
             else otp_model.browse()
         )
+        resend_cooldown = (
+            otp_model.get_resend_cooldown_seconds(normalized)
+            if normalized
+            else 0
+        )
 
         qcontext = {
             "email": normalized,
             "masked_email": mask_email(normalized),
             "delivery_status": latest_otp.delivery_status if latest_otp else "",
-            "delivery_error": latest_otp.delivery_error if latest_otp else "",
             "resent": request.httprequest.args.get("resent") == "1",
+            "cooldown_notice": request.httprequest.args.get("cooldown") == "1",
+            "resend_cooldown": resend_cooldown,
             "error": None,
             "message": None,
         }
@@ -804,6 +823,11 @@ class GeoRutexAuthController(AuthSignupHome):
                     code=303,
                 )
             qcontext["error"] = msg
+            qcontext["resend_cooldown"] = (
+                otp_model.get_resend_cooldown_seconds(normalized)
+                if normalized
+                else 0
+            )
 
         return _security_headers(
             request.render(
@@ -820,10 +844,20 @@ class GeoRutexAuthController(AuthSignupHome):
         sitemap=False,
     )
     def georutex_resend_code(self, email=None, **kw):
-        """Generate and resend a fresh 6-digit numeric OTP code via SMTP."""
+        """Generate and resend a fresh 6-digit numeric OTP code respecting cooldown."""
         ensure_db()
         normalized = normalize_email(email or request.params.get("email") or "")
         if normalized:
+            otp_model = request.env["transport.email.verification"].sudo()
+            remaining = otp_model.get_resend_cooldown_seconds(normalized)
+            if remaining > 0:
+                return request.redirect(
+                    _build_url_with_query(
+                        GEORUTEX_VERIFY_ROUTE,
+                        {"email": normalized, "cooldown": "1"},
+                    ),
+                    code=303,
+                )
             user = (
                 request.env["res.users"]
                 .sudo()
@@ -834,9 +868,7 @@ class GeoRutexAuthController(AuthSignupHome):
                 )
             )
             if user:
-                request.env["transport.email.verification"].create_and_send_otp(
-                    user, normalized, user.name
-                )
+                otp_model.create_and_send_otp(user, normalized, user.name)
         return request.redirect(
             _build_url_with_query(
                 GEORUTEX_VERIFY_ROUTE, {"email": normalized, "resent": "1"}
@@ -875,9 +907,25 @@ class GeoRutexAuthController(AuthSignupHome):
         return self._handle_georutex_reset_password(*args, **kw)
 
     def _handle_georutex_reset_password(self, *args, **kw):
-        """Validate email existence and strong password during reset."""
+        """Handle neutral password recovery requests and tokenized password resets."""
+        ensure_db()
+        qcontext = self.get_auth_signup_qcontext()
+
+        if not qcontext.get("token") and not qcontext.get("reset_password_enabled"):
+            return request.not_found()
+
+        # Normalize invalid/expired/used token error into clear Spanish state
+        if qcontext.get("token") and qcontext.get("error"):
+            qcontext["invalid_token"] = True
+            qcontext["error"] = (
+                "Este enlace de restablecimiento no es válido, ya fue "
+                "utilizado o ha expirado."
+            )
+            return _security_headers(
+                request.render("auth_signup.reset_password", qcontext)
+            )
+
         if request.httprequest.method == "POST":
-            qcontext = self.get_auth_signup_qcontext()
             if qcontext.get("token"):
                 pwd = qcontext.get("password") or ""
                 confirm = qcontext.get("confirm_password") or ""
@@ -892,39 +940,86 @@ class GeoRutexAuthController(AuthSignupHome):
                     return _security_headers(
                         request.render("auth_signup.reset_password", qcontext)
                     )
-            else:
-                login = normalize_email(qcontext.get("login") or "")
-                ok, err = validate_email(login)
-                if not ok:
-                    qcontext["error"] = err
+                try:
+                    self.do_signup(qcontext)
+                    if qcontext.get("login"):
+                        request.params["login"] = qcontext["login"]
                     return _security_headers(
-                        request.render("auth_signup.reset_password", qcontext)
+                        self._handle_georutex_login(*args, **kw)
                     )
-                exists = (
-                    request.env["res.users"]
-                    .sudo()
-                    .search(
-                        [("login", "=ilike", login), ("active", "=", True)],
-                        limit=1,
-                    )
-                )
-                if not exists:
+                except UserError as exc:
                     qcontext["error"] = (
-                        "No existe ninguna cuenta activa asociada a ese "
-                        "correo electrónico."
+                        exc.args[0]
+                        if exc.args
+                        else "No fue posible actualizar tu contraseña."
                     )
                     return _security_headers(
                         request.render("auth_signup.reset_password", qcontext)
                     )
-                request.params["login"] = exists.login
-        try:
-            return super().web_auth_reset_password(*args, **kw)
-        except UserError as exc:
-            qcontext = self.get_auth_signup_qcontext()
-            qcontext["error"] = str(exc)
+                except Exception as exc:
+                    _logger.error("GeoRutex tokenized password reset failed: %s", exc)
+                    qcontext["invalid_token"] = True
+                    qcontext["error"] = (
+                        "Este enlace de restablecimiento no es válido, ya fue "
+                        "utilizado o ha expirado."
+                    )
+                    return _security_headers(
+                        request.render("auth_signup.reset_password", qcontext)
+                    )
+
+            # Password recovery email request — always neutral to prevent email enumeration
+            login = normalize_email(qcontext.get("login") or "")
+            ok, err = validate_email(login)
+            if not ok:
+                qcontext["error"] = err
+                qcontext["login"] = login
+                return _security_headers(
+                    request.render("auth_signup.reset_password", qcontext)
+                )
+
+            neutral_confirmation = (
+                "Si el correo ingresado corresponde a una cuenta activa, "
+                "recibirás en unos minutos las instrucciones para restablecer "
+                "tu contraseña."
+            )
+            exists = (
+                request.env["res.users"]
+                .sudo()
+                .search(
+                    [("login", "=ilike", login), ("active", "=", True)],
+                    limit=1,
+                )
+            )
+            if exists:
+                partner = exists.partner_id
+                # Prevent rapid repeated SMTP dispatches (60 s cooldown on 24h reset token)
+                recent_cutoff = fields.Datetime.now() + timedelta(
+                    hours=23, minutes=59
+                )
+                in_cooldown = bool(
+                    partner.signup_type == "reset"
+                    and partner.signup_expiration
+                    and partner.signup_expiration > recent_cutoff
+                )
+                if not in_cooldown:
+                    try:
+                        exists.action_reset_password()
+                    except Exception as exc:
+                        _logger.warning(
+                            "GeoRutex password reset email failed for %s: %s",
+                            mask_email(login),
+                            exc,
+                        )
+
+            qcontext["message"] = neutral_confirmation
+            qcontext["login"] = login
             return _security_headers(
                 request.render("auth_signup.reset_password", qcontext)
             )
+
+        return _security_headers(
+            request.render("auth_signup.reset_password", qcontext)
+        )
 
 
 class GeoRutexSessionController(Session):

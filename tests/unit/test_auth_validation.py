@@ -45,7 +45,7 @@ class TestEmailValidation:
 
 
 class TestFullNameValidation:
-    """Validate Spanish Title Case names without digits or special characters."""
+    """Validate legitimate names with accents, hyphens, apostrophes, and particles."""
 
     @pytest.mark.parametrize(
         "good_name",
@@ -54,6 +54,13 @@ class TestFullNameValidation:
             "María José López",
             "Ángel Núñez Quiñónez",
             "Carlos Andrés Paredes",
+            "María-José López",
+            "Gabriel García-Márquez",
+            "Carlos O'Connor",
+            "Lucía D'Alessandro",
+            "Ana de la Cruz",
+            "José del Valle",
+            "Sofía de los Ángeles Mora",
         ],
     )
     def test_valid_names_accepted(self, good_name):
@@ -73,7 +80,11 @@ class TestFullNameValidation:
             "Juan @Perez",  # special character
             "Juan_Perez",  # underscore
             "Juan  Pérez",  # double space
-            "Juan-Pérez",  # hyphen special char
+            "Juan-Pérez",  # single hyphenated token without surname space
+            "-Juan Pérez",  # leading hyphen
+            "Juan 'Pérez",  # leading apostrophe
+            "de la Cruz",  # starts with lowercase particle
+            "Juan de",  # ends with lowercase particle
         ],
     )
     def test_invalid_names_rejected(self, bad_name):
@@ -124,13 +135,13 @@ class TestStrongPasswordValidation:
 def test_signup_payload_validation_end_to_end():
     """Full signup payload validates name, email, strong password, and confirmation."""
     ok, err = validate_signup_payload(
-        "Juan Pérez", "juan.perez@uta.edu.ec", "GeoRutex!2026", "GeoRutex!2026"
+        "Ana de la Cruz", "ana.cruz@ejemplo.com", "GeoRutex!2026", "GeoRutex!2026"
     )
     assert ok is True
     assert err == ""
 
     ok, err = validate_signup_payload(
-        "Juan Pérez", "juan.perez@uta.edu.ec", "GeoRutex!2026", "Otra!2026"
+        "Carlos O'Connor", "carlos.oconnor@ejemplo.com", "GeoRutex!2026", "Otra!2026"
     )
     assert ok is False
     assert "coinciden" in err

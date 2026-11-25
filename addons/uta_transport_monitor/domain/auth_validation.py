@@ -24,14 +24,36 @@ COMMON_DOMAIN_TYPOS = {
     "yahoo.con": "yahoo.com",
     "yaho.com": "yahoo.com",
 }
-# Only Spanish letters and single spaces; each word must start with uppercase
-# followed by lowercase letters, and at least two words (name + surname).
-FULL_NAME_PATTERN = re.compile(
-    r"^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+"
-    r"(?:\s[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)+$"
-)
+
+# Allowed characters in personal names: Latin/Spanish letters, single spaces,
+# internal hyphens (e.g. María-José, García-Márquez) and apostrophes (O'Connor).
 ALLOWED_NAME_CHARS_PATTERN = re.compile(
-    r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s]+$"
+    r"^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'\u2019-]+$"
+)
+# Lowercase connector particles valid only between capitalized name words.
+NAME_PARTICLES = frozenset(
+    {
+        "de",
+        "del",
+        "la",
+        "las",
+        "los",
+        "y",
+        "e",
+        "da",
+        "do",
+        "dos",
+        "das",
+        "van",
+        "von",
+        "di",
+    }
+)
+# Each capitalized word may contain internal apostrophes or hyphens joining
+# capitalized segments (e.g., O'Connor, D'Amico, María-José, McDonald).
+NAME_SEGMENT_PATTERN = re.compile(
+    r"^[A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]*"
+    r"(?:['\u2019][A-ZÁÉÍÓÚÜÑ][a-záéíóúüñ]+)?$"
 )
 SPECIAL_CHAR_PATTERN = re.compile(r"[^A-Za-z0-9\s]")
 
@@ -42,23 +64,22 @@ def normalize_email(email: str) -> str:
 
 
 def validate_email(email: str) -> Tuple[bool, str]:
-    """Validate email format for any deliverable provider (Gmail, Hotmail, UTA, etc.)."""
+    """Validate email format for any deliverable provider."""
     cleaned = normalize_email(email)
     if not cleaned:
-        return (False, "Debe ingresar un correo electrónico.")
+        return (False, "Ingresa tu correo electrónico.")
     if len(cleaned) > 120:
         return (False, "El correo electrónico excede la longitud permitida.")
     if " " in cleaned or not EMAIL_PATTERN.match(cleaned):
         return (
             False,
-            "Ingrese un correo electrónico válido (ej. usuario@gmail.com, "
-            "@hotmail.com o @uta.edu.ec).",
+            "Ingresa un correo electrónico válido (ejemplo: nombre@correo.com).",
         )
     domain = cleaned.split("@", 1)[1]
     if ".." in cleaned or domain.startswith(".") or domain.startswith("-"):
         return (
             False,
-            "El dominio del correo electrónico no es válido para envío SMTP.",
+            "El dominio del correo electrónico no tiene un formato válido.",
         )
     if domain in COMMON_DOMAIN_TYPOS:
         suggested = COMMON_DOMAIN_TYPOS[domain]
@@ -70,38 +91,73 @@ def validate_email(email: str) -> Tuple[bool, str]:
     return (True, "")
 
 
+def _is_valid_capitalized_name_word(word: str) -> bool:
+    """Return True if a single non-particle word is properly capitalized."""
+    if not word or word.startswith("-") or word.endswith("-"):
+        return False
+    if word.startswith(("'", "\u2019")) or word.endswith(("'", "\u2019")):
+        return False
+    if "--" in word or "''" in word or "\u2019\u2019" in word:
+        return False
+
+    segments = word.split("-")
+    for segment in segments:
+        if not segment:
+            return False
+        # Require at least 2 characters for standalone segments unless followed
+        # by an apostrophe prefix (e.g., O'Connor, D'Amico).
+        if "'" not in segment and "\u2019" not in segment and len(segment) < 2:
+            return False
+        if not NAME_SEGMENT_PATTERN.match(segment):
+            return False
+    return True
+
+
 def validate_full_name(name: str) -> Tuple[bool, str]:
-    """Validate full name: letters only, no symbols/digits, Title Case words."""
+    """Validate full name allowing accents, internal hyphens, apostrophes, and particles."""
     raw = (name or "").strip()
     if not raw:
-        return (False, "Debe ingresar su nombre completo.")
+        return (False, "Ingresa tu nombre y apellido.")
     if len(raw) < 5 or len(raw) > 80:
         return (
             False,
             "El nombre completo debe tener entre 5 y 80 caracteres.",
         )
-    if "  " in raw:
+    if "  " in raw or "\t" in raw or "\n" in raw:
         return (
             False,
-            "No utilice espacios dobles entre los nombres y apellidos.",
+            "No utilices espacios dobles entre nombres y apellidos.",
         )
     if not ALLOWED_NAME_CHARS_PATTERN.match(raw):
         return (
             False,
-            "El nombre solo puede contener letras y espacios; no se permiten "
-            "números ni caracteres especiales.",
+            "El nombre solo puede incluir letras, espacios, guiones o "
+            "apóstrofos; no se permiten números ni otros símbolos.",
         )
     words = raw.split(" ")
     if len(words) < 2:
         return (
             False,
-            "Ingrese al menos un nombre y un apellido (ejemplo: Juan Pérez).",
+            "Ingresa al menos un nombre y un apellido (ejemplo: Juan Pérez).",
         )
-    if not FULL_NAME_PATTERN.match(raw):
+
+    significant_words = 0
+    for idx, word in enumerate(words):
+        is_edge = idx == 0 or idx == len(words) - 1
+        if not is_edge and word in NAME_PARTICLES:
+            continue
+        if not _is_valid_capitalized_name_word(word):
+            return (
+                False,
+                "Cada nombre y apellido debe iniciar con mayúscula "
+                "(ejemplo: María José López, Carlos O'Connor o Ana de la Cruz).",
+            )
+        significant_words += 1
+
+    if significant_words < 2:
         return (
             False,
-            "Cada nombre y apellido debe iniciar con mayúscula seguida de "
-            "minúsculas (ejemplo: María José López).",
+            "Ingresa al menos un nombre y un apellido válidos.",
         )
     return (True, "")
 
@@ -123,7 +179,7 @@ def validate_strong_password(password: str) -> Tuple[bool, str]:
     """Enforce strong password policy (forbids letters-only passwords)."""
     pwd = password or ""
     if not pwd:
-        return (False, "Debe ingresar una contraseña.")
+        return (False, "Ingresa una contraseña.")
 
     checks = evaluate_password_rules(pwd)
     missing: List[str] = []

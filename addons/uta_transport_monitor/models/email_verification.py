@@ -4,6 +4,7 @@ from datetime import timedelta
 import hashlib
 import logging
 import secrets
+from urllib.parse import urlencode
 
 from odoo import api, fields, models
 
@@ -11,10 +12,11 @@ _logger = logging.getLogger(__name__)
 
 OTP_EXPIRY_MINUTES = 10
 OTP_MAX_ATTEMPTS = 5
+OTP_RESEND_COOLDOWN_SECONDS = 60
 
 
 def mask_email(email: str) -> str:
-    """Return privacy-masked email for UI hints (e.g. j***@uta.edu.ec)."""
+    """Return privacy-masked email for UI hints (e.g. j***z@correo.com)."""
     cleaned = (email or "").strip().lower()
     if "@" not in cleaned:
         return cleaned
@@ -100,6 +102,29 @@ class TransportEmailVerification(models.Model):
         return f"{secrets.randbelow(900000) + 100000:06d}"
 
     @api.model
+    def get_resend_cooldown_seconds(self, email: str) -> int:
+        """Return remaining cooldown seconds before a new OTP may be resent."""
+        normalized_email = (email or "").strip().lower()
+        if not normalized_email:
+            return 0
+        latest = self.sudo().search(
+            [
+                ("email", "=", normalized_email),
+                ("verified", "=", False),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if not latest or not latest.create_date:
+            return 0
+        # Allow immediate retry if prior delivery failed or SMTP wasn't configured
+        if latest.delivery_status in ("failed", "smtp_not_configured"):
+            return 0
+        elapsed = (fields.Datetime.now() - latest.create_date).total_seconds()
+        remaining = int(OTP_RESEND_COOLDOWN_SECONDS - elapsed)
+        return max(0, remaining)
+
+    @api.model
     def create_and_send_otp(self, user, email: str, full_name: str):
         """Invalidate previous open OTPs, generate a 6-digit code, and send via SMTP."""
         normalized_email = (email or "").strip().lower()
@@ -165,14 +190,20 @@ class TransportEmailVerification(models.Model):
             smtp_server.from_filter
             or smtp_server.smtp_user
             or self.env.company.email
-            or "no-reply@georutex.uta.edu.ec"
+            or "no-reply@georutex.local"
         )
         spaced_code = " ".join(list(plain_code))
         base_url = (
             self.env["ir.config_parameter"]
             .sudo()
-            .get_param("web.base.url", "http://localhost:8069")
+            .get_param("web.base.url", "")
             .rstrip("/")
+        )
+        verify_url = (
+            f"{base_url}/georutex/verificar-correo?"
+            f"{urlencode({'email': self.email})}"
+            if base_url
+            else ""
         )
         try:
             mail_id = template.sudo().with_context(
@@ -180,6 +211,7 @@ class TransportEmailVerification(models.Model):
                 otp_code_spaced=spaced_code,
                 otp_expiry_minutes=OTP_EXPIRY_MINUTES,
                 georutex_base_url=base_url,
+                georutex_verify_url=verify_url,
             ).send_mail(
                 self.id,
                 force_send=False,
@@ -221,7 +253,7 @@ class TransportEmailVerification(models.Model):
         if len(code) != 6:
             return (
                 False,
-                "Ingrese los 6 dígitos numéricos del código enviado a su correo.",
+                "Ingresa los 6 dígitos numéricos del código enviado a tu correo.",
                 False,
             )
 
@@ -237,7 +269,7 @@ class TransportEmailVerification(models.Model):
             return (
                 False,
                 "No existe una verificación pendiente para este correo. "
-                "Solicite un nuevo código o inicie sesión.",
+                "Solicita un nuevo código o inicia sesión.",
                 False,
             )
 
@@ -245,16 +277,16 @@ class TransportEmailVerification(models.Model):
         if record.expires_at < now:
             return (
                 False,
-                "El código numérico ha expirado (validez de 10 minutos). "
-                "Solicite un reenvío de código.",
+                "El código de verificación ha expirado. "
+                "Solicita un nuevo código para continuar.",
                 False,
             )
 
         if record.attempts >= OTP_MAX_ATTEMPTS:
             return (
                 False,
-                "Superó el máximo de intentos permitidos. "
-                "Solicite un nuevo código de verificación.",
+                "Superaste el máximo de intentos permitidos. "
+                "Solicita un nuevo código de verificación.",
                 False,
             )
 
@@ -264,9 +296,16 @@ class TransportEmailVerification(models.Model):
             new_attempts = record.attempts + 1
             record.sudo().write({"attempts": new_attempts})
             remaining = max(0, OTP_MAX_ATTEMPTS - new_attempts)
+            if remaining == 0:
+                return (
+                    False,
+                    "Código incorrecto. Alcanzaste el límite de intentos; solicita un nuevo código.",
+                    False,
+                )
             return (
                 False,
-                f"Código numérico incorrecto. Intentos restantes: {remaining}.",
+                f"Código incorrecto. Te quedan {remaining} "
+                f"{'intento' if remaining == 1 else 'intentos'}.",
                 False,
             )
 

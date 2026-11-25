@@ -1,67 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <template id="georutex_auth_brand" name="GeoRutex authentication branding">
-        <section class="georutex-auth-brand" aria-label="GeoRutex">
-            <div class="georutex-orb georutex-orb-1" aria-hidden="true"/>
-            <div class="georutex-orb georutex-orb-2" aria-hidden="true"/>
-            <div class="georutex-brand-content">
-                <header class="georutex-brand-header">
-                    <span class="georutex-brand-logo-wrap">
-                        <img
-                            class="georutex-brand-logo"
-                            src="/uta_transport_monitor/static/src/img/georutex_logo.png"
-                            alt="Logo oficial GeoRutex"
-                        />
-                        <span class="georutex-logo-ring" aria-hidden="true"/>
-                    </span>
-                    <span>
-                        <strong>GeoRutex</strong>
-                        <small>Universidad Técnica de Ambato · Monitoreo GPS Universitario</small>
-                    </span>
-                </header>
+    <!-- =================================================================== -->
+    <!-- SHARED EDITORIAL VISUAL PANEL (LEFT COLUMN, 3-SCENE CAROUSEL)       -->
+    <!-- =================================================================== -->
+    <template id="georutex_auth_visual_panel" name="GeoRutex Auth Visual Panel">
+        <aside class="grx-auth-visual" aria-label="Presentación visual de GeoRutex">
+            <a href="/georutex/inicio" class="grx-auth-brand-link" aria-label="GeoRutex — Ir al inicio">
+                <picture class="grx-auth-brand-mark">
+                    <source srcset="/uta_transport_monitor/static/src/img/georutex_brand_mark.webp" type="image/webp"/>
+                    <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
+                         width="38" height="38" alt="Isotipo de GeoRutex"/>
+                </picture>
+                <span class="grx-auth-brand-lockup">
+                    <strong translate="no">GeoRutex</strong>
+                    <small>Inteligencia para la movilidad</small>
+                </span>
+            </a>
 
-                <div class="georutex-status-pill">
-                    <span class="georutex-live-dot" aria-hidden="true"/>
-                    <span>Plataforma de Rastreo y Evaluación en Vivo</span>
-                </div>
+            <div class="grx-scene-stage" id="grxSceneStage" aria-roledescription="carrusel" aria-label="Capacidades de GeoRutex">
+                <!-- Subtle geospatial vector route signature -->
+                <svg class="grx-scene-route-svg" viewBox="0 0 460 54" preserveAspectRatio="none" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="grxAuthArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="rgba(11,188,215,0.2)"/>
+                            <stop offset="30%" stop-color="rgba(11,188,215,0.88)"/>
+                            <stop offset="72%" stop-color="rgba(26,86,219,0.92)"/>
+                            <stop offset="100%" stop-color="rgba(252,1,84,0.85)"/>
+                        </linearGradient>
+                    </defs>
+                    <path d="M 16 36 C 118 10, 210 46, 316 20 S 410 26, 444 18"
+                          fill="none" stroke="rgba(255,255,255,0.24)" stroke-width="2" stroke-dasharray="4 6"/>
+                    <path id="grxAuthRoutePath"
+                          d="M 16 36 C 118 10, 210 46, 316 20 S 410 26, 444 18"
+                          fill="none" stroke="url(#grxAuthArcGrad)" stroke-width="2.6" stroke-linecap="round"/>
+                    <circle cx="72" cy="24" r="4" fill="#ffffff" stroke="#0bbcd7" stroke-width="2"/>
+                    <circle cx="240" cy="30" r="4" fill="#ffffff" stroke="#1a56db" stroke-width="2"/>
+                    <circle cx="394" cy="20" r="4.2" fill="#fc0154" stroke="#ffffff" stroke-width="2"/>
+                    <g id="grxAuthBeacon">
+                        <circle r="9" fill="rgba(11,188,215,0.34)"/>
+                        <circle r="4.2" fill="#ffffff" stroke="#1a56db" stroke-width="2"/>
+                    </g>
+                </svg>
 
-                <div class="georutex-login-visual">
-                    <img
-                        class="georutex-login-map"
-                        src="/uta_transport_monitor/static/src/img/mapa.webp"
-                        alt="Mapa urbano con rutas y ubicaciones de vehículos"
-                    />
-                    <img
-                        class="georutex-login-phone"
-                        src="/uta_transport_monitor/static/src/img/celular.webp"
-                        alt="Teléfono móvil con la ruta de un bus"
-                    />
-                </div>
+                <div class="grx-scene-slides">
+                    <!-- Scene 1: Seguimiento -->
+                    <article class="grx-scene-slide is-active" id="grx-scene-0" role="tabpanel" aria-labelledby="grx-tab-0">
+                        <figure class="grx-scene-media">
+                            <picture>
+                                <source srcset="/uta_transport_monitor/static/src/img/auth_scene_tracking.webp" type="image/webp"/>
+                                <img src="/uta_transport_monitor/static/src/img/auth_scene_tracking.jpg"
+                                     width="1024" height="682"
+                                     fetchpriority="high" decoding="async"
+                                     alt="Escena ilustrativa de una unidad de transporte en circulación"/>
+                            </picture>
+                        </figure>
+                        <div class="grx-scene-scrim" aria-hidden="true"/>
+                        <div class="grx-scene-caption">
+                            <span class="grx-scene-eyebrow">
+                                <span class="grx-dot" aria-hidden="true"/>
+                                Seguimiento
+                            </span>
+                            <h2 class="grx-scene-title">Cada recorrido, conectado.</h2>
+                            <p class="grx-scene-desc">Supervisa tus vehículos desde una sola plataforma.</p>
+                        </div>
+                    </article>
 
-                <div class="georutex-brand-message">
-                    <h1>Control inteligente de rutas, paradas y puntualidad universitaria</h1>
-                    <ul>
-                        <li>Telemetría Traccar GPS</li>
-                        <li>Reportes de incidencias</li>
-                        <li>Seguridad UTA</li>
-                    </ul>
+                    <!-- Scene 2: Organización -->
+                    <article class="grx-scene-slide" id="grx-scene-1" role="tabpanel" aria-labelledby="grx-tab-1">
+                        <figure class="grx-scene-media">
+                            <picture>
+                                <source srcset="/uta_transport_monitor/static/src/img/auth_scene_organization.webp" type="image/webp"/>
+                                <img src="/uta_transport_monitor/static/src/img/auth_scene_organization.jpg"
+                                     width="1024" height="580"
+                                     loading="lazy" decoding="async"
+                                     alt="Escena ilustrativa de mapa urbano con recorridos y puntos de parada"/>
+                            </picture>
+                        </figure>
+                        <div class="grx-scene-scrim" aria-hidden="true"/>
+                        <div class="grx-scene-caption">
+                            <span class="grx-scene-eyebrow is-org">
+                                <span class="grx-dot" aria-hidden="true"/>
+                                Organización
+                            </span>
+                            <h2 class="grx-scene-title">Cada parada cuenta.</h2>
+                            <p class="grx-scene-desc">Organiza recorridos y conoce el avance de tu operación.</p>
+                        </div>
+                    </article>
+
+                    <!-- Scene 3: Evaluación -->
+                    <article class="grx-scene-slide" id="grx-scene-2" role="tabpanel" aria-labelledby="grx-tab-2">
+                        <figure class="grx-scene-media">
+                            <picture>
+                                <source srcset="/uta_transport_monitor/static/src/img/auth_scene_evaluation.webp" type="image/webp"/>
+                                <img src="/uta_transport_monitor/static/src/img/auth_scene_evaluation.jpg"
+                                     width="1024" height="682"
+                                     loading="lazy" decoding="async"
+                                     alt="Escena ilustrativa de análisis de desempeño y control operativo de flota"/>
+                            </picture>
+                        </figure>
+                        <div class="grx-scene-scrim" aria-hidden="true"/>
+                        <div class="grx-scene-caption">
+                            <span class="grx-scene-eyebrow is-eval">
+                                <span class="grx-dot" aria-hidden="true"/>
+                                Evaluación
+                            </span>
+                            <h2 class="grx-scene-title">Información que te lleva más lejos.</h2>
+                            <p class="grx-scene-desc">Comprende el desempeño de tu servicio.</p>
+                        </div>
+                    </article>
                 </div>
             </div>
-            <script type="text/javascript" defer="defer" src="/uta_transport_monitor/static/src/js/georutex_auth_validation.js?v=16.0.6.6"/>
-        </section>
+
+            <div class="grx-carousel-bar">
+                <div class="grx-carousel-tabs" role="tablist" aria-label="Escenas de GeoRutex">
+                    <button type="button" id="grx-tab-0" class="grx-carousel-tab is-active" role="tab" aria-selected="true" aria-controls="grx-scene-0">
+                        <span class="grx-tab-track" aria-hidden="true"><span class="grx-tab-fill"/></span>
+                        <span class="grx-tab-label">Seguimiento</span>
+                    </button>
+                    <button type="button" id="grx-tab-1" class="grx-carousel-tab" role="tab" aria-selected="false" aria-controls="grx-scene-1">
+                        <span class="grx-tab-track" aria-hidden="true"><span class="grx-tab-fill"/></span>
+                        <span class="grx-tab-label">Organización</span>
+                    </button>
+                    <button type="button" id="grx-tab-2" class="grx-carousel-tab" role="tab" aria-selected="false" aria-controls="grx-scene-2">
+                        <span class="grx-tab-track" aria-hidden="true"><span class="grx-tab-fill"/></span>
+                        <span class="grx-tab-label">Evaluación</span>
+                    </button>
+                </div>
+                <button type="button"
+                        id="grxCarouselToggle"
+                        class="grx-carousel-toggle"
+                        aria-pressed="false"
+                        aria-label="Pausar presentación visual">
+                    <i class="fa fa-pause" aria-hidden="true"/>
+                </button>
+            </div>
+            <p class="grx-visual-note">Escenas ilustrativas de la plataforma GeoRutex.</p>
+        </aside>
     </template>
 
-    <template id="georutex_password_meter" name="GeoRutex password strength meter">
-        <div class="georutex-password-meter" aria-live="polite">
-            <div class="georutex-meter-header">
-                <span>Seguridad de la contraseña</span>
-                <span class="georutex-meter-label">Sin ingresar</span>
+    <!-- =================================================================== -->
+    <!-- SHARED PASSWORD REQUIREMENTS INDICATOR                              -->
+    <!-- =================================================================== -->
+    <template id="georutex_password_meter" name="GeoRutex Password Strength Meter">
+        <div class="grx-password-meter" aria-live="polite">
+            <div class="grx-meter-top">
+                <span>Requisitos de contraseña</span>
+                <span class="grx-meter-label">Sin ingresar</span>
             </div>
-            <div class="progress">
-                <div class="progress-bar bg-danger" role="progressbar" style="width: 0%"/>
+            <div class="grx-meter-track" aria-hidden="true">
+                <div class="grx-meter-fill"/>
             </div>
-            <ul class="georutex-pwd-rules">
-                <li data-rule="min-length"><i class="fa fa-circle-o" aria-hidden="true"/> 8+ caracteres (sin espacios)</li>
+            <ul class="grx-pwd-rules">
+                <li data-rule="min-length"><i class="fa fa-circle-o" aria-hidden="true"/> 8 a 64 caracteres sin espacios</li>
                 <li data-rule="upper"><i class="fa fa-circle-o" aria-hidden="true"/> Una letra mayúscula</li>
                 <li data-rule="lower"><i class="fa fa-circle-o" aria-hidden="true"/> Una letra minúscula</li>
                 <li data-rule="digit"><i class="fa fa-circle-o" aria-hidden="true"/> Al menos un número</li>
@@ -70,47 +160,106 @@
         </div>
     </template>
 
-    <!-- Login principal: /georutex/acceso -->
-    <template id="georutex_login_brand" inherit_id="web.login" name="GeoRutex login">
+    <!-- =================================================================== -->
+    <!-- UNIFIED AUTH LAYOUT (INHERITS web.login_layout FOR ALL AUTH VIEWS)  -->
+    <!-- =================================================================== -->
+    <template id="georutex_login_layout" inherit_id="web.login_layout" name="GeoRutex Unified Auth Layout">
+        <xpath expr="//t[@t-set='body_classname']" position="replace">
+            <t t-set="title" t-value="title or 'GeoRutex — Acceso'"/>
+            <t t-set="body_classname" t-value="'grx-auth-body'"/>
+            <t t-set="head">
+                <meta name="theme-color" content="#f9f8f4"/>
+                <link rel="icon" type="image/png" href="/uta_transport_monitor/static/src/img/georutex_favicon.png"/>
+                <link rel="preconnect" href="https://fonts.googleapis.com"/>
+                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+                <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@500;600;700;800&amp;display=swap" rel="stylesheet"/>
+                <t t-call-assets="uta_transport_monitor.assets_auth" t-js="false"/>
+            </t>
+        </xpath>
+
+        <xpath expr="//div[hasclass('container')]" position="replace">
+            <a href="#grxAuthMain" class="grx-auth-skip">Saltar al formulario</a>
+            <div class="grx-auth-shell">
+                <t t-call="uta_transport_monitor.georutex_auth_visual_panel"/>
+
+                <div class="grx-auth-stage" id="grxAuthMain">
+                    <div class="grx-auth-topbar">
+                        <a href="/georutex/inicio" class="grx-auth-brand-link grx-auth-mobile-brand" aria-label="GeoRutex — Ir al inicio">
+                            <picture class="grx-auth-brand-mark">
+                                <source srcset="/uta_transport_monitor/static/src/img/georutex_brand_mark.webp" type="image/webp"/>
+                                <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
+                                     width="36" height="36" alt="Isotipo de GeoRutex"/>
+                            </picture>
+                            <span class="grx-auth-brand-lockup">
+                                <strong translate="no">GeoRutex</strong>
+                                <small>Inteligencia para la movilidad</small>
+                            </span>
+                        </a>
+
+                        <a href="/georutex/inicio" class="grx-back-home-link">
+                            <i class="fa fa-arrow-left" aria-hidden="true"/>
+                            <span>Volver al inicio</span>
+                        </a>
+                    </div>
+
+                    <div class="grx-auth-center">
+                        <div class="grx-auth-card">
+                            <t t-out="0"/>
+                        </div>
+                    </div>
+
+                    <div class="grx-auth-stage-footer">
+                        <span>GeoRutex · Inteligencia para la movilidad</span>
+                    </div>
+                </div>
+            </div>
+            <t t-call-assets="uta_transport_monitor.assets_auth" t-css="false"/>
+        </xpath>
+    </template>
+
+    <!-- =================================================================== -->
+    <!-- 1. INICIO DE SESIÓN: /georutex/acceso                               -->
+    <!-- =================================================================== -->
+    <template id="georutex_login_brand" inherit_id="web.login" name="GeoRutex Login Form">
         <xpath expr="//form[hasclass('oe_login_form')]" position="attributes">
             <attribute name="t-attf-action">/georutex/acceso</attribute>
+            <attribute name="onsubmit">this.action = '/georutex/acceso' + location.hash</attribute>
             <attribute name="novalidate">novalidate</attribute>
         </xpath>
+
         <xpath expr="//form[hasclass('oe_login_form')]" position="before">
-            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
-            <div class="georutex-auth-heading">
-                <div class="georutex-auth-head-row">
-                    <img
-                        class="georutex-mini-logo"
-                        src="/uta_transport_monitor/static/src/img/georutex_logo.png"
-                        alt="GeoRutex"
-                    />
-                    <span class="georutex-auth-pill">
-                        <i class="fa fa-shield" aria-hidden="true"/> Acceso GeoRutex
-                    </span>
-                </div>
-                <h2>Iniciar sesión</h2>
-                <p>Ingresa con tu correo verificado para acceder a tu espacio operativo.</p>
+            <div class="grx-form-head">
+                <span class="grx-form-eyebrow">
+                    <span class="grx-pin-dot" aria-hidden="true"/>
+                    Acceso seguro
+                </span>
+                <h1 class="grx-form-title">Bienvenido <em>de nuevo.</em></h1>
+                <p class="grx-form-desc">Ingresa a tu espacio de trabajo.</p>
             </div>
-            <div t-if="georutex_verify_url" class="alert alert-info d-flex flex-column gap-2 mb-3" role="alert">
-                <span><i class="fa fa-envelope-o me-1" aria-hidden="true"/> Completa la verificación numérica de tu correo para activar tu cuenta.</span>
-                <a t-att-href="georutex_verify_url" class="btn btn-sm btn-primary align-self-start">
-                    Ingresar código de 6 dígitos
-                </a>
+
+            <div t-if="georutex_verify_url" class="grx-alert grx-alert--info" role="alert">
+                <i class="fa fa-envelope-o" aria-hidden="true"/>
+                <div>
+                    <div>Completa la verificación de tu correo electrónico para activar tu cuenta.</div>
+                    <a t-att-href="georutex_verify_url" class="grx-btn-secondary mt-2" style="width:auto;min-height:36px;padding:0.42rem 0.9rem;font-size:0.82rem;">
+                        Ingresar código de 6 dígitos
+                    </a>
+                </div>
             </div>
         </xpath>
 
         <xpath expr="//label[@for='db']" position="replace">
-            <label for="db" class="col-form-label">Base de datos</label>
+            <label for="db" class="form-label">Espacio de datos</label>
         </xpath>
         <xpath expr="//a[@href='/web/database/selector']" position="replace">
-            <a role="button" href="/web/database/selector" class="btn btn-secondary">Seleccionar <i class="fa fa-database" role="img" aria-label="Base de datos" title="Base de datos"/></a>
+            <a role="button" href="/web/database/selector" class="btn btn-secondary">Seleccionar</a>
         </xpath>
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">Correo electrónico</label>
         </xpath>
         <xpath expr="//input[@id='login']" position="attributes">
-            <attribute name="placeholder">ejemplo@gmail.com</attribute>
+            <attribute name="placeholder">nombre@correo.com</attribute>
+            <attribute name="type">email</attribute>
             <attribute name="autocomplete">username</attribute>
         </xpath>
         <xpath expr="//label[@for='password']" position="replace">
@@ -121,65 +270,66 @@
             <attribute name="autocomplete">current-password</attribute>
         </xpath>
         <xpath expr="//form[hasclass('oe_login_form')]//button[@type='submit'][not(@name)]" position="replace">
-            <button type="submit" class="btn btn-primary w-100 georutex-cta-btn">
-                <i class="fa fa-sign-in me-2" aria-hidden="true"/>INICIAR SESIÓN
+            <button type="submit" class="btn btn-primary grx-btn-primary">
+                <span class="grx-btn-spinner" aria-hidden="true"/>
+                <span class="grx-btn-label">Iniciar sesión</span>
+                <i class="fa fa-arrow-right grx-btn-arrow" aria-hidden="true"/>
             </button>
         </xpath>
     </template>
 
-    <template id="georutex_login_signup_labels" inherit_id="auth_signup.login" name="GeoRutex login links">
-        <xpath expr="//a[@t-if='signup_enabled']" position="replace">
-            <a t-if="signup_enabled" t-attf-href="/georutex/registro-conductor?{{ keep_query() }}" class="fw-semibold">Crear cuenta de conductor</a>
-        </xpath>
-        <xpath expr="//a[@t-if='reset_password_enabled']" position="replace">
-            <a t-if="reset_password_enabled" t-attf-href="/georutex/recuperar-acceso?{{ keep_query() }}">¿Olvidaste tu contraseña?</a>
-        </xpath>
-    </template>
-
-    <template id="georutex_login_layout_labels" inherit_id="web.login_layout" name="GeoRutex login layout">
-        <xpath expr="//a[@href='/web/database/manager']" position="replace">
-            <a class="border-end pe-2 me-1" href="/web/database/manager">Administrar bases de datos</a>
+    <template id="georutex_login_signup_labels" inherit_id="auth_signup.login" name="GeoRutex Login Auxiliary Links">
+        <xpath expr="//a[@t-if='signup_enabled']/.." position="replace">
+            <div class="grx-auth-links">
+                <a t-if="reset_password_enabled" t-attf-href="/georutex/recuperar-acceso?{{ keep_query() }}">Recuperar contraseña</a>
+                <a t-if="signup_enabled" t-attf-href="/georutex/registro-conductor?{{ keep_query() }}">Registro de conductores</a>
+            </div>
         </xpath>
     </template>
 
-    <!-- Registro de conductor: /georutex/registro-conductor -->
-    <template id="georutex_signup_brand" inherit_id="auth_signup.signup" name="GeoRutex signup">
+    <!-- =================================================================== -->
+    <!-- 2. REGISTRO DE CONDUCTORES: /georutex/registro-conductor            -->
+    <!-- =================================================================== -->
+    <template id="georutex_signup_brand" inherit_id="auth_signup.signup" name="GeoRutex Driver Signup">
         <xpath expr="//form[hasclass('oe_signup_form')]" position="attributes">
             <attribute name="t-attf-action">/georutex/registro-conductor</attribute>
             <attribute name="novalidate">novalidate</attribute>
         </xpath>
+
         <xpath expr="//form[hasclass('oe_signup_form')]" position="before">
-            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
-            <div class="georutex-auth-heading is-centered">
-                <div class="georutex-auth-head-row justify-content-center">
-                    <span class="georutex-auth-pill">
-                        <i class="fa fa-bus" aria-hidden="true"/> Registro de Conductor
-                    </span>
-                </div>
-                <h2 class="georutex-dynamic-title">
-                    <span>Crear cuenta</span>
-                </h2>
+            <div class="grx-form-head">
+                <span class="grx-form-eyebrow">
+                    <span class="grx-pin-dot" aria-hidden="true"/>
+                    Registro de conductores
+                </span>
+                <h1 class="grx-form-title">Crea tu <em>cuenta.</em></h1>
+                <p class="grx-form-desc">Completa tus datos y verifica tu correo para activar tu acceso.</p>
             </div>
         </xpath>
+
         <xpath expr="//form[hasclass('oe_signup_form')]//button[@type='submit']" position="replace">
-            <button type="submit" class="btn btn-primary w-100 georutex-cta-btn">
-                <i class="fa fa-paper-plane me-2" aria-hidden="true"/>CONTINUAR Y VERIFICAR CORREO
+            <button type="submit" class="btn btn-primary grx-btn-primary">
+                <span class="grx-btn-spinner" aria-hidden="true"/>
+                <span class="grx-btn-label">Crear cuenta</span>
+                <i class="fa fa-arrow-right grx-btn-arrow" aria-hidden="true"/>
             </button>
         </xpath>
+
         <xpath expr="//form[hasclass('oe_signup_form')]//a[@role='button']" position="replace">
-            <div class="georutex-auth-footer">
+            <div class="grx-auth-footer">
                 ¿Ya tienes una cuenta?
-                <a t-attf-href="/georutex/acceso?{{ keep_query() }}" role="button">Inicia sesión aquí</a>
+                <a t-attf-href="/georutex/acceso?{{ keep_query() }}">Inicia sesión</a>
             </div>
         </xpath>
     </template>
 
-    <template id="georutex_signup_field_labels" inherit_id="auth_signup.fields" name="GeoRutex signup field labels">
+    <!-- Shared signup & reset-password fields -->
+    <template id="georutex_signup_field_labels" inherit_id="auth_signup.fields" name="GeoRutex Auth Fields">
         <xpath expr="//label[@for='login']" position="replace">
             <label for="login" class="form-label">Correo electrónico</label>
         </xpath>
         <xpath expr="//input[@id='login']" position="attributes">
-            <attribute name="placeholder">ejemplo@gmail.com</attribute>
+            <attribute name="placeholder">nombre@correo.com</attribute>
             <attribute name="type">email</attribute>
             <attribute name="autocomplete">email</attribute>
         </xpath>
@@ -187,17 +337,22 @@
             <label for="name" class="form-label">Nombre y apellido</label>
         </xpath>
         <xpath expr="//input[@id='name']" position="attributes">
-            <attribute name="placeholder">Ej. Juan Pérez</attribute>
+            <attribute name="placeholder">Ej. María José López</attribute>
             <attribute name="autocomplete">name</attribute>
         </xpath>
         <xpath expr="//input[@id='name']" position="after">
-            <div class="form-text text-muted small">Solo letras y espacios; cada palabra debe iniciar con mayúscula.</div>
+            <div t-if="not only_passwords" class="grx-field-help">
+                Ingresa tu nombre y apellido; se admiten tildes, guiones y apóstrofos.
+            </div>
         </xpath>
         <xpath expr="//label[@for='password']" position="replace">
-            <label for="password" class="form-label">Contraseña segura</label>
+            <label for="password" class="form-label">
+                <t t-if="only_passwords">Nueva contraseña</t>
+                <t t-else="">Contraseña</t>
+            </label>
         </xpath>
         <xpath expr="//input[@id='password']" position="attributes">
-            <attribute name="placeholder">Mínimo 8 caracteres seguros</attribute>
+            <attribute name="placeholder">Mínimo 8 caracteres</attribute>
             <attribute name="autocomplete">new-password</attribute>
         </xpath>
         <xpath expr="//input[@id='password']" position="after">
@@ -212,121 +367,211 @@
         </xpath>
     </template>
 
-    <!-- Recuperación de acceso: /georutex/recuperar-acceso -->
-    <template id="georutex_reset_password_brand" inherit_id="auth_signup.reset_password" name="GeoRutex reset password">
-        <xpath expr="//form[hasclass('oe_reset_password_form')]" position="attributes">
-            <attribute name="novalidate">novalidate</attribute>
-        </xpath>
-        <xpath expr="//form[hasclass('oe_reset_password_form')]" position="before">
-            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
-            <div class="georutex-auth-heading">
-                <div class="georutex-auth-head-row">
-                    <img
-                        class="georutex-mini-logo"
-                        src="/uta_transport_monitor/static/src/img/georutex_logo.png"
-                        alt="GeoRutex"
-                    />
-                    <span class="georutex-auth-pill">
-                        <i class="fa fa-key" aria-hidden="true"/> Recuperación
-                    </span>
+    <!-- =================================================================== -->
+    <!-- 3. RECUPERACIÓN Y RESTABLECIMIENTO: /georutex/recuperar-acceso      -->
+    <!-- =================================================================== -->
+    <template id="georutex_reset_password_brand" inherit_id="auth_signup.reset_password" name="GeoRutex Password Recovery &amp; Reset">
+        <!-- Neutral Confirmation State (after submitting recovery email) -->
+        <xpath expr="//div[@t-if='message']" position="replace">
+            <div t-if="message" class="grx-state-card">
+                <div class="grx-state-icon is-success" aria-hidden="true">
+                    <i class="fa fa-check"/>
                 </div>
-                <h2>Recuperar acceso</h2>
-                <p>Ingresa el correo registrado en tu cuenta para restablecer tu contraseña.</p>
+                <div class="grx-form-head" style="margin-bottom:0.75rem;">
+                    <span class="grx-form-eyebrow">
+                        <span class="grx-pin-dot" aria-hidden="true"/>
+                        Solicitud procesada
+                    </span>
+                    <h1 class="grx-form-title">Revisa tu <em>correo.</em></h1>
+                    <p class="grx-form-desc" role="status"><t t-esc="message"/></p>
+                </div>
+                <div class="grx-state-note">
+                    Revisa también tu carpeta de correo no deseado. Si la dirección corresponde a una cuenta activa, el enlace de restablecimiento tendrá una validez de 24 horas y podrá usarse una sola vez.
+                </div>
+                <div class="grx-state-actions">
+                    <a href="/georutex/acceso" class="grx-btn-primary">
+                        <span>Volver a iniciar sesión</span>
+                        <i class="fa fa-arrow-right" aria-hidden="true"/>
+                    </a>
+                </div>
             </div>
         </xpath>
-        <xpath expr="//form[hasclass('oe_reset_password_form')]//a[contains(@t-attf-href, '/web/login')]" position="replace">
-            <a t-attf-href="/georutex/acceso?{{ keep_query() }}">Volver a iniciar sesión</a>
+
+        <!-- Form attributes -->
+        <xpath expr="//form[hasclass('oe_reset_password_form')]" position="attributes">
+            <attribute name="t-attf-action">/georutex/recuperar-acceso</attribute>
+            <attribute name="novalidate">novalidate</attribute>
+        </xpath>
+
+        <!-- Context-aware Spanish heading inside the reset/recovery form -->
+        <xpath expr="//form[hasclass('oe_reset_password_form')]/input[@name='csrf_token']" position="after">
+            <t t-if="invalid_token">
+                <div class="grx-state-icon is-warning" aria-hidden="true">
+                    <i class="fa fa-clock-o"/>
+                </div>
+                <div class="grx-form-head">
+                    <span class="grx-form-eyebrow">
+                        <span class="grx-pin-dot" aria-hidden="true"/>
+                        Enlace no disponible
+                    </span>
+                    <h1 class="grx-form-title">Este enlace ya no es <em>válido.</em></h1>
+                    <p class="grx-form-desc">
+                        El enlace de recuperación pudo haber expirado o ya fue utilizado anteriormente.
+                    </p>
+                </div>
+            </t>
+            <t t-elif="token">
+                <div class="grx-form-head">
+                    <span class="grx-form-eyebrow">
+                        <span class="grx-pin-dot" aria-hidden="true"/>
+                        Restablecimiento de contraseña
+                    </span>
+                    <h1 class="grx-form-title">Define tu nueva <em>contraseña.</em></h1>
+                    <p class="grx-form-desc">
+                        Crea una contraseña segura para recuperar el acceso a tu cuenta.
+                    </p>
+                </div>
+            </t>
+            <t t-else="">
+                <div class="grx-form-head">
+                    <span class="grx-form-eyebrow">
+                        <span class="grx-pin-dot" aria-hidden="true"/>
+                        Recuperación de acceso
+                    </span>
+                    <h1 class="grx-form-title">Recupera tu <em>acceso.</em></h1>
+                    <p class="grx-form-desc">
+                        Ingresa tu correo electrónico y recibe las instrucciones para restablecer tu contraseña.
+                    </p>
+                </div>
+            </t>
+        </xpath>
+
+        <!-- Replace English "Your Email" label & enhance input -->
+        <xpath expr="//form[hasclass('oe_reset_password_form')]//label[@for='login']" position="replace">
+            <label for="login" class="form-label">Correo electrónico</label>
+        </xpath>
+        <xpath expr="//form[hasclass('oe_reset_password_form')]//input[@id='login']" position="attributes">
+            <attribute name="type">email</attribute>
+            <attribute name="placeholder">nombre@correo.com</attribute>
+            <attribute name="autocomplete">email</attribute>
+        </xpath>
+
+        <!-- Avoid duplicate alert box when dedicated invalid_token screen is shown -->
+        <xpath expr="//form[hasclass('oe_reset_password_form')]//p[@t-if='error']" position="attributes">
+            <attribute name="t-if">error and not invalid_token</attribute>
+        </xpath>
+
+        <!-- Replace English "Reset Password" / "Back to Login" actions -->
+        <xpath expr="//form[hasclass('oe_reset_password_form')]//div[hasclass('oe_login_buttons')]" position="replace">
+            <div t-if="invalid_token" class="grx-state-actions mt-3">
+                <a href="/georutex/recuperar-acceso" class="grx-btn-primary">
+                    <span>Solicitar un nuevo enlace</span>
+                    <i class="fa fa-arrow-right" aria-hidden="true"/>
+                </a>
+                <a href="/georutex/acceso" class="grx-btn-secondary">
+                    Volver a iniciar sesión
+                </a>
+            </div>
+            <div t-else="" class="clearfix oe_login_buttons d-grid">
+                <button type="submit" class="btn btn-primary grx-btn-primary">
+                    <span class="grx-btn-spinner" aria-hidden="true"/>
+                    <span class="grx-btn-label">
+                        <t t-if="token">Actualizar contraseña</t>
+                        <t t-else="">Enviar instrucciones</t>
+                    </span>
+                    <i class="fa fa-arrow-right grx-btn-arrow" aria-hidden="true"/>
+                </button>
+                <div class="grx-auth-footer">
+                    <a t-attf-href="/georutex/acceso?{{ keep_query() }}">Volver a iniciar sesión</a>
+                </div>
+                <div class="o_login_auth"/>
+            </div>
         </xpath>
     </template>
 
-    <!-- Verificación numérica de correo (OTP 6 dígitos): /georutex/verificar-correo -->
+    <!-- =================================================================== -->
+    <!-- 4. VERIFICACIÓN OTP (6 DÍGITOS): /georutex/verificar-correo         -->
+    <!-- =================================================================== -->
     <template id="georutex_verify_email" name="GeoRutex 6-Digit Email Verification">
         <t t-call="web.login_layout">
-            <t t-call="uta_transport_monitor.georutex_auth_brand"/>
-            <div class="georutex-otp-wrapper">
-                <div class="georutex-auth-heading">
-                    <div class="georutex-auth-head-row">
-                        <img
-                            class="georutex-mini-logo"
-                            src="/uta_transport_monitor/static/src/img/georutex_logo.png"
-                            alt="GeoRutex"
-                        />
-                        <span class="georutex-auth-pill">
-                            <i class="fa fa-envelope-open-o" aria-hidden="true"/> Verificación de Correo
-                        </span>
-                    </div>
-                    <h2>Verifica tu correo electrónico</h2>
-                    <p>
-                        Ingresa el <strong>código numérico de 6 dígitos</strong> enviado a
+            <t t-set="title" t-value="'GeoRutex — Verificación de correo'"/>
+            <div class="grx-otp-wrapper">
+                <div class="grx-form-head">
+                    <span class="grx-form-eyebrow">
+                        <span class="grx-pin-dot" aria-hidden="true"/>
+                        Verificación de correo
+                    </span>
+                    <h1 class="grx-form-title">Verifica tu <em>correo.</em></h1>
+                    <p class="grx-form-desc">
+                        Ingresa el código de 6 dígitos enviado a
                         <strong t-out="masked_email or email"/>.
                     </p>
                 </div>
 
-                <div t-if="delivery_status == 'sent'" class="alert alert-primary d-flex align-items-start gap-2" role="status">
-                    <i class="fa fa-paper-plane mt-1" aria-hidden="true"/>
+                <div t-if="cooldown_notice" class="grx-alert grx-alert--warning" role="status">
+                    <i class="fa fa-clock-o" aria-hidden="true"/>
+                    <div>
+                        Ya enviamos un código hace unos instantes. Espera a que finalice el contador antes de solicitar uno nuevo.
+                    </div>
+                </div>
+                <div t-elif="delivery_status == 'sent'" class="grx-alert grx-alert--info" role="status">
+                    <i class="fa fa-envelope-o" aria-hidden="true"/>
                     <div>
                         <strong t-if="resent">Nuevo código enviado.</strong>
-                        <strong t-else="">Correo enviado por SMTP.</strong>
-                        Revisa tu bandeja de entrada o carpeta de spam. El código vence en 10 minutos.
+                        <strong t-else="">Código enviado a tu correo.</strong>
+                        Revisa tu bandeja de entrada o carpeta de correo no deseado. Tiene una validez de 10 minutos.
                     </div>
                 </div>
-
-                <div t-elif="delivery_status == 'smtp_not_configured'" class="alert alert-warning d-flex align-items-start gap-2" role="alert">
-                    <i class="fa fa-exclamation-triangle mt-1" aria-hidden="true"/>
+                <div t-elif="delivery_status in ('smtp_not_configured', 'failed')" class="grx-alert grx-alert--warning" role="alert">
+                    <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
                     <div>
-                        <strong>Servidor SMTP no configurado en Odoo.</strong>
-                        Configura <code>SMTP_HOST</code>, <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code> y <code>SMTP_FROM</code> en <code>.env</code> (o en Ajustes → Servidores de correo saliente) y presiona <strong>Reenviar código</strong>.
+                        No pudimos entregar el correo de verificación en este momento. Intenta reenviar el código en unos instantes o comunícate con soporte.
                     </div>
                 </div>
 
-                <div t-elif="delivery_status == 'failed'" class="alert alert-danger d-flex align-items-start gap-2" role="alert">
-                    <i class="fa fa-times-circle mt-1" aria-hidden="true"/>
-                    <div>
-                        <strong>Error al enviar el correo por SMTP.</strong>
-                        Verifica las credenciales del servidor saliente e intenta reenviar el código.
-                    </div>
+                <div t-if="error" class="grx-alert grx-alert--danger" role="alert">
+                    <i class="fa fa-exclamation-circle" aria-hidden="true"/>
+                    <div><t t-out="error"/></div>
                 </div>
 
-                <div t-if="error" class="alert alert-danger georutex-shake" role="alert">
-                    <i class="fa fa-exclamation-circle me-1" aria-hidden="true"/>
-                    <t t-out="error"/>
-                </div>
-
-                <form class="georutex-otp-form" action="/georutex/verificar-correo" method="post" novalidate="novalidate">
+                <form class="grx-otp-form" action="/georutex/verificar-correo" method="post" novalidate="novalidate">
                     <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
                     <input type="hidden" name="email" t-att-value="email"/>
                     <input type="hidden" name="code" id="georutex_otp_hidden" value=""/>
 
-                    <label class="form-label d-block text-center mb-2">Código numérico de 6 dígitos</label>
-                    <div class="georutex-otp-grid" role="group" aria-label="Código numérico de 6 dígitos">
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_1" class="form-control georutex-otp-digit" autocomplete="one-time-code" aria-label="Dígito 1" required="required"/>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_2" class="form-control georutex-otp-digit" aria-label="Dígito 2" required="required"/>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_3" class="form-control georutex-otp-digit" aria-label="Dígito 3" required="required"/>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_4" class="form-control georutex-otp-digit" aria-label="Dígito 4" required="required"/>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_5" class="form-control georutex-otp-digit" aria-label="Dígito 5" required="required"/>
-                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_6" class="form-control georutex-otp-digit" aria-label="Dígito 6" required="required"/>
+                    <label class="grx-otp-label" for="grx_otp_1">Código de 6 dígitos</label>
+                    <div class="grx-otp-grid" role="group" aria-label="Código numérico de 6 dígitos">
+                        <input id="grx_otp_1" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_1" class="form-control grx-otp-digit" autocomplete="one-time-code" aria-label="Dígito 1 de 6" required="required"/>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_2" class="form-control grx-otp-digit" aria-label="Dígito 2 de 6" required="required"/>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_3" class="form-control grx-otp-digit" aria-label="Dígito 3 de 6" required="required"/>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_4" class="form-control grx-otp-digit" aria-label="Dígito 4 de 6" required="required"/>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_5" class="form-control grx-otp-digit" aria-label="Dígito 5 de 6" required="required"/>
+                        <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="1" name="digit_6" class="form-control grx-otp-digit" aria-label="Dígito 6 de 6" required="required"/>
                     </div>
+                    <div id="grxOtpInlineError" class="grx-field-feedback text-center mb-3" role="alert"/>
 
-                    <div class="d-grid mt-4">
-                        <button type="submit" class="btn btn-primary georutex-cta-btn">
-                            <i class="fa fa-check-circle me-2" aria-hidden="true"/>VERIFICAR Y ACTIVAR CUENTA
-                        </button>
-                    </div>
-                </form>
-
-                <form action="/georutex/reenviar-codigo" method="post" class="text-center mt-3">
-                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
-                    <input type="hidden" name="email" t-att-value="email"/>
-                    <span class="small text-muted me-1">¿No recibiste el correo?</span>
-                    <button type="submit" class="btn btn-link btn-sm p-0 fw-semibold">
-                        Reenviar código numérico
+                    <button type="submit" class="btn btn-primary grx-btn-primary">
+                        <span class="grx-btn-spinner" aria-hidden="true"/>
+                        <span class="grx-btn-label">Verificar código</span>
+                        <i class="fa fa-arrow-right grx-btn-arrow" aria-hidden="true"/>
                     </button>
                 </form>
 
-                <div class="georutex-auth-footer">
-                    <a href="/georutex/acceso">
-                        <i class="fa fa-arrow-left me-1" aria-hidden="true"/>Volver a iniciar sesión
-                    </a>
+                <form action="/georutex/reenviar-codigo" method="post" class="grx-resend-box">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                    <input type="hidden" name="email" t-att-value="email"/>
+                    <span>¿No recibiste el código?</span>
+                    <button type="submit"
+                            id="grxResendBtn"
+                            class="grx-resend-btn"
+                            t-att-data-cooldown="resend_cooldown or 0"
+                            t-att-disabled="'disabled' if (resend_cooldown or 0) &gt; 0 else None">
+                        <span class="grx-resend-label">Reenviar código</span>
+                    </button>
+                </form>
+
+                <div class="grx-auth-footer">
+                    <a href="/georutex/acceso">Volver a iniciar sesión</a>
                 </div>
             </div>
         </t>

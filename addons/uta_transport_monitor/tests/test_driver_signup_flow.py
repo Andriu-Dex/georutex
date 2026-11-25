@@ -436,3 +436,141 @@ class TestDriverSignupHttpRedirect(HttpCase):
             location.endswith("/web") or "/web?" in location,
             f"Expected redirect to /web, got: {location}",
         )
+
+    def test_04_otp_security_and_password_recovery_flows(self):
+        """Verify OTP expiry/attempts/cooldown, neutral recovery, token reset, and branded emails."""
+        from datetime import timedelta
+        from odoo import fields
+
+        self.env["ir.config_parameter"].sudo().set_param(
+            "auth_signup.reset_password", "True"
+        )
+        # 1. Create active user with compound surname & apostrophe
+        login, _ = self.env["res.users"].sudo().signup(
+            {
+                "name": "Carlos O'Connor",
+                "login": "carlos.recovery@ejemplo.com",
+                "password": "OldPassword!2026",
+            }
+        )
+        user = self.env["res.users"].sudo().search([("login", "=", login)], limit=1)
+        self.assertTrue(user)
+
+        # 2. OTP wrong code, attempt limit, expiry, and resend cooldown checks
+        otp_model = self.env["transport.email.verification"].sudo()
+        otp_rec, plain_code = otp_model.create_and_send_otp(
+            user, login, user.name
+        )
+        # Wrong code increments attempts
+        ok_wrong, msg_wrong, _ = otp_model.verify_code(login, "000000" if plain_code != "000000" else "999999")
+        self.assertFalse(ok_wrong)
+        self.assertIn("incorrecto", msg_wrong.lower())
+        self.assertEqual(otp_rec.attempts, 1)
+
+        # Expired code rejected
+        otp_rec.write({"expires_at": fields.Datetime.now() - timedelta(minutes=1)})
+        ok_exp, msg_exp, _ = otp_model.verify_code(login, plain_code)
+        self.assertFalse(ok_exp)
+        self.assertIn("expirado", msg_exp.lower())
+
+        # Cooldown enforced for freshly sent OTP
+        otp_rec.write({"delivery_status": "sent", "expires_at": fields.Datetime.now() + timedelta(minutes=10)})
+        self.assertGreater(otp_model.get_resend_cooldown_seconds(login), 0)
+
+        # 3. Password recovery page in Spanish (no English "Your Email"/"Reset Password")
+        rec_page = self.url_open("/georutex/recuperar-acceso")
+        self.assertEqual(rec_page.status_code, 200)
+        self.assertIn("Recupera tu", rec_page.text)
+        self.assertNotIn("Your Email", rec_page.text)
+        self.assertNotIn("Reset Password", rec_page.text)
+        rec_csrf = self._extract_csrf(rec_page.text)
+
+        # Neutral confirmation for unregistered email (no email enumeration)
+        unreg_resp = self.url_open(
+            "/georutex/recuperar-acceso",
+            data={"csrf_token": rec_csrf, "login": "no.existe.nadie@ejemplo.com"},
+            allow_redirects=False,
+        )
+        self.assertEqual(unreg_resp.status_code, 200)
+        self.assertIn("Si el correo ingresado corresponde a una cuenta activa", unreg_resp.text)
+        self.assertNotIn("No existe ninguna cuenta", unreg_resp.text)
+
+        # 4. Invalid/expired reset token renders clean Spanish error state
+        bad_token_page = self.url_open("/georutex/recuperar-acceso?token=token_invalido_12345")
+        self.assertEqual(bad_token_page.status_code, 200)
+        self.assertIn("Este enlace ya no es", bad_token_page.text)
+        self.assertIn("Solicitar un nuevo enlace", bad_token_page.text)
+
+        # 5. Valid reset token updates password and invalidates token (single-use)
+        user.partner_id.sudo().signup_prepare(
+            signup_type="reset",
+            expiration=fields.Datetime.now() + timedelta(hours=24),
+        )
+        token = user.partner_id.sudo().signup_token
+        self.assertTrue(token)
+
+        reset_form_page = self.url_open(f"/georutex/recuperar-acceso?token={token}")
+        self.assertEqual(reset_form_page.status_code, 200)
+        self.assertIn("Define tu nueva", reset_form_page.text)
+        self.assertIn("Actualizar contraseña", reset_form_page.text)
+        reset_csrf = self._extract_csrf(reset_form_page.text)
+
+        # Mismatched confirmation rejected
+        mismatch_resp = self.url_open(
+            "/georutex/recuperar-acceso",
+            data={
+                "csrf_token": reset_csrf,
+                "token": token,
+                "login": login,
+                "name": user.name,
+                "password": "NewPassword!2026",
+                "confirm_password": "OtherPassword!2026",
+            },
+            allow_redirects=False,
+        )
+        self.assertEqual(mismatch_resp.status_code, 200)
+        self.assertIn("no coinciden", mismatch_resp.text)
+
+        # Valid password reset succeeds and consumes token
+        reset_csrf_2 = self._extract_csrf(mismatch_resp.text)
+        ok_reset_resp = self.url_open(
+            "/georutex/recuperar-acceso",
+            data={
+                "csrf_token": reset_csrf_2,
+                "token": token,
+                "login": login,
+                "name": user.name,
+                "password": "NewPassword!2026",
+                "confirm_password": "NewPassword!2026",
+            },
+            allow_redirects=False,
+        )
+        self.assertEqual(ok_reset_resp.status_code, 303)
+        # Token must be invalidated after use (cannot be reused)
+        user.partner_id.sudo().invalidate_recordset()
+        self.assertFalse(user.partner_id.sudo().signup_token)
+        reused_page = self.url_open(f"/georutex/recuperar-acceso?token={token}")
+        self.assertIn("Este enlace ya no es", reused_page.text)
+
+        # 6. Verify branded GeoRutex email templates render cleanly without Odoo/UTA coupling
+        otp_tpl = self.env.ref("uta_transport_monitor.mail_template_georutex_email_verification")
+        otp_html = otp_tpl.sudo().with_context(
+            otp_code="654321",
+            otp_expiry_minutes=10,
+            georutex_base_url="https://app.georutex.example",
+            georutex_verify_url="https://app.georutex.example/georutex/verificar-correo",
+        )._render_field("body_html", [otp_rec.id])[otp_rec.id]
+        self.assertIn("654321", otp_html)
+        self.assertIn("georutex_brand_mark.png", otp_html)
+        self.assertNotIn("Odoo", otp_html)
+        self.assertNotIn("Universidad Técnica de Ambato", otp_html)
+
+        reset_tpl = self.env.ref("uta_transport_monitor.mail_template_georutex_reset_password")
+        reset_html = reset_tpl.sudo().with_context(
+            georutex_base_url="https://app.georutex.example",
+            georutex_reset_url="https://app.georutex.example/georutex/recuperar-acceso?token=abc",
+        )._render_field("body_html", [user.id])[user.id]
+        self.assertIn("Restablecer contraseña", reset_html)
+        self.assertIn("georutex_brand_mark.png", reset_html)
+        self.assertNotIn("Odoo", reset_html)
+        self.assertNotIn("#875A7B", reset_html)
