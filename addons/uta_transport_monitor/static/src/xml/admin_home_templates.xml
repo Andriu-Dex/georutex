@@ -3,23 +3,22 @@
     <t t-name="uta_transport_monitor.GeoRutexAdminHomeAction" owl="1">
         <div class="grx-ops-page grx-admin-home" t-ref="adminHomeRoot">
             <div class="grx-ops-container">
-                <!-- 1. COMPACT PAGE HEADER -->
-                <header class="grx-page-header">
+                <!-- 1. COMPACT PREMIUM LIGHT COMMAND HEADER -->
+                <header class="grx-page-header grx-page-header--compact">
                     <div class="grx-page-heading">
                         <div class="grx-eyebrow">
-                            <span class="grx-eyebrow-dot" aria-hidden="true"/>
                             <span>Centro de operaciones</span>
                             <span t-if="state.localDateLabel" class="grx-eyebrow-sep">·</span>
                             <span t-if="state.localDateLabel"><t t-esc="state.localDateLabel"/></span>
                         </div>
-                        <h1 class="grx-page-title">Panel operativo de flota</h1>
+                        <h1 class="grx-page-title">Supervisión de flota</h1>
                     </div>
                     <div class="grx-header-actions">
                         <span class="grx-status-chip" title="Unidades con señal GPS activa">
                             <span t-attf-class="grx-dot #{state.traccar.has_signal ? 'is-green is-pulse' : 'is-amber'}"/>
-                            <span>Señal GPS: <strong><t t-esc="state.traccar.online_ratio"/></strong></span>
+                            <span>GPS <strong class="grx-num"><t t-esc="state.traccar.online_ratio"/></strong></span>
                         </span>
-                        <span class="grx-status-chip">
+                        <span class="grx-status-chip grx-num">
                             <i class="fa fa-clock-o" aria-hidden="true"/>
                             <span><t t-esc="state.localTimeLabel || 'ECT'"/></span>
                         </span>
@@ -53,93 +52,78 @@
                     <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.loadAdminHome(false)">Reintentar</button>
                 </div>
 
-                <!-- 2. SIX SIMULTANEOUS REAL OPERATIONAL KPI CARDS -->
-                <section class="grx-kpi-grid" aria-label="Indicadores operativos principales">
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openFleet()">
-                        <div class="grx-kpi-head">
+                <!-- 2. PREMIUM LIGHT OPERATIONAL KPI BAND (5 operational indicators; MT-01/02 live in Performance section) -->
+                <section class="grx-ops-kpi-band grx-ops-kpi-band--five" aria-label="Indicadores operativos principales">
+                    <button type="button" class="grx-band-cell grx-band-cell--anchor-light" t-on-click="() => this.openFleet()">
+                        <div class="grx-band-head">
                             <span>Flota en línea</span>
                             <span t-attf-class="grx-dot #{!state.stats.vehicles_total ? 'is-muted' : (state.stats.vehicles_online ? 'is-green is-pulse' : 'is-amber')}"/>
                         </div>
-                        <div class="grx-kpi-val">
+                        <div class="grx-band-val grx-num">
                             <t t-if="state.stats.vehicles_tracked">
-                                <t t-esc="state.stats.vehicles_online"/> <span class="grx-kpi-denom">/ <t t-esc="state.stats.vehicles_tracked"/></span>
+                                <t t-esc="state.stats.vehicles_online"/><span class="grx-band-denom">/<t t-esc="state.stats.vehicles_tracked"/></span>
                             </t>
-                            <t t-else="">N/A</t>
+                            <t t-else="">Sin datos</t>
                         </div>
-                        <div class="grx-kpi-foot">
-                            <span t-if="state.stats.vehicles_total"><t t-esc="state.stats.vehicles_total"/> unidades registradas</span>
-                            <span t-else="">Sin vehículos registrados</span>
+                        <div class="grx-band-foot">
+                            <span t-if="state.stats.vehicles_total"><t t-esc="state.stats.vehicles_total"/> unidades</span>
+                            <span t-else="">Sin vehículos</span>
                             <strong t-if="state.stats.vehicles_tracked" class="grx-num"><t t-esc="this.fleetOnlinePct"/>%</strong>
                         </div>
-                        <div t-if="state.stats.vehicles_tracked" class="grx-progress-track"><div class="grx-progress-fill" t-attf-style="width: #{this.fleetOnlinePct}%;"/></div>
-                    </article>
+                    </button>
 
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openRoutes()">
-                        <div class="grx-kpi-head">
-                            <span>Rutas activas</span>
-                            <i class="fa fa-map-signs grx-kpi-ico" aria-hidden="true"/>
+                    <button type="button" class="grx-band-cell" t-on-click="() => this.openTrips()">
+                        <div class="grx-band-head">
+                            <span>En operación</span>
                         </div>
-                        <div class="grx-kpi-val" data-grx-counter="1"><t t-esc="state.stats.routes_active"/></div>
-                        <div class="grx-kpi-foot">
+                        <div class="grx-band-val grx-num" data-grx-counter="1"><t t-esc="state.stats.trips_active"/></div>
+                        <div class="grx-band-foot">
+                            <span>Recorridos activos ahora</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="grx-band-cell" t-on-click="() => this.openTrips()">
+                        <div class="grx-band-head">
+                            <span>Recorridos hoy</span>
+                        </div>
+                        <div class="grx-band-val grx-num" data-grx-counter="1"><t t-esc="state.stats.trips_today"/></div>
+                        <div class="grx-band-foot">
+                            <span>Agenda del día</span>
+                        </div>
+                    </button>
+
+                    <button type="button" class="grx-band-cell" t-on-click="() => this.openRoutes()">
+                        <div class="grx-band-head">
+                            <span>Rutas activas</span>
+                        </div>
+                        <div class="grx-band-val grx-num" data-grx-counter="1"><t t-esc="state.stats.routes_active"/></div>
+                        <div class="grx-band-foot">
                             <span><t t-esc="state.stats.stops_total"/> puntos de control</span>
                         </div>
-                    </article>
+                    </button>
 
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openTrips()">
-                        <div class="grx-kpi-head">
-                            <span>Recorridos de hoy</span>
-                            <i class="fa fa-road grx-kpi-ico" aria-hidden="true"/>
-                        </div>
-                        <div class="grx-kpi-val" data-grx-counter="1"><t t-esc="state.stats.trips_today"/></div>
-                        <div class="grx-kpi-foot">
-                            <span><t t-esc="state.stats.trips_active"/> en operación</span>
-                        </div>
-                    </article>
-
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openDashboard()">
-                        <div class="grx-kpi-head">
-                            <span>Cumplimiento de recorridos</span>
-                            <span class="grx-code-tag">MT-01</span>
-                        </div>
-                        <div class="grx-kpi-val"><t t-esc="state.kpis.mt01.display_value"/></div>
-                        <div class="grx-kpi-foot">
-                            <span>Muestra n = <t t-esc="state.kpis.mt01.sample_size"/></span>
-                        </div>
-                    </article>
-
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openDashboard()">
-                        <div class="grx-kpi-head">
-                            <span>Puntualidad</span>
-                            <span class="grx-code-tag">MT-02</span>
-                        </div>
-                        <div class="grx-kpi-val"><t t-esc="state.kpis.mt02.display_value"/></div>
-                        <div class="grx-kpi-foot">
-                            <span>Muestra n = <t t-esc="state.kpis.mt02.sample_size"/></span>
-                        </div>
-                    </article>
-
-                    <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openIncidents()">
-                        <div class="grx-kpi-head">
+                    <button type="button"
+                            t-attf-class="grx-band-cell #{state.stats.incidents_open ? 'grx-band-cell--attention' : ''}"
+                            t-on-click="() => this.openIncidents()">
+                        <div class="grx-band-head">
                             <span>Incidencias abiertas</span>
                             <span t-attf-class="grx-dot #{state.stats.incidents_open ? 'is-red' : 'is-green'}"/>
                         </div>
-                        <div class="grx-kpi-val" data-grx-counter="1"><t t-esc="state.stats.incidents_open"/></div>
-                        <div class="grx-kpi-foot">
-                            <span><t t-esc="state.stats.incidents_critical"/> críticas o altas</span>
+                        <div class="grx-band-val grx-num" data-grx-counter="1"><t t-esc="state.stats.incidents_open"/></div>
+                        <div class="grx-band-foot">
+                            <span t-if="state.stats.incidents_critical"><t t-esc="state.stats.incidents_critical"/> críticas / altas</span>
+                            <span t-else="">Sin alertas críticas</span>
                         </div>
-                    </article>
+                    </button>
                 </section>
 
-                <!-- 3. PROTAGONIST STAGE: LIVE MAP + FLEET SIDEBAR -->
-                <section class="grx-ops-stage">
-                    <div class="grx-card grx-card--map">
-                        <div class="grx-card-header">
+                <!-- 3. ASYMMETRIC COMMAND STAGE: PROTAGONIST LIVE MAP + UNIFIED FLEET CONSOLE -->
+                <section class="grx-ops-command-stage" aria-label="Mapa de flota y estado de unidades">
+                    <div class="grx-surface-panel grx-ops-map-panel">
+                        <div class="grx-panel-head">
                             <div class="grx-card-title-wrap">
-                                <h2 class="grx-card-title">
-                                    <i class="fa fa-map-marker grx-ico-primary" aria-hidden="true"/>
-                                    <span>Mapa de flota en tiempo real</span>
-                                </h2>
-                                <span class="grx-pill is-blue"><t t-esc="this.positionedVehicleCount"/> ubicadas</span>
+                                <h2 class="grx-panel-title">Mapa de flota en vivo</h2>
+                                <span class="grx-pill is-blue grx-num"><t t-esc="this.positionedVehicleCount"/> ubicadas</span>
                             </div>
                             <div class="grx-card-controls">
                                 <div class="grx-segmented" role="group" aria-label="Filtrar unidades en mapa">
@@ -151,13 +135,13 @@
                                     <i class="fa fa-crosshairs" aria-hidden="true"/>
                                 </button>
                                 <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openLiveMap()">
-                                    <span>Pantalla completa</span>
+                                    <span>Mapa completo</span>
                                     <i class="fa fa-external-link" aria-hidden="true"/>
                                 </button>
                             </div>
                         </div>
 
-                        <div class="grx-map-wrap">
+                        <div class="grx-map-wrap grx-map-wrap--command">
                             <div t-ref="adminMapCanvas" class="grx-map-canvas"/>
                             <div class="grx-map-search-overlay">
                                 <i class="fa fa-search" aria-hidden="true"/>
@@ -178,145 +162,141 @@
                             </div>
                         </div>
 
-                        <!-- Compact GeoRutex Vehicle Telemetry Strip -->
-                        <div class="grx-vehicle-rail" aria-hidden="true">
-                            <svg class="grx-vehicle-rail-svg" viewBox="0 0 1000 44" preserveAspectRatio="xMidYMid slice">
-                                <line x1="0" y1="34" x2="1000" y2="34" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="14 10" class="grx-road-dashes"/>
-                                <g class="grx-bus-ltr">
-                                    <g class="grx-bus-float">
-                                        <rect x="8" y="12" width="62" height="20" rx="5" fill="#111827"/>
-                                        <rect x="8" y="25" width="62" height="3" fill="#0bbcd7"/>
-                                        <rect x="14" y="15" width="12" height="7" rx="1.5" fill="#ebf2ff"/>
-                                        <rect x="29" y="15" width="12" height="7" rx="1.5" fill="#ebf2ff"/>
-                                        <rect x="44" y="15" width="12" height="7" rx="1.5" fill="#ebf2ff"/>
-                                        <rect x="59" y="15" width="8" height="7" rx="1.5" fill="#93c5fd"/>
-                                        <circle cx="21" cy="33" r="4.5" fill="#111827" stroke="#e2e8f0" stroke-width="1.5"/>
-                                        <circle cx="57" cy="33" r="4.5" fill="#111827" stroke="#e2e8f0" stroke-width="1.5"/>
-                                    </g>
-                                </g>
-                            </svg>
-                            <span class="grx-rail-meta">
-                                <i class="fa fa-signal me-1"/> Telemetría: <strong t-esc="state.stats.positions_total"/> posiciones registradas
+                        <div class="grx-telemetry-footer">
+                            <span class="grx-telemetry-foot-item">
+                                <span class="grx-leg-line is-recorded" aria-hidden="true"/>
+                                <span>Telemetría registrada: <strong class="grx-num"><t t-esc="state.stats.positions_total"/></strong> posiciones</span>
                             </span>
-                            <span class="grx-rail-meta">
-                                Último reporte: <strong t-esc="state.traccar.last_fix_local"/>
+                            <span class="grx-telemetry-foot-item">
+                                <span>Último reporte: <strong class="grx-num"><t t-esc="state.traccar.last_fix_local"/></strong></span>
                             </span>
                         </div>
                     </div>
 
-                    <!-- Right Stack: Fleet Summary + Vehicles + Routes -->
-                    <div class="grx-ops-side-stack">
-                        <div class="grx-card">
-                            <div class="grx-card-header">
-                                <h2 class="grx-card-title">
-                                    <i class="fa fa-th-large grx-ico-primary" aria-hidden="true"/>
-                                    <span>Estado de la flota</span>
-                                </h2>
-                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openFleet()">Ver flota</button>
+                    <!-- Unified Right Contextual Fleet Console -->
+                    <aside class="grx-surface-panel grx-ops-fleet-console" aria-label="Consola de flota y conectividad">
+                        <div class="grx-panel-head">
+                            <div>
+                                <h2 class="grx-panel-title">Estado de la flota</h2>
+                                <p class="grx-panel-sub">Selecciona una unidad para enfocarla en el mapa</p>
                             </div>
-                            <div class="grx-card-body">
-                                <div class="grx-unit-grid">
-                                    <div class="grx-unit-stat is-green">
-                                        <span>En línea</span>
-                                        <strong t-esc="state.stats.vehicles_online"/>
-                                    </div>
-                                    <div class="grx-unit-stat is-amber">
-                                        <span>Reciente</span>
-                                        <strong t-esc="state.stats.vehicles_stale"/>
-                                    </div>
-                                    <div class="grx-unit-stat is-red">
-                                        <span>Sin señal</span>
-                                        <strong t-esc="state.stats.vehicles_offline"/>
-                                    </div>
-                                    <div class="grx-unit-stat is-blue">
-                                        <span>Simuladas</span>
-                                        <strong t-esc="state.stats.vehicles_simulated"/>
-                                    </div>
-                                </div>
-                                <div class="grx-unit-total">
-                                    <span>Total flota activa</span>
-                                    <strong t-esc="state.stats.vehicles_total"/>
-                                </div>
+                            <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openFleet()">Ver flota</button>
+                        </div>
+
+                        <div class="grx-connectivity-strip">
+                            <div class="grx-conn-cell">
+                                <span class="grx-conn-label"><i class="grx-dot is-green"/> En línea</span>
+                                <strong class="grx-num"><t t-esc="state.stats.vehicles_online"/></strong>
+                            </div>
+                            <div class="grx-conn-cell">
+                                <span class="grx-conn-label"><i class="grx-dot is-amber"/> Reciente</span>
+                                <strong class="grx-num"><t t-esc="state.stats.vehicles_stale"/></strong>
+                            </div>
+                            <div class="grx-conn-cell">
+                                <span class="grx-conn-label"><i class="grx-dot is-red"/> Sin señal</span>
+                                <strong class="grx-num"><t t-esc="state.stats.vehicles_offline"/></strong>
+                            </div>
+                            <div class="grx-conn-cell">
+                                <span class="grx-conn-label"><i class="grx-dot is-blue"/> Simuladas</span>
+                                <strong class="grx-num"><t t-esc="state.stats.vehicles_simulated"/></strong>
                             </div>
                         </div>
 
-                        <div class="grx-card">
-                            <div class="grx-card-header">
-                                <h2 class="grx-card-title">
-                                    <i class="fa fa-bus grx-ico-primary" aria-hidden="true"/>
-                                    <span>Vehículos monitoreados</span>
-                                </h2>
-                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openFleet()">Gestionar</button>
-                            </div>
-                            <div t-if="state.isLoading" class="grx-card-body grx-skeleton-stack">
-                                <div class="grx-skeleton-line"/>
-                                <div class="grx-skeleton-line is-short"/>
-                                <div class="grx-skeleton-line"/>
-                            </div>
-                            <div t-elif="!this.filteredVehicles.length" class="grx-empty">
-                                <i class="fa fa-bus" aria-hidden="true"/>
-                                <strong>Sin unidades monitoreadas</strong>
-                                <p>Vincula un vehículo con seguimiento GPS para supervisarlo en tiempo real.</p>
-                            </div>
-                            <div t-else="" class="grx-list-scroll">
-                                <t t-foreach="this.filteredVehicles" t-as="v" t-key="v.vehicle_id">
-                                    <div t-attf-class="grx-list-item #{state.selectedVehicleId === v.vehicle_id ? 'is-selected' : ''}"
-                                         role="button" tabindex="0"
-                                         t-on-click="() => this.focusVehicle(v)">
-                                        <div class="grx-item-lead">
-                                            <span t-attf-class="grx-dot #{this.getFreshnessDotClass(v.freshness)}"/>
-                                            <div class="grx-item-text">
-                                                <div class="grx-item-title"><t t-esc="v.name"/></div>
-                                                <div class="grx-item-sub">
-                                                    <t t-esc="v.license_plate || 'S/P'"/> · <t t-esc="v.driver_name"/>
-                                                </div>
+                        <div t-if="state.isLoading" class="grx-card-body grx-skeleton-stack">
+                            <div class="grx-skeleton-line"/>
+                            <div class="grx-skeleton-line is-short"/>
+                            <div class="grx-skeleton-line"/>
+                        </div>
+                        <div t-elif="!this.filteredVehicles.length" class="grx-empty">
+                            <i class="fa fa-bus" aria-hidden="true"/>
+                            <strong>Sin unidades monitoreadas</strong>
+                            <p>Vincula un vehículo con seguimiento GPS para supervisarlo en tiempo real.</p>
+                        </div>
+                        <div t-else="" class="grx-ledger-list" t-ref="adminVehiclesList">
+                            <t t-foreach="this.filteredVehicles.slice(0, 6)" t-as="v" t-key="v.vehicle_id">
+                                <div t-attf-class="grx-ledger-row #{state.selectedVehicleId === v.vehicle_id ? 'is-selected' : ''}"
+                                     role="button" tabindex="0"
+                                     t-on-click="() => this.focusVehicle(v)">
+                                    <div class="grx-item-lead">
+                                        <span t-attf-class="grx-dot #{this.getFreshnessDotClass(v.freshness)}"/>
+                                        <div class="grx-item-text">
+                                            <div class="grx-item-title"><t t-esc="v.name"/></div>
+                                            <div class="grx-item-sub">
+                                                <span class="grx-mono"><t t-esc="v.license_plate || 'S/P'"/></span> · <t t-esc="v.driver_name"/>
                                             </div>
                                         </div>
-                                        <div class="grx-item-trail">
-                                            <div class="grx-item-title grx-num"><t t-esc="Math.round(v.speed || 0)"/> km/h</div>
-                                            <div class="grx-item-sub"><t t-esc="v.fix_time_local"/></div>
-                                        </div>
                                     </div>
-                                </t>
-                            </div>
+                                    <div class="grx-item-trail">
+                                        <div class="grx-item-title grx-num">
+                                            <t t-if="v.has_coordinates and (v.freshness === 'fresh' or v.freshness === 'online')">
+                                                <t t-esc="Math.round(v.speed || 0)"/> km/h
+                                            </t>
+                                            <t t-else="">Sin datos</t>
+                                        </div>
+                                        <div class="grx-item-sub grx-num"><t t-esc="v.fix_time_local"/></div>
+                                    </div>
+                                </div>
+                            </t>
                         </div>
 
-                        <div class="grx-card grx-card--grow">
-                            <div class="grx-card-header">
-                                <h2 class="grx-card-title">
-                                    <i class="fa fa-map-signs grx-ico-primary" aria-hidden="true"/>
-                                    <span>Rutas y paradas</span>
-                                </h2>
-                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openRoutes()">Ver rutas</button>
-                            </div>
-                            <div t-if="!state.routes.length" class="grx-empty">
-                                <i class="fa fa-map-o" aria-hidden="true"/>
-                                <strong>Sin rutas configuradas</strong>
-                                <p>Registra tus rutas de servicio y configura sus puntos de control.</p>
-                            </div>
-                            <div t-else="" class="grx-list-scroll grx-list-scroll--sm">
-                                <t t-foreach="state.routes" t-as="rt" t-key="rt.id">
-                                    <div class="grx-list-item" role="button" tabindex="0" t-on-click="() => this.openRouteDetail(rt.id)">
-                                        <div class="grx-item-text">
-                                            <div class="grx-item-title"><t t-esc="rt.name"/></div>
-                                            <div class="grx-item-sub"><t t-esc="rt.origin_name"/> → <t t-esc="rt.destination_name"/></div>
-                                        </div>
-                                        <span class="grx-pill is-muted"><t t-esc="rt.stop_count"/> paradas</span>
-                                    </div>
-                                </t>
-                            </div>
+                        <div t-if="state.routes.length" class="grx-console-footer">
+                            <span class="grx-item-sub">
+                                <strong class="grx-num"><t t-esc="state.routes.length"/></strong> rutas activas · <span class="grx-num"><t t-esc="state.stats.stops_total"/></span> paradas
+                            </span>
+                            <button type="button" class="grx-link-btn" t-on-click="() => this.openRoutes()">
+                                Ver rutas <i class="fa fa-arrow-right" aria-hidden="true"/>
+                            </button>
                         </div>
-                    </div>
+                    </aside>
                 </section>
 
-                <!-- 4. ANALYTICS PREVIEW & INCIDENTS ROW -->
-                <section class="grx-two-col">
-                    <div class="grx-card">
-                        <div class="grx-card-header">
-                            <h2 class="grx-card-title">
-                                <i class="fa fa-line-chart grx-ico-primary" aria-hidden="true"/>
-                                <span>Tendencia de cumplimiento y puntualidad</span>
-                            </h2>
+                <!-- 4. LOWER SPLIT: PRIORITY INCIDENTS + SERVICE PERFORMANCE (MT-01 & MT-02) -->
+                <section class="grx-ops-lower-split">
+                    <div class="grx-surface-panel">
+                        <div class="grx-panel-head">
+                            <div>
+                                <h2 class="grx-panel-title">Incidencias prioritarias</h2>
+                                <p class="grx-panel-sub">Eventos recientes que requieren seguimiento</p>
+                            </div>
+                            <div class="grx-card-controls">
+                                <div class="grx-segmented" role="group" aria-label="Filtrar incidencias">
+                                    <button type="button" t-att-class="state.incidentFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'all'; }">Todas</button>
+                                    <button type="button" t-att-class="state.incidentFilter === 'open' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'open'; }">Abiertas</button>
+                                </div>
+                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openIncidents()">Ver todas</button>
+                            </div>
+                        </div>
+                        <div t-if="!this.filteredIncidents.length" class="grx-empty">
+                            <i class="fa fa-check-circle" aria-hidden="true"/>
+                            <strong>Sin incidencias pendientes</strong>
+                            <p>No existen novedades operacionales para el filtro seleccionado.</p>
+                        </div>
+                        <div t-else="" class="grx-ledger-list">
+                            <t t-foreach="this.filteredIncidents.slice(0, 5)" t-as="inc" t-key="inc.id">
+                                <div class="grx-ledger-row" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
+                                    <div class="grx-item-text">
+                                        <div class="grx-item-title"><t t-esc="inc.incident_type_label"/></div>
+                                        <div class="grx-item-sub">
+                                            <span class="grx-mono"><t t-esc="inc.name"/></span> · <span class="grx-mono"><t t-esc="inc.trip_name"/></span> · <t t-esc="inc.timestamp_local"/>
+                                        </div>
+                                    </div>
+                                    <span t-attf-class="grx-pill #{this.getSeverityBadgeClass(inc.severity)}">
+                                        <t t-esc="inc.severity_label"/>
+                                    </span>
+                                </div>
+                            </t>
+                        </div>
+                    </div>
+
+                    <div class="grx-surface-panel">
+                        <div class="grx-panel-head">
+                            <div>
+                                <h2 class="grx-panel-title">Rendimiento del servicio</h2>
+                                <p class="grx-panel-sub">
+                                    Cumplimiento <span class="grx-mono">MT-01</span>: <strong class="grx-num"><t t-esc="state.kpis.mt01.display_value"/></strong>
+                                    · Puntualidad <span class="grx-mono">MT-02</span>: <strong class="grx-num"><t t-esc="state.kpis.mt02.display_value"/></strong>
+                                </p>
+                            </div>
                             <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openDashboard()">
                                 <span>Análisis completo</span>
                                 <i class="fa fa-arrow-right" aria-hidden="true"/>
@@ -331,53 +311,15 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="grx-card">
-                        <div class="grx-card-header">
-                            <h2 class="grx-card-title">
-                                <i class="fa fa-exclamation-triangle grx-ico-primary" aria-hidden="true"/>
-                                <span>Incidencias operacionales</span>
-                            </h2>
-                            <div class="grx-card-controls">
-                                <div class="grx-segmented" role="group">
-                                    <button type="button" t-att-class="state.incidentFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'all'; }">Todas</button>
-                                    <button type="button" t-att-class="state.incidentFilter === 'open' ? 'is-active' : ''" t-on-click="() => { state.incidentFilter = 'open'; }">Abiertas</button>
-                                </div>
-                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openNewIncident()">+ Nueva</button>
-                            </div>
-                        </div>
-                        <div t-if="!this.filteredIncidents.length" class="grx-empty">
-                            <i class="fa fa-check-circle" aria-hidden="true"/>
-                            <strong>Sin incidencias registradas</strong>
-                            <p>No existen novedades operacionales para el filtro seleccionado.</p>
-                        </div>
-                        <div t-else="" class="grx-list-scroll grx-list-scroll--md">
-                            <t t-foreach="this.filteredIncidents" t-as="inc" t-key="inc.id">
-                                <div class="grx-list-item" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
-                                    <div class="grx-item-text">
-                                        <div class="grx-item-title">
-                                            <t t-esc="inc.name"/> · <t t-esc="inc.incident_type_label"/>
-                                        </div>
-                                        <div class="grx-item-sub">
-                                            <t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/>
-                                        </div>
-                                    </div>
-                                    <span t-attf-class="grx-pill #{this.getSeverityBadgeClass(inc.severity)}">
-                                        <t t-esc="inc.severity_label"/>
-                                    </span>
-                                </div>
-                            </t>
-                        </div>
-                    </div>
                 </section>
 
-                <!-- 5. FILTERABLE RECENT TRIPS TABLE -->
-                <section class="grx-card">
-                    <div class="grx-card-header">
-                        <h2 class="grx-card-title">
-                            <i class="fa fa-list-alt grx-ico-primary" aria-hidden="true"/>
-                            <span>Recorridos recientes</span>
-                        </h2>
+                <!-- 5. RECENT TRIPS LEDGER -->
+                <section class="grx-surface-panel">
+                    <div class="grx-panel-head">
+                        <div>
+                            <h2 class="grx-panel-title">Recorridos recientes</h2>
+                            <p class="grx-panel-sub">Control operativo de salidas, asignación y telemetría</p>
+                        </div>
                         <div class="grx-table-toolbar">
                             <input type="search"
                                    class="grx-search-input"
@@ -404,27 +346,27 @@
                         <table class="grx-table">
                             <thead>
                                 <tr>
-                                    <th>Recorrido</th>
                                     <th>Ruta</th>
+                                    <th>Código</th>
                                     <th>Vehículo</th>
                                     <th>Conductor</th>
                                     <th>Inicio (ECT)</th>
-                                    <th>Origen / GPS</th>
+                                    <th>Fuente / GPS</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <t t-foreach="this.filteredTrips" t-as="trip" t-key="trip.id">
+                                <t t-foreach="this.filteredTrips.slice(0, 8)" t-as="trip" t-key="trip.id">
                                     <tr t-on-click="() => this.openTripDetail(trip.id)">
-                                        <td><strong><t t-esc="trip.name"/></strong></td>
-                                        <td><t t-esc="trip.route_name"/></td>
+                                        <td><strong><t t-esc="trip.route_name"/></strong></td>
+                                        <td class="grx-mono grx-cell-muted"><t t-esc="trip.name"/></td>
                                         <td><t t-esc="trip.vehicle_name"/></td>
                                         <td><t t-esc="trip.driver_name"/></td>
                                         <td class="grx-num"><t t-esc="trip.scheduled_start_local"/></td>
                                         <td>
                                             <span t-if="trip.source_type === 'simulated'" class="grx-pill is-amber">Simulado</span>
                                             <span t-else="" class="grx-pill is-blue">Real</span>
-                                            <span class="grx-item-sub ms-1"><t t-esc="trip.position_count"/> pts</span>
+                                            <span class="grx-num grx-item-sub ms-1"><t t-esc="trip.position_count"/> pts</span>
                                         </td>
                                         <td>
                                             <span t-attf-class="grx-pill #{this.getStateBadgeClass(trip.state)}">

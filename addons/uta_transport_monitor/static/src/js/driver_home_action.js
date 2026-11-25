@@ -3,7 +3,12 @@
 import { registry } from "@web/core/registry";
 import { Component, onMounted, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { runGeorutexEntrance } from "./georutex_motion";
+import {
+    runGeorutexEntrance,
+    animateGeorutexTrajectory,
+    captureGeorutexFlip,
+    playGeorutexFlip,
+} from "./georutex_motion";
 
 export class GeoRutexDriverHomeAction extends Component {
     static template = "uta_transport_monitor.GeoRutexDriverHomeAction";
@@ -17,12 +22,14 @@ export class GeoRutexDriverHomeAction extends Component {
 
         this.rootRef = useRef("driverHomeRoot");
         this.mapRef = useRef("driverMapCanvas");
+        this.tripsListRef = useRef("driverTripsList");
 
         this._map = null;
         this._layerGroup = null;
         this._stopMarkers = new Map();
         this._refreshTimer = null;
         this._revertMotion = null;
+        this._revertTrajectory = null;
         this._hasFittedMap = false;
 
         this._onWindowResize = () => {
@@ -58,8 +65,12 @@ export class GeoRutexDriverHomeAction extends Component {
             await this.loadDriverHome(false);
             this._ensureMapAndRender();
             this._revertMotion = runGeorutexEntrance(this.rootRef.el, [
-                { selector: ".grx-drv-unassigned-card, .grx-drv-tile, .grx-card", y: 12, duration: 0.36, stagger: 0.04 },
+                { selector: ".grx-drv-hero-surface, .grx-drv-unassigned-card", y: 12, duration: 0.36, stagger: 0.04 },
+                { selector: ".grx-surface-panel", y: 12, duration: 0.34, stagger: 0.04 },
             ]);
+            window.setTimeout(() => {
+                this._revertTrajectory = animateGeorutexTrajectory(this.rootRef.el);
+            }, 80);
             window.addEventListener("resize", this._onWindowResize);
             this._refreshTimer = window.setInterval(() => {
                 void this.loadDriverHome(false, true);
@@ -75,6 +86,10 @@ export class GeoRutexDriverHomeAction extends Component {
             if (this._revertMotion) {
                 this._revertMotion();
                 this._revertMotion = null;
+            }
+            if (this._revertTrajectory) {
+                this._revertTrajectory();
+                this._revertTrajectory = null;
             }
             if (this._map) {
                 this._map.remove();
@@ -108,14 +123,34 @@ export class GeoRutexDriverHomeAction extends Component {
     }
 
     get currentSpeedDisplay() {
-        if (this.state.featuredTrip && this.state.featuredTrip.vehicle_speed_display !== "N/A") {
+        if (this.state.featuredTrip && this.state.featuredTrip.vehicle_speed_display && this.state.featuredTrip.vehicle_speed_display !== "N/A") {
             return this.state.featuredTrip.vehicle_speed_display;
         }
         const v = this.primaryVehicle;
-        if (v && v.has_speed) {
+        if (v && v.has_speed && (v.freshness === "online" || v.freshness === "fresh")) {
             return `${v.speed} km/h`;
         }
-        return "N/A";
+        return "Sin datos";
+    }
+
+    get nextScheduledTrip() {
+        const featuredId = this.state.featuredTrip ? this.state.featuredTrip.id : null;
+        return (
+            (this.state.trips || []).find(
+                (t) => t.state === "scheduled" && t.id !== featuredId
+            ) || null
+        );
+    }
+
+    setTripFilter(nextFilter) {
+        const rows = this.tripsListRef.el
+            ? this.tripsListRef.el.querySelectorAll(".grx-ledger-row")
+            : null;
+        const flipState = captureGeorutexFlip(rows);
+        this.state.tripFilter = nextFilter;
+        if (flipState) {
+            window.requestAnimationFrame(() => playGeorutexFlip(flipState, { duration: 0.24 }));
+        }
     }
 
     get filteredTrips() {
@@ -294,6 +329,12 @@ export class GeoRutexDriverHomeAction extends Component {
 
     async transitionTrip(tripId, targetAction) {
         if (this.state.isTransitioning) return;
+        if (targetAction === "complete") {
+            const ok = window.confirm(
+                "¿Confirmas que deseas finalizar este recorrido? Esta acción registrará la hora de cierre."
+            );
+            if (!ok) return;
+        }
         this.state.isTransitioning = true;
         try {
             await this.orm.call(

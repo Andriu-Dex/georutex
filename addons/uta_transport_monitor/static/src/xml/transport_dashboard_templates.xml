@@ -3,16 +3,15 @@
     <t t-name="uta_transport_monitor.TransportDashboardAction" owl="1">
         <div class="grx-ops-page grx-analytics-page" t-ref="analyticsRoot">
             <div class="grx-ops-container">
-                <!-- 1. ANALYST HEADER: "ANÁLISIS DEL SERVICIO" -->
-                <header class="grx-page-header">
+                <!-- 1. PREMIUM LIGHT ANALYST HEADER -->
+                <header class="grx-page-header grx-page-header--compact">
                     <div class="grx-page-heading">
                         <div class="grx-eyebrow">
-                            <span class="grx-eyebrow-dot" aria-hidden="true"/>
                             <span>Evaluación e indicadores</span>
                             <span class="grx-eyebrow-sep">·</span>
                             <span>
                                 Fuente:
-                                <t t-esc="state.filters.source_type == 'real' ? 'Solo real' : (state.filters.source_type == 'simulated' ? 'Solo simulado' : 'Combinado')"/>
+                                <strong><t t-esc="state.filters.source_type == 'real' ? 'Solo real' : (state.filters.source_type == 'simulated' ? 'Solo simulado' : 'Combinado')"/></strong>
                             </span>
                         </div>
                         <h1 class="grx-page-title">Análisis del servicio</h1>
@@ -36,8 +35,8 @@
                     </div>
                 </header>
 
-                <!-- 2. COMPACT ANALYTICAL FILTER TOOLBAR (Always visible Real / Simulated / Combined separation!) -->
-                <section class="grx-card grx-filter-bar-card" aria-label="Filtros de análisis">
+                <!-- 2. COMPACT GLOBAL FILTER STRIP -->
+                <section class="grx-ana-filter-strip" aria-label="Filtros de análisis">
                     <div class="grx-filter-bar-row">
                         <div class="grx-filter-bar-group">
                             <span class="grx-filter-bar-label">Período</span>
@@ -50,7 +49,7 @@
                         </div>
 
                         <div class="grx-filter-bar-group">
-                            <span class="grx-filter-bar-label">Fuente de datos</span>
+                            <span class="grx-filter-bar-label">Fuente</span>
                             <div class="grx-segmented" role="group" aria-label="Fuente de datos">
                                 <button type="button" t-att-class="state.filters.source_type === 'combined' ? 'is-active' : ''" t-on-click="() => this.onSourceTypeChange('combined')">Combinado</button>
                                 <button type="button" t-att-class="state.filters.source_type === 'real' ? 'is-active' : ''" t-on-click="() => this.onSourceTypeChange('real')">Real</button>
@@ -60,7 +59,7 @@
 
                         <div class="grx-filter-bar-actions">
                             <button type="button"
-                                    t-attf-class="grx-btn #{state.filtersOpen ? 'grx-btn--primary' : ''}"
+                                    t-attf-class="grx-btn grx-btn--sm #{state.filtersOpen ? 'grx-btn--primary' : ''}"
                                     t-att-aria-expanded="state.filtersOpen"
                                     t-on-click="toggleFilterPanel">
                                 <i class="fa fa-sliders" aria-hidden="true"/>
@@ -111,75 +110,64 @@
                     </form>
                 </section>
 
-                <!-- 3. FOUR EXECUTIVE SUMMARY CARDS -->
-                <section class="grx-summary-grid" aria-label="Resumen ejecutivo del servicio">
-                    <article class="grx-summary-card is-blue" role="button" tabindex="0" t-on-click="() => this.openTripsList('all')">
-                        <div class="grx-kpi-head">
-                            <span>Recorridos evaluados</span>
-                            <i class="fa fa-bus grx-kpi-ico" aria-hidden="true"/>
+                <!-- 3. PREMIUM LIGHT QUANTITATIVE SUMMARY BAND (No dark block!) -->
+                <section class="grx-ana-headline-band" aria-label="Resumen de desempeño">
+                    <button type="button" class="grx-band-cell grx-band-cell--anchor-light" t-on-click="() => this.openTripsList('compliant')">
+                        <div class="grx-band-head">
+                            <span>Cumplimiento global</span>
+                            <span class="grx-mono grx-band-code">MT-01</span>
                         </div>
-                        <div class="grx-summary-row">
-                            <strong class="grx-kpi-val" data-grx-counter="1">
-                                <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/>
-                            </strong>
-                            <span class="grx-pill is-blue">Muestra n</span>
+                        <div class="grx-band-val grx-num">
+                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].display_value : 'N/A'"/>
                         </div>
-                        <div class="grx-item-sub">Base evaluable de cumplimiento</div>
-                    </article>
+                        <div class="grx-band-foot">
+                            <span>Bruto <strong class="grx-num"><t t-esc="state.summary.compliant_trips_gross || 0"/></strong> · Ajustado <strong class="grx-num"><t t-esc="state.summary.compliant_trips_adjusted || 0"/></strong></span>
+                        </div>
+                    </button>
 
-                    <article class="grx-summary-card is-green" role="button" tabindex="0" t-on-click="() => this.openTripsList('compliant')">
-                        <div class="grx-kpi-head">
-                            <span>Recorridos conformes</span>
-                            <i class="fa fa-check-circle grx-kpi-ico" aria-hidden="true"/>
-                        </div>
-                        <div class="grx-summary-row">
-                            <strong class="grx-kpi-val" data-grx-counter="1">
-                                <t t-esc="state.summary.compliant_trips_gross || 0"/>
-                            </strong>
-                            <span t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na" class="grx-pill is-green">
-                                <t t-esc="state.kpis['MT-01'].display_value"/>
-                            </span>
-                            <span t-else="" class="grx-pill is-amber">N/A</span>
-                        </div>
-                        <div class="grx-item-sub">
-                            Bruto: <strong t-esc="state.summary.compliant_trips_gross || 0"/> · Ajustado: <strong t-esc="state.summary.compliant_trips_adjusted || 0"/>
-                        </div>
-                    </article>
-
-                    <article class="grx-summary-card is-red" role="button" tabindex="0" t-on-click="openIncidentsList">
-                        <div class="grx-kpi-head">
-                            <span>Incidencias registradas</span>
-                            <i class="fa fa-exclamation-triangle grx-kpi-ico" aria-hidden="true"/>
-                        </div>
-                        <div class="grx-summary-row">
-                            <strong class="grx-kpi-val" data-grx-counter="1">
-                                <t t-esc="state.summary.total_incidents || 0"/>
-                            </strong>
-                            <span t-if="state.summary.total_incidents" class="grx-pill is-red">Revisar</span>
-                            <span t-else="" class="grx-pill is-green">Sin novedades</span>
-                        </div>
-                        <div class="grx-item-sub">Detecciones automáticas y manuales</div>
-                    </article>
-
-                    <article class="grx-summary-card is-amber" role="button" tabindex="0" t-on-click="() => this.openTripsList('all')">
-                        <div class="grx-kpi-head">
+                    <button type="button" class="grx-band-cell" t-on-click="() => this.openTripsList('all')">
+                        <div class="grx-band-head">
                             <span>Puntualidad general</span>
-                            <i class="fa fa-clock-o grx-kpi-ico" aria-hidden="true"/>
+                            <span class="grx-mono grx-band-code">MT-02</span>
                         </div>
-                        <div class="grx-summary-row">
-                            <strong class="grx-kpi-val">
-                                <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/>
-                            </strong>
-                            <span t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na" class="grx-pill is-blue">Calculada</span>
-                            <span t-else="" class="grx-pill is-muted">Sin muestra</span>
+                        <div class="grx-band-val grx-num">
+                            <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/>
                         </div>
-                        <div class="grx-item-sub">
-                            Muestra n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/>
+                        <div class="grx-band-foot">
+                            <span>Meta ≥ 85% · <span class="grx-num">n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/></span></span>
                         </div>
-                    </article>
+                    </button>
+
+                    <button type="button" class="grx-band-cell" t-on-click="() => this.openTripsList('all')">
+                        <div class="grx-band-head">
+                            <span>Recorridos evaluados</span>
+                            <span class="grx-mono grx-band-code">n</span>
+                        </div>
+                        <div class="grx-band-val grx-num" data-grx-counter="1">
+                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/>
+                        </div>
+                        <div class="grx-band-foot">
+                            <span>Base evaluable del período</span>
+                        </div>
+                    </button>
+
+                    <button type="button"
+                            t-attf-class="grx-band-cell #{state.summary.total_incidents ? 'grx-band-cell--attention' : ''}"
+                            t-on-click="openIncidentsList">
+                        <div class="grx-band-head">
+                            <span>Incidencias registradas</span>
+                            <span t-attf-class="grx-dot #{state.summary.total_incidents ? 'is-red' : 'is-green'}"/>
+                        </div>
+                        <div class="grx-band-val grx-num" data-grx-counter="1">
+                            <t t-esc="state.summary.total_incidents || 0"/>
+                        </div>
+                        <div class="grx-band-foot">
+                            <span>Detecciones automáticas y manuales</span>
+                        </div>
+                    </button>
                 </section>
 
-                <!-- COMPACT ANALYTICAL EMPTY BANNER (when n=0 so KPIs remain visible without giant void) -->
+                <!-- COMPACT EMPTY BANNER -->
                 <div t-if="!state.isLoading and state.kpis['MT-01'] and state.kpis['MT-01'].sample_size === 0"
                      class="grx-ana-empty-banner" role="status">
                     <div class="grx-ana-empty-banner-icon" aria-hidden="true">
@@ -198,15 +186,15 @@
                     </button>
                 </div>
 
-                <!-- 4. GAUGES + DAILY TREND + FLEET PREVIEW -->
+                <!-- 4. EVOLUTION + GOAL COMPARISON -->
                 <section class="grx-ana-main-grid">
-                    <div class="grx-card">
-                        <div class="grx-card-header">
+                    <div class="grx-surface-panel">
+                        <div class="grx-panel-head">
                             <div>
-                                <h2 class="grx-card-title">Evolución de cumplimiento y puntualidad</h2>
-                                <p class="grx-card-sub">Tendencia diaria por recorridos evaluados (bruto, ajustado y puntualidad)</p>
+                                <h2 class="grx-panel-title">Evolución temporal de cumplimiento y puntualidad</h2>
+                                <p class="grx-panel-sub">Serie diaria de cumplimiento bruto, ajustado por justificaciones y puntualidad</p>
                             </div>
-                            <span class="grx-code-tag">MT-01 · MT-02</span>
+                            <span class="grx-mono grx-code-tag">MT-01 · MT-02</span>
                         </div>
                         <div class="grx-card-body">
                             <div t-if="this.hasDailyTrendData"
@@ -223,47 +211,61 @@
                     </div>
 
                     <div class="grx-ana-side-col">
-                        <div class="grx-gauge-pair">
-                            <article class="grx-card">
-                                <div class="grx-card-header">
-                                    <div>
-                                        <h2 class="grx-card-title">Cumplimiento de rutas</h2>
-                                        <p class="grx-card-sub">Meta operativa ≥ 90%</p>
-                                    </div>
-                                    <span class="grx-code-tag">MT-01</span>
-                                </div>
-                                <div class="grx-card-body grx-gauge-body">
-                                    <div t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na" t-ref="mt01GaugeBox" class="grx-echart-gauge"/>
-                                    <div t-else="" class="grx-gauge-na">
-                                        <strong>N/A</strong>
-                                        <span>Sin muestra evaluada (n = 0)</span>
-                                    </div>
-                                </div>
-                            </article>
-
-                            <article class="grx-card">
-                                <div class="grx-card-header">
-                                    <div>
-                                        <h2 class="grx-card-title">Puntualidad general</h2>
-                                        <p class="grx-card-sub">Meta operativa ≥ 85%</p>
-                                    </div>
-                                    <span class="grx-code-tag">MT-02</span>
-                                </div>
-                                <div class="grx-card-body grx-gauge-body">
-                                    <div t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na" t-ref="mt02GaugeBox" class="grx-echart-gauge"/>
-                                    <div t-else="" class="grx-gauge-na">
-                                        <strong>N/A</strong>
-                                        <span>Sin muestra evaluada (n = 0)</span>
-                                    </div>
-                                </div>
-                            </article>
-                        </div>
-
-                        <article class="grx-card">
-                            <div class="grx-card-header">
+                        <article class="grx-surface-panel">
+                            <div class="grx-panel-head">
                                 <div>
-                                    <h2 class="grx-card-title">Ubicaciones activas</h2>
-                                    <p class="grx-card-sub"><t t-esc="state.livePositionCount"/> unidades con posición GPS</p>
+                                    <h2 class="grx-panel-title">Comparación con metas</h2>
+                                    <p class="grx-panel-sub">Desempeño frente a umbrales operativos</p>
+                                </div>
+                            </div>
+                            <div class="grx-goal-stack">
+                                <div class="grx-goal-item">
+                                    <div class="grx-goal-top">
+                                        <span class="grx-goal-name">Cumplimiento de rutas <span class="grx-mono grx-goal-code">MT-01</span></span>
+                                        <strong class="grx-num grx-goal-val">
+                                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].display_value : 'N/A'"/>
+                                        </strong>
+                                    </div>
+                                    <div class="grx-goal-bar-wrap">
+                                        <div class="grx-goal-track">
+                                            <div class="grx-goal-fill is-primary"
+                                                 t-attf-style="width: #{this.getMetricProgressPct(state.kpis['MT-01'])}%;"/>
+                                            <span class="grx-goal-marker" style="left: 90%;" title="Meta operativa: 90%"/>
+                                        </div>
+                                    </div>
+                                    <div class="grx-goal-meta">
+                                        <span>Meta ≥ 90%</span>
+                                        <span class="grx-num">n = <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/></span>
+                                    </div>
+                                </div>
+
+                                <div class="grx-goal-item">
+                                    <div class="grx-goal-top">
+                                        <span class="grx-goal-name">Puntualidad general <span class="grx-mono grx-goal-code">MT-02</span></span>
+                                        <strong class="grx-num grx-goal-val">
+                                            <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/>
+                                        </strong>
+                                    </div>
+                                    <div class="grx-goal-bar-wrap">
+                                        <div class="grx-goal-track">
+                                            <div class="grx-goal-fill is-turquoise"
+                                                 t-attf-style="width: #{this.getMetricProgressPct(state.kpis['MT-02'])}%;"/>
+                                            <span class="grx-goal-marker" style="left: 85%;" title="Meta operativa: 85%"/>
+                                        </div>
+                                    </div>
+                                    <div class="grx-goal-meta">
+                                        <span>Meta ≥ 85%</span>
+                                        <span class="grx-num">n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        <article class="grx-surface-panel">
+                            <div class="grx-panel-head">
+                                <div>
+                                    <h2 class="grx-panel-title">Ubicaciones activas</h2>
+                                    <p class="grx-panel-sub"><span class="grx-num"><t t-esc="state.livePositionCount"/></span> unidades con posición GPS</p>
                                 </div>
                                 <button type="button" class="grx-btn grx-btn--sm" t-on-click="openLiveMap">
                                     <span>Abrir mapa</span>
@@ -285,55 +287,13 @@
                     </div>
                 </section>
 
-                <!-- 5. OPERATIONAL INDICATORS GRID (MT-01 .. MT-08) -->
-                <section class="grx-section-block" aria-label="Indicadores de desempeño operativo">
-                    <div class="grx-section-head">
-                        <div>
-                            <h2>Indicadores de desempeño operativo</h2>
-                            <p>Pasa el cursor sobre cualquier tarjeta para consultar fórmula, fuente, versión de reglas y muestra.</p>
-                        </div>
-                        <span class="grx-pill is-muted">
-                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].period : 'Histórico completo'"/>
-                        </span>
-                    </div>
-                    <div class="grx-metric-grid">
-                        <t t-foreach="this.transportMetricCards" t-as="metric" t-key="metric.id">
-                            <button type="button"
-                                    t-attf-class="grx-metric-card is-#{metric.tone}"
-                                    t-att-title="this.getMetricTooltip(metric.metric)"
-                                    t-att-aria-label="metric.title + ' (' + metric.id + '). ' + this.getMetricTooltip(metric.metric)"
-                                    t-on-click="() => this.openMetric(metric.id)">
-                                <div class="grx-metric-top">
-                                    <span class="grx-metric-title"><t t-esc="metric.title"/></span>
-                                    <span class="grx-code-tag"><t t-esc="metric.id"/></span>
-                                </div>
-                                <strong class="grx-metric-val">
-                                    <t t-esc="metric.metric.display_value || 'N/A'"/>
-                                </strong>
-                                <span class="grx-metric-sub">
-                                    <t t-esc="this.getMetricSecondary(metric.id, metric.metric) || (metric.metric.is_na ? 'Sin muestra suficiente' : 'Resultado calculado')"/>
-                                </span>
-                                <div class="grx-metric-bar" aria-hidden="true">
-                                    <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
-                                        <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
-                                    </t>
-                                </div>
-                                <div class="grx-metric-foot">
-                                    <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></span>
-                                    <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
-                                </div>
-                            </button>
-                        </t>
-                    </div>
-                </section>
-
-                <!-- 6. ROUTE COMPARISON + INCIDENTS DISTRIBUTION -->
-                <section class="grx-two-col">
-                    <article class="grx-card">
-                        <div class="grx-card-header">
+                <!-- 5. ROUTE COMPARISON + INCIDENTS DISTRIBUTION -->
+                <section class="grx-ops-lower-split">
+                    <article class="grx-surface-panel">
+                        <div class="grx-panel-head">
                             <div>
-                                <h2 class="grx-card-title">Comparativa por ruta</h2>
-                                <p class="grx-card-sub">Cumplimiento bruto frente a cumplimiento ajustado con incidencias justificadas</p>
+                                <h2 class="grx-panel-title">Comparativa por ruta</h2>
+                                <p class="grx-panel-sub">Cumplimiento bruto frente a cumplimiento ajustado con incidencias justificadas</p>
                             </div>
                         </div>
                         <div class="grx-card-body">
@@ -364,17 +324,17 @@
                             </t>
                             <div t-else="" class="grx-empty">
                                 <i class="fa fa-map-signs" aria-hidden="true"/>
-                                <strong>Sin rutas evaluadas en este período</strong>
-                                <p>Las comparativas aparecerán al registrar evaluaciones de recorridos.</p>
+                                <strong>Sin comparativa por ruta</strong>
+                                <p>Evalúa al menos un recorrido por ruta para comparar resultados.</p>
                             </div>
                         </div>
                     </article>
 
-                    <article class="grx-card">
-                        <div class="grx-card-header">
+                    <article class="grx-surface-panel">
+                        <div class="grx-panel-head">
                             <div>
-                                <h2 class="grx-card-title">Distribución de incidencias</h2>
-                                <p class="grx-card-sub">Eventos por categoría para el período y fuente seleccionados</p>
+                                <h2 class="grx-panel-title">Distribución de incidencias</h2>
+                                <p class="grx-panel-sub">Eventos por categoría para el período y fuente seleccionados</p>
                             </div>
                             <button type="button" class="grx-btn grx-btn--sm" t-on-click="openIncidentsList">Ver registro</button>
                         </div>
@@ -393,12 +353,61 @@
                     </article>
                 </section>
 
-                <!-- 7. TECHNICAL QUALITY INDICATORS (MCS-01 .. MCS-04) -->
-                <section class="grx-card grx-quality-card" aria-label="Calidad técnica del servicio">
-                    <div class="grx-card-header">
+                <!-- 6. ANALYTICAL TABLE: OPERATIONAL INDICATORS (MT-01 .. MT-08) -->
+                <section class="grx-surface-panel" aria-label="Indicadores de desempeño operativo">
+                    <div class="grx-panel-head">
                         <div>
-                            <h2 class="grx-card-title">Calidad técnica y telemetría</h2>
-                            <p class="grx-card-sub">Integridad GPS, sincronización, tiempo de respuesta y detección (MCS-01 a MCS-04)</p>
+                            <h2 class="grx-panel-title">Indicadores de desempeño operativo</h2>
+                            <p class="grx-panel-sub">Haz clic en cualquier fila para abrir los registros fuente; pasa el cursor para consultar fórmula y versión de reglas</p>
+                        </div>
+                        <span class="grx-pill is-muted grx-num">
+                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].period : 'Histórico completo'"/>
+                        </span>
+                    </div>
+                    <div class="grx-table-wrap">
+                        <table class="grx-table grx-ana-table">
+                            <thead>
+                                <tr>
+                                    <th>Indicador</th>
+                                    <th>Referencia</th>
+                                    <th>Resultado</th>
+                                    <th>Detalle / Escala</th>
+                                    <th>Muestra</th>
+                                    <th>Fuente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="this.transportMetricCards" t-as="metric" t-key="metric.id">
+                                    <tr t-on-click="() => this.openMetric(metric.id)"
+                                        t-att-title="this.getMetricTooltip(metric.metric)">
+                                        <td><strong><t t-esc="metric.title"/></strong></td>
+                                        <td><span class="grx-mono grx-code-tag"><t t-esc="metric.id"/></span></td>
+                                        <td class="grx-num"><strong><t t-esc="metric.metric.display_value || 'N/A'"/></strong></td>
+                                        <td>
+                                            <div t-if="!metric.metric.is_na and metric.metric.unit === '%'" class="grx-inline-scale">
+                                                <div class="grx-progress-track" aria-hidden="true">
+                                                    <div class="grx-progress-fill" t-attf-style="width: #{this.getMetricProgressPct(metric.metric)}%;"/>
+                                                </div>
+                                            </div>
+                                            <span class="grx-item-sub">
+                                                <t t-esc="this.getMetricSecondary(metric.id, metric.metric) || (metric.metric.is_na ? 'Sin muestra suficiente' : (metric.metric.unit || 'Resultado calculado'))"/>
+                                            </span>
+                                        </td>
+                                        <td class="grx-num">n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></td>
+                                        <td class="grx-item-sub"><t t-esc="this.getMetricSource(metric.metric)"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 7. ANALYTICAL TABLE: TECHNICAL QUALITY (MCS-01 .. MCS-04) -->
+                <section class="grx-surface-panel" aria-label="Calidad técnica del servicio">
+                    <div class="grx-panel-head">
+                        <div>
+                            <h2 class="grx-panel-title">Calidad técnica y telemetría</h2>
+                            <p class="grx-panel-sub">Integridad GPS, sincronización, tiempo de respuesta y detección de incidencias</p>
                         </div>
                         <button type="button"
                                 class="grx-btn grx-btn--sm"
@@ -408,33 +417,33 @@
                             <span>Ejecutar medición</span>
                         </button>
                     </div>
-                    <div class="grx-card-body">
-                        <div class="grx-metric-grid">
-                            <t t-foreach="this.qualityMetricCards" t-as="metric" t-key="metric.id">
-                                <article t-attf-class="grx-metric-card is-#{metric.tone}"
-                                         t-att-title="this.getMetricTooltip(metric.metric)">
-                                    <div class="grx-metric-top">
-                                        <span class="grx-metric-title"><t t-esc="metric.title"/></span>
-                                        <span class="grx-code-tag"><t t-esc="metric.id"/></span>
-                                    </div>
-                                    <strong class="grx-metric-val">
-                                        <t t-esc="metric.metric.display_value || 'N/A'"/>
-                                    </strong>
-                                    <span class="grx-metric-sub">
-                                        <t t-esc="metric.metric.is_na ? 'Sin muestra suficiente' : (metric.metric.unit || 'Medición registrada')"/>
-                                    </span>
-                                    <div class="grx-metric-bar" aria-hidden="true">
-                                        <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
-                                            <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
-                                        </t>
-                                    </div>
-                                    <div class="grx-metric-foot">
-                                        <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></span>
-                                        <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
-                                    </div>
-                                </article>
-                            </t>
-                        </div>
+                    <div class="grx-table-wrap">
+                        <table class="grx-table grx-ana-table">
+                            <thead>
+                                <tr>
+                                    <th>Métrica técnica</th>
+                                    <th>Referencia</th>
+                                    <th>Resultado</th>
+                                    <th>Unidad / Estado</th>
+                                    <th>Muestra</th>
+                                    <th>Fuente</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="this.qualityMetricCards" t-as="metric" t-key="metric.id">
+                                    <tr t-att-title="this.getMetricTooltip(metric.metric)">
+                                        <td><strong><t t-esc="metric.title"/></strong></td>
+                                        <td><span class="grx-mono grx-code-tag"><t t-esc="metric.id"/></span></td>
+                                        <td class="grx-num"><strong><t t-esc="metric.metric.display_value || 'N/A'"/></strong></td>
+                                        <td class="grx-item-sub">
+                                            <t t-esc="metric.metric.is_na ? 'Sin muestra suficiente' : (metric.metric.unit || 'Medición registrada')"/>
+                                        </td>
+                                        <td class="grx-num">n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></td>
+                                        <td class="grx-item-sub"><t t-esc="this.getMetricSource(metric.metric)"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
                     </div>
                 </section>
             </div>

@@ -45,7 +45,7 @@
                         <group string="Identificación y Sentido">
                             <field name="code" placeholder="Ej. RUT-01"/>
                             <field name="direction"/>
-                            <field name="current_version_id" options="{'no_create': True}"/>
+                            <field name="current_version_id" options="{'no_create': True}" attrs="{'invisible': [('id', '=', False)]}"/>
                             <field name="active" widget="boolean_toggle"/>
                         </group>
                         <group string="Cabeceras Operacionales">

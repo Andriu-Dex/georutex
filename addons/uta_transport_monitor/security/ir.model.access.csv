@@ -37,3 +37,6 @@ access_fleet_vehicle_state_analyst_read,fleet.vehicle.state.analyst.read,fleet.m
 access_fleet_vehicle_tag_driver_read,fleet.vehicle.tag.driver.read,fleet.model_fleet_vehicle_tag,group_transport_driver,1,0,0,0
 access_fleet_vehicle_tag_analyst_read,fleet.vehicle.tag.analyst.read,fleet.model_fleet_vehicle_tag,group_transport_analyst,1,0,0,0
 access_transport_email_verification_manager,transport.email.verification.manager,model_transport_email_verification,group_transport_manager,1,1,1,1
+access_transport_notification_manager,transport.notification.manager,model_transport_notification,group_transport_manager,1,1,1,1
+access_transport_notification_analyst,transport.notification.analyst,model_transport_notification,group_transport_analyst,1,1,0,0
+access_transport_notification_driver,transport.notification.driver,model_transport_notification,group_transport_driver,1,1,0,0

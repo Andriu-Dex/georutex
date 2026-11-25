@@ -155,6 +155,14 @@ function localizeFallbackUiButtons() {
                 button.setAttribute("title", _t("Guardar"));
             }
         });
+    // Friendly platform wording in Preferences modal without altering stored values
+    document
+        .querySelectorAll(".grx-preferences-form label, .grx-preferences-form .o_radio_item label")
+        .forEach((lbl) => {
+            if (lbl.textContent && lbl.textContent.trim() === "Gestionar en Odoo") {
+                lbl.textContent = "Notificaciones en la plataforma";
+            }
+        });
 }
 
 function findMenuByIdOrXmlid(sections, menuId, xmlid) {
@@ -248,35 +256,59 @@ patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
         this._grxSyncActiveFromHash = () => {
             const isGrx = this.isGeoRutexApp();
             if (isGrx) {
-                const hash = window.location.hash || "";
-                const m = hash.match(/menu_id=(\d+)/);
-                if (m) {
-                    const idNum = parseInt(m[1], 10);
-                    this.grxNav.activeMenuId = idNum;
-                    const matched = findMenuByIdOrXmlid(this.currentAppSections, idNum, null);
-                    if (matched && matched.xmlid) {
-                        this.grxNav.activeXmlid = matched.xmlid;
-                        window.sessionStorage.setItem(SELECTED_XMLID_KEY, matched.xmlid);
-                    }
+                // 1. Prioritize actual rendered view / action over stale URL hash menu_id!
+                let inferredXmlid = "";
+                if (document.querySelector(".grx-admin-home")) {
+                    inferredXmlid = "uta_transport_monitor.menu_georutex_admin_home";
+                } else if (document.querySelector(".grx-driver-home")) {
+                    inferredXmlid = "uta_transport_monitor.menu_georutex_driver_home";
+                } else if (document.querySelector(".grx-analytics-page")) {
+                    inferredXmlid = "uta_transport_monitor.menu_georutex_dashboard_main";
+                } else if (document.querySelector(".o_georutex_live_fleet_view")) {
+                    inferredXmlid = "uta_transport_monitor.menu_georutex_live_fleet_map";
                 } else {
-                    let inferredXmlid = "";
-                    if (document.querySelector(".grx-admin-home")) {
-                        inferredXmlid = "uta_transport_monitor.menu_georutex_admin_home";
-                    } else if (document.querySelector(".grx-driver-home")) {
-                        inferredXmlid = "uta_transport_monitor.menu_georutex_driver_home";
-                    } else if (document.querySelector(".grx-analytics-page")) {
-                        inferredXmlid = "uta_transport_monitor.menu_georutex_dashboard_main";
-                    } else if (document.querySelector(".o_georutex_live_fleet_view")) {
-                        inferredXmlid = "uta_transport_monitor.menu_georutex_live_fleet_map";
+                    const ctrl = this.actionService && this.actionService.currentController;
+                    const act = ctrl && ctrl.action;
+                    const resModel = act && act.res_model;
+                    if (resModel === "transport.trip") {
+                        inferredXmlid = session.georutex_is_driver_only
+                            ? "uta_transport_monitor.menu_georutex_my_trips"
+                            : "uta_transport_monitor.menu_georutex_trips";
+                    } else if (resModel === "transport.incident") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_incidents";
+                    } else if (resModel === "transport.trip.evaluation") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_evaluations";
+                    } else if (resModel === "transport.route") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_routes";
+                    } else if (resModel === "transport.route.version") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_route_versions";
+                    } else if (resModel === "fleet.vehicle") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_fleet";
+                    } else if (resModel === "transport.vehicle.position") {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_positions";
                     }
-                    if (inferredXmlid) {
-                        this.grxNav.activeXmlid = inferredXmlid;
-                        const matched = findMenuByIdOrXmlid(
-                            this.currentAppSections,
-                            null,
-                            inferredXmlid
-                        );
-                        if (matched) this.grxNav.activeMenuId = matched.id;
+                }
+
+                if (inferredXmlid) {
+                    this.grxNav.activeXmlid = inferredXmlid;
+                    window.sessionStorage.setItem(SELECTED_XMLID_KEY, inferredXmlid);
+                    const matched = findMenuByIdOrXmlid(
+                        this.currentAppSections,
+                        null,
+                        inferredXmlid
+                    );
+                    if (matched) this.grxNav.activeMenuId = matched.id;
+                } else {
+                    const hash = window.location.hash || "";
+                    const m = hash.match(/menu_id=(\d+)/);
+                    if (m) {
+                        const idNum = parseInt(m[1], 10);
+                        this.grxNav.activeMenuId = idNum;
+                        const matched = findMenuByIdOrXmlid(this.currentAppSections, idNum, null);
+                        if (matched && matched.xmlid) {
+                            this.grxNav.activeXmlid = matched.xmlid;
+                            window.sessionStorage.setItem(SELECTED_XMLID_KEY, matched.xmlid);
+                        }
                     } else if (!this.grxNav.activeMenuId && this.currentAppSections.length) {
                         const firstLeaf = this.currentAppSections[0];
                         if (firstLeaf && !firstLeaf.childrenTree.length) {
@@ -322,6 +354,16 @@ patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
 
     _grxSyncBrowserTitle(isGrx) {
         if (!this.titleService) return;
+        if (isGrx) {
+            // Ensure /web uses GeoRutex favicon even if res.company sets a fallback icon
+            document.querySelectorAll('link[rel*="icon"]').forEach((lnk) => {
+                const href = lnk.getAttribute("href") || "";
+                if (!href.includes("georutex_favicon.png")) {
+                    lnk.setAttribute("href", "/uta_transport_monitor/static/src/img/georutex_favicon.png");
+                    lnk.setAttribute("type", "image/png");
+                }
+            });
+        }
         if (!isGrx) {
             this.titleService.setParts({ zopenerp: "Odoo" });
             return;

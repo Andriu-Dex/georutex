@@ -85,8 +85,8 @@ export class TransportDashboardAction extends Component {
                 this.loadLiveMapPositions(),
             ]);
             this._revertMotion = runGeorutexEntrance(this.rootRef.el, [
-                { selector: ".grx-summary-card", y: 12, duration: 0.34, stagger: 0.04 },
-                { selector: ".grx-metric-card", y: 10, duration: 0.32, stagger: 0.025 },
+                { selector: ".grx-ana-headline-band", y: 10, duration: 0.32, stagger: 0 },
+                { selector: ".grx-surface-panel", y: 12, duration: 0.36, stagger: 0.045 },
             ]);
             this._revertCounters = animateGeorutexCounters(this.rootRef.el);
             this.mapRefreshTimer = setInterval(() => {
@@ -768,6 +768,17 @@ export class TransportDashboardAction extends Component {
             views: [[false, "list"], [false, "form"]],
             domain: [],
         });
+    }
+
+    getMetricProgressPct(metric) {
+        if (!metric || metric.is_na || metric.unit !== "%") {
+            return 0;
+        }
+        const numeric = Number(metric.value);
+        if (!Number.isFinite(numeric)) {
+            return 0;
+        }
+        return Math.min(100, Math.max(0, numeric));
     }
 
     openEvaluationsList() {

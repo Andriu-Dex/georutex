@@ -7,10 +7,7 @@
         <field name="arch" type="xml">
             <tree string="Evaluaciones"
                   create="false"
-                  edit="false"
-                  decoration-success="is_compliant_adjusted"
-                  decoration-danger="not is_compliant_adjusted and integrity_status != 'insufficient_data'"
-                  decoration-warning="integrity_status == 'insufficient_data'">
+                  edit="false">
                 <field name="name"/>
                 <field name="trip_id"/>
                 <field name="vehicle_id"/>
@@ -18,8 +15,8 @@
                 <field name="driver_id"/>
                 <field name="evaluation_date"/>
                 <field name="integrity_status" widget="badge"/>
-                <field name="is_compliant_gross" widget="boolean_toggle"/>
-                <field name="is_compliant_adjusted" widget="boolean_toggle"/>
+                <field name="is_compliant_gross" string="Conforme bruto"/>
+                <field name="is_compliant_adjusted" string="Conforme ajustado"/>
                 <field name="stops_on_time"/>
                 <field name="stops_total"/>
                 <field name="deviation_count"/>

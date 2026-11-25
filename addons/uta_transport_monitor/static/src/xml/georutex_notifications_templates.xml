@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="uta_transport_monitor.GeoRutexNotificationBell" owl="1">
+        <div class="grx-notif-menu" t-ref="notifRoot">
+            <button type="button"
+                    class="grx-notif-btn"
+                    t-on-click.stop="() => this.togglePanel()"
+                    t-att-aria-expanded="state.open.toString()"
+                    aria-label="Notificaciones operacionales"
+                    title="Notificaciones de GeoRutex">
+                <i class="fa fa-bell-o" aria-hidden="true"/>
+                <span t-if="state.unreadCount > 0" class="grx-notif-badge" t-esc="state.unreadCount > 99 ? '99+' : state.unreadCount"/>
+            </button>
+
+            <div t-if="state.open" class="grx-notif-panel" t-ref="notifPanel" role="dialog" aria-label="Centro de notificaciones">
+                <div class="grx-notif-head">
+                    <strong>Notificaciones</strong>
+                    <button t-if="state.unreadCount > 0"
+                            type="button"
+                            class="grx-btn grx-btn--sm"
+                            t-on-click="() => this.markAllRead()">
+                        Marcar todas
+                    </button>
+                </div>
+
+                <div class="grx-notif-tabs">
+                    <div class="grx-segmented" role="group" aria-label="Filtrar notificaciones">
+                        <button type="button" t-att-class="state.filter === 'all' ? 'is-active' : ''" t-on-click="() => this.setFilter('all')">Todas</button>
+                        <button type="button" t-att-class="state.filter === 'unread' ? 'is-active' : ''" t-on-click="() => this.setFilter('unread')">Sin leer</button>
+                    </div>
+                </div>
+
+                <div class="grx-notif-list">
+                    <div t-if="state.isLoading" class="grx-empty py-4">
+                        <span class="grx-item-sub">Cargando notificaciones…</span>
+                    </div>
+                    <div t-elif="!state.items.length" class="grx-empty py-4">
+                        <i class="fa fa-bell-slash-o" aria-hidden="true"/>
+                        <strong>Sin notificaciones pendientes</strong>
+                        <p>Aquí verás avisos sobre tus recorridos, incidencias y evaluaciones.</p>
+                    </div>
+                    <t t-else="" t-foreach="state.items" t-as="item" t-key="item.id">
+                        <button type="button"
+                                t-attf-class="grx-notif-item #{item.is_read ? '' : 'is-unread'}"
+                                t-on-click="() => this.openNotification(item)">
+                            <span class="grx-notif-dot" aria-hidden="true"/>
+                            <div class="grx-notif-item-body">
+                                <div class="grx-notif-item-title" t-esc="item.title"/>
+                                <div class="grx-notif-item-msg" t-esc="item.message"/>
+                                <div class="grx-notif-item-time" t-esc="item.time_local"/>
+                            </div>
+                        </button>
+                    </t>
+                </div>
+            </div>
+        </div>
+    </t>
+
+</templates>

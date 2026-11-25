@@ -5,18 +5,35 @@
         <field name="name">transport.trip.tree</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <tree string="Recorridos Operacionales" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'">
-                <field name="name"/>
-                <field name="scheduled_start_utc" string="Inicio Programado"/>
-                <field name="scheduled_end_utc" string="Fin Previsto"/>
-                <field name="scheduled_duration_display" string="Duración Prog."/>
-                <field name="vehicle_id"/>
-                <field name="driver_id"/>
-                <field name="route_id"/>
-                <field name="route_version_id"/>
-                <field name="source_type" widget="badge" decoration-warning="source_type == 'simulated'" decoration-info="source_type == 'real'"/>
-                <field name="evaluation_status" widget="badge" decoration-success="evaluation_status == 'compliant'" decoration-danger="evaluation_status == 'non_compliant'" decoration-warning="evaluation_status == 'indeterminate'" decoration-info="evaluation_status == 'unevaluated'"/>
-                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'"/>
+            <tree string="Recorridos Operacionales">
+                <field name="route_id" string="Ruta"/>
+                <field name="name" string="Código"/>
+                <field name="scheduled_start_utc" string="Inicio programado"/>
+                <field name="scheduled_end_utc" string="Fin previsto"/>
+                <field name="scheduled_duration_display" string="Duración" optional="hide"/>
+                <field name="vehicle_id" string="Unidad"/>
+                <field name="driver_id" string="Conductor"/>
+                <field name="route_version_id" string="Versión" optional="hide"/>
+                <field name="source_type" string="Fuente" widget="badge" decoration-warning="source_type == 'simulated'" decoration-info="source_type == 'real'"/>
+                <field name="evaluation_status" string="Evaluación" widget="badge" decoration-success="evaluation_status == 'compliant'" decoration-danger="evaluation_status == 'non_compliant'" decoration-warning="evaluation_status == 'indeterminate'" decoration-info="evaluation_status == 'unevaluated'"/>
+                <field name="state" string="Estado" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Dedicated Driver Agenda List View: Mis Recorridos (No redundant driver column) -->
+    <record id="view_transport_trip_driver_tree" model="ir.ui.view">
+        <field name="name">transport.trip.driver.tree</field>
+        <field name="model">transport.trip</field>
+        <field name="priority">25</field>
+        <field name="arch" type="xml">
+            <tree string="Mis recorridos">
+                <field name="route_id" string="Ruta"/>
+                <field name="scheduled_start_utc" string="Fecha y salida"/>
+                <field name="scheduled_end_utc" string="Llegada prevista"/>
+                <field name="vehicle_id" string="Unidad asignada"/>
+                <field name="state" string="Estado" widget="badge" decoration-info="state == 'draft'" decoration-primary="state == 'scheduled'" decoration-warning="state == 'in_progress'" decoration-success="state == 'completed'" decoration-muted="state == 'cancelled'"/>
+                <field name="name" string="Código" optional="show"/>
             </tree>
         </field>
     </record>
@@ -85,7 +102,8 @@
                                             <i class="fa fa-map-pin me-1" title="Posiciones GPS"/><field name="position_count"/> pts
                                         </span>
                                     </div>
-                                    <button name="action_report_incident"
+                                    <button t-if="record.state.raw_value == 'in_progress' or record.state.raw_value == 'scheduled'"
+                                            name="action_report_incident"
                                             type="object"
                                             class="btn btn-outline-danger btn-sm o_georutex_report_btn">
                                         <i class="fa fa-exclamation-triangle me-1" aria-hidden="true"/>Reportar incidencia
@@ -285,6 +303,7 @@
                 <filter string="Programados" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
                 <filter string="En Curso" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter string="Finalizados" name="filter_completed" domain="[('state', '=', 'completed')]"/>
+                <filter string="Cancelados" name="filter_cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
                 <filter string="Datos Reales" name="filter_real" domain="[('source_type', '=', 'real')]"/>
                 <filter string="Simulados" name="filter_simulated" domain="[('source_type', '=', 'simulated')]"/>
@@ -314,11 +333,12 @@
         </field>
     </record>
 
-    <!-- Action Window: Mis Recorridos (Conductor) -->
+    <!-- Action Window: Mis Recorridos (Conductor — Agenda/Listado por defecto) -->
     <record id="action_transport_trip_my_driver" model="ir.actions.act_window">
-        <field name="name">Mis Recorridos</field>
+        <field name="name">Mis recorridos</field>
         <field name="res_model">transport.trip</field>
-        <field name="view_mode">kanban,tree,form</field>
+        <field name="view_mode">tree,kanban,form</field>
+        <field name="view_id" ref="view_transport_trip_driver_tree"/>
         <field name="domain">['|', ('driver_user_id', '=', uid), ('driver_id.user_ids', 'in', [uid])]</field>
         <field name="context">{'search_default_filter_my_trips': 1}</field>
         <field name="search_view_id" ref="view_transport_trip_search"/>

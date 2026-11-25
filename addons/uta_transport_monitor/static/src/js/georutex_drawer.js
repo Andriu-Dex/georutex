@@ -86,6 +86,7 @@ export class GeoRutexDrawerDialog extends Component {
         this.drawerRef = useRef("drawerRoot");
         this._tl = null;
         this._footerObserver = null;
+        this._previousFocus = document.activeElement;
         this._isClosing = false;
         this._isSaving = false;
         this._recordDirty = false;
@@ -253,11 +254,14 @@ export class GeoRutexDrawerDialog extends Component {
                 this._tl.kill();
                 this._tl = null;
             }
-            // Guarantee main page scroll is never left locked after closing Drawer
+            // Guarantee main page scroll is never left locked and restore trigger focus after closing Drawer
             window.requestAnimationFrame(() => {
                 if (!document.querySelector(".modal.d-block")) {
                     document.body.classList.remove("modal-open");
                     document.body.style.overflow = "";
+                }
+                if (this._previousFocus && typeof this._previousFocus.focus === "function" && document.contains(this._previousFocus)) {
+                    this._previousFocus.focus({ preventScroll: true });
                 }
             });
         });

@@ -154,6 +154,47 @@ export function animateGeorutexPopover(el) {
 }
 
 /**
+ * Animates real SVG route progress paths tied to actual completion percentage.
+ * Never fabricates motion when progress is 0 or reduced motion is preferred.
+ */
+export function animateGeorutexTrajectory(rootEl) {
+    const gsap = window.gsap;
+    if (!gsap || !rootEl || prefersReducedMotion()) {
+        return () => {};
+    }
+    const paths = rootEl.querySelectorAll("[data-grx-trajectory-progress]");
+    if (!paths.length) {
+        return () => {};
+    }
+    const tweens = [];
+    paths.forEach((pathEl) => {
+        if (typeof pathEl.getTotalLength !== "function") return;
+        const pct = Math.max(0, Math.min(100, Number(pathEl.getAttribute("data-grx-progress")) || 0));
+        const total = pathEl.getTotalLength();
+        if (!total) return;
+        const targetOffset = total * (1 - pct / 100);
+        pathEl.style.strokeDasharray = `${total}`;
+        pathEl.style.strokeDashoffset = `${total}`;
+        if (pct <= 0) return;
+        const tw = gsap.to(pathEl, {
+            strokeDashoffset: targetOffset,
+            duration: 0.44,
+            ease: "power2.out",
+        });
+        tweens.push(tw);
+    });
+    return () => {
+        tweens.forEach((tw) => {
+            try {
+                tw.kill();
+            } catch (_err) {
+                // Safe ignore
+            }
+        });
+    };
+}
+
+/**
  * Discrete GSAP reveal for branded GeoRutex SVG empty states (.grx-nocontent).
  */
 export function animateGeorutexEmptyStates(scope = document) {

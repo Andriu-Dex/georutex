@@ -5,24 +5,20 @@
         <field name="name">transport.incident.tree</field>
         <field name="model">transport.incident</field>
         <field name="arch" type="xml">
-            <tree string="Incidencias Operacionales"
-                  decoration-danger="severity in ('critical', 'high')"
-                  decoration-warning="severity == 'medium'"
-                  decoration-success="state == 'justified'"
-                  decoration-muted="state == 'rejected'">
-                <field name="name" string="Código"/>
-                <field name="timestamp_utc" string="Fecha y Hora"/>
+            <tree string="Incidencias">
+                <field name="incident_type" string="Tipo de incidencia"/>
                 <field name="trip_id" string="Recorrido"/>
-                <field name="vehicle_id" string="Vehículo"/>
-                <field name="driver_id" string="Conductor"/>
-                <field name="incident_type" string="Tipo de Incidencia"/>
-                <field name="source" string="Origen"/>
-                <field name="severity" string="Severidad" widget="badge"/>
+                <field name="timestamp_utc" string="Fecha y hora"/>
+                <field name="severity" string="Prioridad" widget="badge"/>
                 <field name="state" string="Estado" widget="badge"
                        decoration-info="state == 'pending'"
                        decoration-success="state == 'justified'"
                        decoration-danger="state == 'rejected'"
                        decoration-warning="state == 'confirmed'"/>
+                <field name="vehicle_id" string="Vehículo" groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"/>
+                <field name="driver_id" string="Conductor" groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"/>
+                <field name="source" string="Origen" groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager" optional="hide"/>
+                <field name="name" string="Código" optional="hide"/>
                 <button name="action_open_justify_wizard"
                         string="Justificar"
                         type="object"
@@ -92,9 +88,13 @@
                     <group>
                         <group string="Recorrido">
                             <field name="trip_id" string="Recorrido asociado" options="{'no_create': True}" placeholder="Selecciona tu recorrido..."/>
-                            <field name="vehicle_id" string="Vehículo"/>
-                            <field name="route_id" string="Ruta"/>
-                            <field name="driver_id" string="Conductor"/>
+                            <div class="text-muted small py-1" colspan="2"
+                                 attrs="{'invisible': [('trip_id', '!=', False)]}">
+                                Al seleccionar un recorrido, se completarán automáticamente el vehículo, la ruta y el conductor asociados.
+                            </div>
+                            <field name="vehicle_id" string="Vehículo" attrs="{'invisible': [('trip_id', '=', False)]}"/>
+                            <field name="route_id" string="Ruta" attrs="{'invisible': [('trip_id', '=', False)]}"/>
+                            <field name="driver_id" string="Conductor" attrs="{'invisible': [('trip_id', '=', False)]}"/>
                         </group>
                         <group string="¿Qué ocurrió?">
                             <field name="incident_type" string="Tipo de incidencia"/>

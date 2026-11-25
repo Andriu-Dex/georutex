@@ -16,12 +16,12 @@
     color: var(--grx-ink-primary);
     background: var(--grx-ops-bg);
 }
-.o_web_client a,
+.o_web_client a:not(.grx-sb-item):not(.btn):not(.dropdown-item):not(.o_nav_entry):not(.grx-topbar-brand):not(.grx-foreign-link),
 .o_web_client .o_external_button,
 .o_web_client .o_field_many2one_selection .o_external_button {
     color: var(--grx-brand-primary) !important;
 }
-.o_web_client a:hover,
+.o_web_client a:not(.grx-sb-item):not(.btn):not(.dropdown-item):not(.o_nav_entry):not(.grx-topbar-brand):not(.grx-foreign-link):hover,
 .o_web_client .o_external_button:hover { color: var(--grx-brand-deep) !important; }
 .o_web_client .btn-link { color: var(--grx-brand-primary) !important; }
 .o_web_client .o_searchview .o_searchview_facet .o_searchview_facet_label {
@@ -221,22 +221,28 @@
 .grx-sidebar-mobile-head { display: none; }
 .grx-sidebar-footer { padding: 10px; border-top: 1px solid var(--grx-ops-border); }
 
+.o_web_client .grx-sidebar a.grx-sb-item,
 .grx-sb-item, .grx-sb-group-head, .grx-sb-collapse-btn {
     display: flex; align-items: center; gap: 12px; width: 100%;
     min-height: 40px; padding: 8px 10px;
     border: 0; border-radius: var(--grx-ops-radius-sm);
-    background: transparent; color: var(--grx-ink-secondary) !important;
+    background: transparent; color: #334155 !important;
     font-size: 14px; font-weight: 600; text-decoration: none; text-align: left;
     cursor: pointer; white-space: nowrap;
     transition: background var(--grx-dur-micro), color var(--grx-dur-micro);
 }
-.grx-sb-item:hover, .grx-sb-collapse-btn:hover { background: var(--grx-ops-hover); color: var(--grx-ink-primary) !important; }
+.o_web_client .grx-sidebar a.grx-sb-item .grx-sb-icon { color: #64748b !important; }
+.o_web_client .grx-sidebar a.grx-sb-item:hover,
+.grx-sb-item:hover, .grx-sb-collapse-btn:hover { background: var(--grx-ops-hover); color: #111827 !important; }
+.o_web_client .grx-sidebar a.grx-sb-item:hover .grx-sb-icon { color: #334155 !important; }
+.o_web_client .grx-sidebar a.grx-sb-item.is-active,
 .grx-sb-item.is-active {
     background: var(--grx-brand-tint);
     color: var(--grx-brand-primary) !important;
     font-weight: 700;
-    box-shadow: inset 0 0 0 1px rgba(26, 86, 219, 0.14);
+    box-shadow: inset 3px 0 0 var(--grx-brand-primary);
 }
+.o_web_client .grx-sidebar a.grx-sb-item.is-active .grx-sb-icon { color: var(--grx-brand-primary) !important; }
 .grx-sb-item:focus-visible, .grx-sb-group-head:focus-visible { outline: 0; box-shadow: var(--grx-ops-focus-ring); }
 .grx-sb-item.dropdown-item::before, .grx-sb-item.active::before { content: none !important; display: none !important; }
 .grx-sb-icon { display: inline-grid; place-items: center; flex: 0 0 22px; width: 22px; font-size: 16px; }
@@ -308,8 +314,8 @@
 }
 @media (min-width: 992px) { .grx-sidebar-backdrop { display: none; } }
 
-/* ---------- 3. Native Odoo control sanity (fixes deformed radios/checkboxes) ---------- */
-.o_web_client .btn { font-size: 13.5px; font-weight: 600; border-radius: var(--grx-ops-radius-sm); }
+/* ---------- 3. Native Odoo control sanity (natural capitalization, crisp controls) ---------- */
+.o_web_client .btn { font-size: 13.5px; font-weight: 600; border-radius: var(--grx-ops-radius-sm); text-transform: none !important; }
 .o_web_client .btn-primary,
 .o_web_client .btn.oe_highlight {
     background: var(--grx-brand-primary); border-color: var(--grx-brand-primary); color: #fff;
@@ -372,7 +378,8 @@
     font-size: 12px; font-weight: 700; text-transform: none; letter-spacing: 0;
     border-bottom: 1px solid var(--grx-ops-border-strong); padding: 10px 10px;
 }
-.o_web_client .o_list_view .o_list_table td { padding: 9px 10px; font-size: 13.5px; vertical-align: middle; }
+.o_web_client .o_list_view .o_list_table td { padding: 10px 12px; font-size: 13.5px; vertical-align: middle; font-variant-numeric: tabular-nums; }
+.o_web_client .o_list_view .o_list_table tbody tr { min-height: 44px; }
 .o_web_client .o_list_view .o_list_renderer { background: var(--grx-ops-surface); border-radius: var(--grx-ops-radius-md); }
 .o_web_client .o_list_table tbody tr:hover { background: var(--grx-ops-hover); }
 .o_web_client .o_list_table .badge, .o_web_client .o_field_badge { border-radius: 999px; font-weight: 700; font-size: 12px; }
@@ -684,9 +691,11 @@
 /* Refined Preferences Modal (compact, crisp, zero Odoo purple) */
 .o_web_client .modal-dialog:has(.grx-preferences-form) { max-width: 680px; }
 .o_web_client .grx-preferences-form .oe_avatar {
+    width: 72px; height: 72px;
     border-radius: 50%; overflow: hidden; border: 2px solid var(--grx-ops-border);
     box-shadow: var(--grx-ops-shadow-xs);
 }
+.o_web_client .grx-preferences-form .oe_avatar img { width: 72px; height: 72px; object-fit: cover; }
 .o_web_client .grx-preferences-form h1 { font-family: var(--grx-font-display); font-size: 22px; font-weight: 800; color: var(--grx-ink-primary); }
 .o_web_client .grx-preferences-form .o_notebook { margin-top: 14px; }
 
@@ -883,10 +892,62 @@ button.grx-metric-card:hover { border-color: var(--grx-brand-primary); box-shado
     .grx-two-col { grid-template-columns: minmax(0, 1fr); }
     .grx-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* Hide generic Odoo Discuss & Activity menus for Drivers (they use GeoRutex Operational Notification Bell) */
+.o_web_client.o_georutex_driver_mode .o_main_navbar .o_MessagingMenu,
+.o_web_client.o_georutex_driver_mode .o_main_navbar .o_ActivityMenuView { display: none !important; }
+
+/* GeoRutex Operational Notification Center (Systray Bell) */
+.grx-notif-menu { position: relative; display: inline-flex; align-items: center; }
+.grx-notif-btn {
+    position: relative; display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border: 0; border-radius: var(--grx-ops-radius-sm);
+    background: transparent; color: #475569; cursor: pointer;
+    transition: background var(--grx-dur-micro), color var(--grx-dur-micro);
+}
+.grx-notif-btn:hover, .grx-notif-btn[aria-expanded="true"] { background: var(--grx-ops-hover); color: var(--grx-brand-primary); }
+.grx-notif-badge {
+    position: absolute; top: 3px; right: 2px; min-width: 17px; height: 17px; padding: 0 4px;
+    border-radius: 999px; background: var(--grx-brand-primary); color: #fff;
+    font-size: 10px; font-weight: 800; line-height: 17px; text-align: center;
+    box-shadow: 0 0 0 2px var(--grx-ops-surface);
+}
+.grx-notif-panel {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 1090;
+    width: min(380px, calc(100vw - 24px)); max-height: 480px;
+    background: var(--grx-ops-surface); border: 1px solid var(--grx-ops-border);
+    border-radius: var(--grx-ops-radius-md); box-shadow: var(--grx-ops-shadow-md);
+    display: flex; flex-direction: column; overflow: hidden;
+}
+.grx-notif-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 8px;
+    padding: 12px 14px; border-bottom: 1px solid var(--grx-ops-border);
+}
+.grx-notif-head strong { font-family: var(--grx-font-display); font-size: 14px; font-weight: 800; color: var(--grx-ink-primary); }
+.grx-notif-tabs { display: flex; gap: 6px; padding: 8px 14px; border-bottom: 1px solid var(--grx-ops-border); background: var(--grx-ops-surface-soft); }
+.grx-notif-list { overflow-y: auto; max-height: 360px; }
+.grx-notif-item {
+    display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 11px 14px;
+    border: 0; border-bottom: 1px solid var(--grx-ops-border); background: transparent;
+    text-align: left; cursor: pointer; transition: background var(--grx-dur-micro);
+}
+.grx-notif-item:hover { background: var(--grx-ops-hover); }
+.grx-notif-item.is-unread { background: rgba(24, 84, 230, 0.04); }
+.grx-notif-dot { width: 8px; height: 8px; flex: 0 0 8px; margin-top: 5px; border-radius: 50%; background: #cbd5e1; }
+.grx-notif-item.is-unread .grx-notif-dot { background: var(--grx-brand-primary); }
+.grx-notif-item-body { min-width: 0; flex: 1 1 auto; }
+.grx-notif-item-title { font-size: 13px; font-weight: 700; color: var(--grx-ink-primary); }
+.grx-notif-item-msg { font-size: 12.5px; color: var(--grx-ink-secondary); margin-top: 2px; line-height: 1.4; }
+.grx-notif-item-time { font-size: 11.5px; color: var(--grx-ink-subtle); margin-top: 4px; }
+
+/* Responsive 360px clean fit */
 @media (max-width: 767.98px) {
     .o_web_client, .o_main_navbar { max-width: 100vw; overflow-x: clip; }
+    .o_main_navbar { padding: 0 8px; gap: 4px; }
     .o_main_navbar .o_user_menu .oe_topbar_name { display: none; }
-    .grx-ops-container { padding: 14px 12px 88px; gap: 14px; }
+    .grx-ops-container { padding: 12px 10px 88px; gap: 12px; width: 100%; box-sizing: border-box; }
+    .grx-page-header, .grx-header-actions, .grx-card { max-width: 100%; min-width: 0; }
+    .grx-header-actions { gap: 6px; }
+    .grx-status-chip { padding: 4px 10px; font-size: 12px; }
     .grx-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .grx-summary-grid, .grx-metric-grid, .grx-gauge-pair { grid-template-columns: minmax(0, 1fr); }
     .grx-drv-telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -913,4 +974,1305 @@ button.grx-metric-card:hover { border-color: var(--grx-brand-primary); box-shado
 @media (prefers-reduced-motion: reduce) {
     .grx-sidebar, .o_web_client > .o_action_manager, .grx-progress-fill, .grx-kpi-card, .grx-summary-card { transition: none; }
     .grx-bus-ltr, .grx-bus-float, .grx-road-dashes, .grx-dot.is-pulse, .grx-skeleton-line { animation: none; }
+}
+
+
+/* ============================================================================
+   GEORUTEX v16.0.10.0.0 — EDITORIAL & GEOSPATIAL MOBILITY ART DIRECTION
+   Shared surfaces, hairline dividers, deep-ink hero stages, SVG trajectories,
+   IBM Plex Mono telemetry, and Instrument Serif editorial accents.
+   ============================================================================ */
+
+.grx-mono {
+    font-family: var(--grx-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+
+.grx-page-title--editorial {
+    font-family: var(--grx-font-display);
+    font-size: clamp(1.55rem, 2.2vw, 1.95rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: var(--grx-ink-primary);
+    line-height: 1.15;
+}
+
+.grx-serif-accent {
+    font-family: var(--grx-font-editorial);
+    font-style: italic;
+    font-weight: 400;
+    font-size: 1.14em;
+    letter-spacing: -0.01em;
+    color: var(--grx-ink-primary);
+}
+
+.grx-page-header--compact {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--grx-ops-border);
+}
+
+.grx-page-header--editorial {
+    margin-bottom: 16px;
+}
+
+/* Shared architectural surface (replaces repetitive floating card stacks) */
+.grx-surface-panel {
+    background: var(--grx-ops-surface);
+    border: 1px solid var(--grx-ops-border);
+    border-radius: 10px;
+    box-shadow: var(--grx-ops-shadow-xs);
+    overflow: hidden;
+    min-width: 0;
+}
+
+.grx-panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--grx-ops-border);
+    background: #ffffff;
+}
+
+.grx-panel-title {
+    margin: 0;
+    font-family: var(--grx-font-display);
+    font-size: 0.96rem;
+    font-weight: 700;
+    color: var(--grx-ink-primary);
+    letter-spacing: -0.01em;
+}
+
+.grx-panel-sub {
+    margin: 2px 0 0;
+    font-size: 0.78rem;
+    color: var(--grx-ink-subtle);
+}
+
+/* Hairline-divided ledger rows */
+.grx-ledger-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.grx-ledger-list--md {
+    max-height: 310px;
+    overflow-y: auto;
+}
+
+.grx-ledger-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 18px;
+    border-bottom: 1px solid var(--grx-ops-border);
+    cursor: pointer;
+    transition: background-color 140ms ease;
+    min-width: 0;
+}
+
+.grx-ledger-row:last-child {
+    border-bottom: 0;
+}
+
+.grx-ledger-row:hover {
+    background: #f8fafc;
+}
+
+.grx-ledger-row.is-selected {
+    background: #eff6ff;
+    box-shadow: inset 3px 0 0 var(--grx-brand-primary);
+}
+
+.grx-cell-muted {
+    color: var(--grx-ink-subtle);
+    font-size: 0.8rem;
+}
+
+.grx-link-btn {
+    border: 0;
+    background: transparent;
+    color: var(--grx-brand-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 6px;
+    border-radius: 6px;
+}
+
+.grx-link-btn:hover {
+    background: var(--grx-brand-tint);
+}
+
+/* ============================================================================
+   1. MI JORNADA — DEEP-INK PROTAGONIST STAGE + INTEGRATED TELEMETRY RAIL
+   ============================================================================ */
+.grx-drv-hero-surface {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--grx-ops-border);
+    box-shadow: var(--grx-ops-shadow-sm);
+    margin-bottom: 18px;
+    background: #ffffff;
+}
+
+.grx-drv-stage {
+    background:
+        radial-gradient(620px 240px at 94% 0%, rgba(6, 182, 212, 0.16), transparent 62%),
+        radial-gradient(520px 220px at 4% 100%, rgba(24, 84, 230, 0.2), transparent 64%),
+        #111827;
+    color: #ffffff;
+    padding: 22px 24px 20px;
+}
+
+.grx-drv-stage-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.grx-drv-stage-identity {
+    min-width: 0;
+    flex: 1 1 360px;
+}
+
+.grx-drv-stage-kicker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.78);
+    margin-bottom: 8px;
+}
+
+.grx-stage-state {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 9px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.grx-stage-state.is-amber {
+    background: rgba(245, 158, 11, 0.2);
+    color: #fde68a;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.grx-stage-state.is-blue {
+    background: rgba(59, 130, 246, 0.22);
+    color: #bfdbfe;
+    border: 1px solid rgba(96, 165, 250, 0.35);
+}
+
+.grx-stage-state.is-green {
+    background: rgba(34, 197, 94, 0.2);
+    color: #bbf7d0;
+    border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.grx-stage-meta-sep {
+    opacity: 0.4;
+}
+
+.grx-stage-code {
+    color: #67e8f9;
+    font-size: 0.76rem;
+}
+
+.grx-stage-vehicle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(255, 255, 255, 0.86);
+}
+
+.grx-drv-stage-title {
+    margin: 0 0 6px;
+    font-family: var(--grx-font-display);
+    font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+    line-height: 1.18;
+}
+
+.grx-drv-stage-corridor {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 0.86rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.grx-drv-stage-ctas {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.grx-btn--dark-ghost {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+}
+
+.grx-btn--dark-ghost:hover {
+    background: rgba(255, 255, 255, 0.16) !important;
+}
+
+/* Geospatial SVG Trajectory Band inside Deep-Ink Stage */
+.grx-drv-trajectory-band {
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.grx-drv-trajectory-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.74);
+    margin-bottom: 8px;
+}
+
+.grx-drv-trajectory-head strong {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.grx-drv-trajectory-svg {
+    width: 100%;
+    height: 24px;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.grx-drv-stop-nodes {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.grx-drv-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 5px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.grx-drv-node:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.grx-drv-node-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.grx-drv-node.is-next {
+    border-color: #06b6d4;
+    background: rgba(6, 182, 212, 0.16);
+    color: #ffffff;
+}
+
+.grx-drv-node.is-next .grx-drv-node-num {
+    background: #06b6d4;
+    color: #0f172a;
+}
+
+.grx-drv-node.is-done {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: rgba(34, 197, 94, 0.14);
+}
+
+.grx-drv-node.is-done .grx-drv-node-num {
+    background: #22c55e;
+    color: #052e16;
+}
+
+/* Shared Operational Telemetry Rail (NO 6 nested mini-cards!) */
+.grx-drv-telemetry-rail {
+    display: grid;
+    grid-template-columns: 1.55fr repeat(5, minmax(0, 1fr));
+    background: var(--grx-ops-border);
+    gap: 1px;
+    border-top: 1px solid var(--grx-ops-border);
+}
+
+.grx-rail-cell {
+    background: #ffffff;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.grx-rail-cell--priority {
+    background: #fbfcfd;
+}
+
+.grx-rail-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-rail-val {
+    font-size: 1.02rem;
+    font-weight: 700;
+    color: var(--grx-ink-primary);
+    line-height: 1.25;
+}
+
+.grx-rail-val--wrap {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+}
+
+.grx-rail-sub {
+    font-size: 0.74rem;
+    color: var(--grx-ink-subtle);
+}
+
+/* Asymmetric Driver Map + Integrated Stop Timeline */
+.grx-drv-map-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: start;
+}
+
+.grx-map-wrap--drv-stage {
+    height: 360px;
+}
+
+.grx-map-inline-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 0.74rem;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-map-inline-legend > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.grx-leg-line {
+    display: inline-block;
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.grx-leg-line.is-planned {
+    background: repeating-linear-gradient(90deg, #1854e6 0 5px, transparent 5px 8px);
+}
+
+.grx-leg-line.is-recorded {
+    background: #06b6d4;
+}
+
+.grx-stop-timeline {
+    display: flex;
+    flex-direction: column;
+}
+
+.grx-stop-row {
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--grx-ops-border);
+    background: #ffffff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background-color 140ms ease;
+}
+
+.grx-stop-row:last-child {
+    border-bottom: 0;
+}
+
+.grx-stop-row:hover {
+    background: #f8fafc;
+}
+
+.grx-stop-row.is-next {
+    background: #f0f7ff;
+    box-shadow: inset 3px 0 0 var(--grx-brand-primary);
+}
+
+.grx-stop-row.is-selected {
+    background: #e0f2fe;
+}
+
+.grx-stop-bullet {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.74rem;
+    font-weight: 600;
+    background: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    flex-shrink: 0;
+}
+
+.grx-stop-row.is-next .grx-stop-bullet {
+    background: var(--grx-brand-primary);
+    color: #ffffff;
+    border-color: var(--grx-brand-primary);
+}
+
+.grx-stop-row.is-done .grx-stop-bullet {
+    background: #dcfce7;
+    color: #15803d;
+    border-color: #86efac;
+}
+
+.grx-stop-copy {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.grx-stop-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--grx-ink-primary);
+}
+
+.grx-stop-meta {
+    font-size: 0.75rem;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-next-trip-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 11px 18px;
+    margin-bottom: 18px;
+    background: #ffffff;
+    border: 1px solid var(--grx-ops-border);
+    border-left: 3px solid var(--grx-brand-turquoise);
+    border-radius: 10px;
+}
+
+.grx-next-trip-lead {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.86rem;
+}
+
+/* ============================================================================
+   2. CENTRO DE OPERACIONES — UNIFIED TELEMETRY BAND & COMMAND STAGE
+   ============================================================================ */
+.grx-ops-kpi-band,
+.grx-ana-headline-band {
+    display: grid;
+    gap: 1px;
+    background: var(--grx-ops-border);
+    border: 1px solid var(--grx-ops-border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: var(--grx-ops-shadow-xs);
+}
+
+.grx-ops-kpi-band {
+    grid-template-columns: 1.25fr repeat(5, minmax(0, 1fr));
+}
+
+.grx-ana-headline-band {
+    grid-template-columns: 1.35fr repeat(3, minmax(0, 1fr));
+}
+
+.grx-band-cell {
+    border: 0;
+    background: #ffffff;
+    padding: 12px 16px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    cursor: pointer;
+    transition: background-color 140ms ease;
+    min-width: 0;
+}
+
+.grx-band-cell:hover {
+    background: #f8fafc;
+}
+
+.grx-band-cell--anchor {
+    background:
+        radial-gradient(240px 120px at 100% 0%, rgba(6, 182, 212, 0.2), transparent 65%),
+        #111827;
+    color: #ffffff;
+}
+
+.grx-band-cell--anchor:hover {
+    background:
+        radial-gradient(240px 120px at 100% 0%, rgba(6, 182, 212, 0.28), transparent 65%),
+        #172033;
+}
+
+.grx-band-cell--attention {
+    background: #fef2f2;
+}
+
+.grx-band-cell--attention:hover {
+    background: #fee2e2;
+}
+
+.grx-band-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-band-cell--anchor .grx-band-head {
+    color: rgba(255, 255, 255, 0.76);
+}
+
+.grx-band-val {
+    font-size: 1.42rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--grx-ink-primary);
+    letter-spacing: -0.02em;
+}
+
+.grx-band-cell--anchor .grx-band-val {
+    color: #ffffff;
+}
+
+.grx-band-denom {
+    font-size: 0.92rem;
+    font-weight: 500;
+    opacity: 0.65;
+    margin-left: 2px;
+}
+
+.grx-band-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    font-size: 0.73rem;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-band-cell--anchor .grx-band-foot {
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.grx-band-code {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--grx-ink-subtle);
+    background: #f1f5f9;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+.grx-band-code--dark {
+    background: rgba(255, 255, 255, 0.12);
+    color: #67e8f9;
+}
+
+.grx-band-progress {
+    height: 3px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+.grx-band-progress-fill {
+    height: 100%;
+    background: #06b6d4;
+    border-radius: 999px;
+}
+
+/* Asymmetric Command Stage */
+.grx-ops-command-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 1.85fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+    align-items: stretch;
+}
+
+.grx-map-wrap--command {
+    height: 410px;
+}
+
+.grx-telemetry-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 9px 18px;
+    background: #f8fafc;
+    border-top: 1px solid var(--grx-ops-border);
+    font-size: 0.76rem;
+    color: var(--grx-ink-secondary);
+}
+
+.grx-telemetry-foot-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.grx-ops-fleet-console {
+    display: flex;
+    flex-direction: column;
+}
+
+.grx-connectivity-strip {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--grx-ops-border);
+    border-bottom: 1px solid var(--grx-ops-border);
+}
+
+.grx-conn-cell {
+    background: #f8fafc;
+    padding: 9px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.grx-conn-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.7rem;
+    color: var(--grx-ink-subtle);
+}
+
+.grx-conn-cell strong {
+    font-size: 1.05rem;
+    color: var(--grx-ink-primary);
+}
+
+.grx-console-list {
+    flex: 1 1 auto;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.grx-console-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 16px;
+    border-top: 1px solid var(--grx-ops-border);
+    background: #f8fafc;
+}
+
+.grx-ops-lower-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+/* ============================================================================
+   3. ANÁLISIS DEL SERVICIO — FILTER STRIP, GOAL COMPARISONS & INDICATOR LEDGERS
+   ============================================================================ */
+.grx-ana-filter-strip {
+    background: #ffffff;
+    border: 1px solid var(--grx-ops-border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--grx-ops-shadow-xs);
+}
+
+.grx-goal-stack {
+    display: flex;
+    flex-direction: column;
+}
+
+.grx-goal-item {
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--grx-ops-border);
+}
+
+.grx-goal-item:last-child {
+    border-bottom: 0;
+}
+
+.grx-goal-top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.grx-goal-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--grx-ink-primary);
+}
+
+.grx-goal-code {
+    font-size: 0.7rem;
+    color: var(--grx-ink-subtle);
+    margin-left: 4px;
+}
+
+.grx-goal-val {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--grx-ink-primary);
+}
+
+.grx-goal-track {
+    position: relative;
+    height: 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    overflow: visible;
+}
+
+.grx-goal-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 320ms var(--grx-ease-out);
+}
+
+.grx-goal-fill.is-primary {
+    background: var(--grx-brand-primary);
+}
+
+.grx-goal-fill.is-turquoise {
+    background: var(--grx-brand-turquoise);
+}
+
+.grx-goal-marker {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    background: #111827;
+    border-radius: 1px;
+}
+
+.grx-goal-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.73rem;
+    color: var(--grx-ink-subtle);
+}
+
+/* Shared Hairline-Divided Indicator Ledger (MT-01..08 & MCS-01..04) */
+.grx-indicator-ledger {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--grx-ops-border);
+}
+
+.grx-ledger-metric {
+    border: 0;
+    background: #ffffff;
+    padding: 16px 18px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    cursor: pointer;
+    transition: background-color 140ms ease;
+    min-width: 0;
+}
+
+.grx-ledger-metric:hover {
+    background: #f8fafc;
+}
+
+.grx-ledger-metric--static {
+    cursor: default;
+}
+
+.grx-ledger-metric--static:hover {
+    background: #ffffff;
+}
+
+.grx-analytics-page .grx-surface-panel {
+    margin-bottom: 16px;
+}
+
+.grx-analytics-page .grx-ops-lower-split .grx-surface-panel,
+.grx-analytics-page .grx-ana-main-grid .grx-surface-panel {
+    margin-bottom: 0;
+}
+
+/* ============================================================================
+   4. RESPONSIVE ADAPTATION (1920px -> 360px & 125% / 150% ZOOM — 0px OVERFLOW)
+   ============================================================================ */
+@media (max-width: 1200px) {
+    .grx-ops-kpi-band {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grx-drv-telemetry-rail {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .grx-indicator-ledger {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991px) {
+    .grx-ops-command-stage,
+    .grx-ops-lower-split,
+    .grx-drv-map-split,
+    .grx-ana-headline-band {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .grx-ops-kpi-band {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grx-drv-telemetry-rail {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grx-map-wrap--command,
+    .grx-map-wrap--drv-stage {
+        height: 320px;
+    }
+}
+
+@media (max-width: 640px) {
+    .grx-drv-stage {
+        padding: 16px;
+    }
+    .grx-drv-telemetry-rail,
+    .grx-ops-kpi-band,
+    .grx-indicator-ledger {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .grx-connectivity-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .grx-panel-head {
+        padding: 12px 14px;
+    }
+    .grx-ledger-row,
+    .grx-stop-row {
+        padding: 10px 14px;
+    }
+}
+
+
+/* ============================================================================
+   GEORUTEX v16.0.11.0.0 — PREMIUM LIGHT PRODUCT DESIGN SYSTEM
+   Shopify / Apple Store / Stripe / Linear precision:
+   - Single primary UI font (Plus Jakarta Sans) with tabular numerals
+   - 100% Premium Light surfaces (zero dark hero/KPI blocks)
+   - Discreet role badge, clean commercial tables & Odoo search/filter bar
+   ============================================================================ */
+
+.o_web_client,
+.grx-ops-page,
+.grx-ops-page button,
+.grx-ops-page input,
+.grx-ops-page select,
+.grx-drawer-modal {
+    font-family: var(--grx-font-display) !important;
+}
+
+.grx-num {
+    font-family: var(--grx-font-display);
+    font-variant-numeric: tabular-nums;
+}
+
+.grx-page-title {
+    font-family: var(--grx-font-display) !important;
+    font-size: clamp(1.625rem, 2.2vw, 1.95rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.028em !important;
+    color: var(--grx-ink-primary) !important;
+    line-height: 1.18 !important;
+}
+
+/* Discreet role indicator in topbar (replaces oversized blue pill) */
+.grx-topbar-role-pill {
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    padding: 2px 8px !important;
+    border-radius: 6px !important;
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+    letter-spacing: 0.01em;
+}
+
+/* Premium Light Protagonist Surface for Mi Jornada (replaces dark #111827 stage) */
+.grx-drv-hero-surface--light {
+    border: 1px solid var(--grx-ops-border);
+    border-top: 3px solid var(--grx-brand-primary);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: var(--grx-ops-shadow-xs);
+    overflow: hidden;
+    margin-bottom: 18px;
+}
+
+.grx-drv-stage--light {
+    background: #ffffff !important;
+    color: var(--grx-ink-primary) !important;
+    padding: 20px 22px 18px !important;
+}
+
+.grx-drv-stage-kicker--light {
+    color: var(--grx-ink-subtle) !important;
+    margin-bottom: 8px;
+}
+
+.grx-stage-vehicle--light {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--grx-ink-secondary);
+}
+
+.grx-drv-stage-title--light {
+    color: var(--grx-ink-primary) !important;
+    font-size: clamp(1.4rem, 2.1vw, 1.7rem) !important;
+    margin: 0 0 6px !important;
+}
+
+.grx-drv-stage-corridor--light {
+    color: var(--grx-ink-secondary) !important;
+    font-size: 0.86rem;
+}
+
+.grx-drv-stage-corridor--light strong {
+    color: var(--grx-ink-primary);
+    font-weight: 600;
+}
+
+/* Compact Linear Checkpoint Progress */
+.grx-drv-progress-linear {
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid var(--grx-ops-border);
+}
+
+.grx-drv-progress-linear-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 0.78rem;
+    color: var(--grx-ink-subtle);
+    margin-bottom: 8px;
+}
+
+.grx-drv-progress-linear-head strong {
+    color: var(--grx-ink-primary);
+}
+
+.grx-drv-progress-bar {
+    height: 6px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.grx-drv-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, var(--grx-brand-primary), var(--grx-brand-turquoise));
+    transition: width 320ms var(--grx-ease-out);
+}
+
+.grx-drv-stop-pills {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.grx-drv-pill-node {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px 4px 5px;
+    border-radius: 8px;
+    border: 1px solid var(--grx-ops-border);
+    background: #f8fafc;
+    color: var(--grx-ink-secondary);
+    font-size: 0.76rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.grx-drv-pill-node:hover {
+    background: #f1f5f9;
+}
+
+.grx-drv-pill-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: #e2e8f0;
+    color: #334155;
+}
+
+.grx-drv-pill-node.is-next {
+    background: #eaf0ff;
+    border-color: rgba(24, 84, 230, 0.35);
+    color: var(--grx-brand-primary);
+    font-weight: 600;
+}
+
+.grx-drv-pill-node.is-next .grx-drv-pill-num {
+    background: var(--grx-brand-primary);
+    color: #ffffff;
+}
+
+.grx-drv-pill-node.is-done {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+}
+
+.grx-drv-pill-node.is-done .grx-drv-pill-num {
+    background: #15803d;
+    color: #ffffff;
+}
+
+/* Premium Light KPI Band Anchor Cell (replaces dark #111827 cell in Admin & Analyst) */
+.grx-ops-kpi-band--five {
+    grid-template-columns: 1.2fr repeat(4, minmax(0, 1fr));
+}
+
+.grx-band-cell--anchor-light {
+    background: #ffffff;
+    box-shadow: inset 0 3px 0 var(--grx-brand-primary);
+}
+
+.grx-band-cell--anchor-light:hover {
+    background: #f8fafc;
+}
+
+.grx-band-cell--anchor-light .grx-band-val {
+    color: var(--grx-brand-primary);
+    font-size: 1.75rem;
+}
+
+/* Driver Contextual Map Sidebar (Mi mapa) */
+.grx-drv-map-summary {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--grx-ops-border);
+    background: #ffffff;
+}
+
+.grx-drv-map-kicker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.grx-drv-map-route {
+    margin: 0 0 2px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--grx-ink-primary);
+}
+
+.grx-drv-map-meta {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--grx-ops-border);
+}
+
+.grx-drv-map-meta > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.grx-drv-map-meta strong {
+    font-size: 0.84rem;
+    color: var(--grx-ink-primary);
+}
+
+.grx-drv-map-stops-head {
+    padding: 10px 16px 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--grx-ink-subtle);
+    background: #f8fafc;
+    border-bottom: 1px solid var(--grx-ops-border);
+}
+
+/* Analytical Indicator Tables */
+.grx-ana-table tbody tr {
+    cursor: pointer;
+}
+
+.grx-inline-scale {
+    max-width: 140px;
+    margin-bottom: 3px;
+}
+
+/* Commercial Table & Odoo Search/Filter Bar Refinement inside GeoRutex */
+.o_web_client.grx-app-active .o_control_panel {
+    background: #ffffff !important;
+    border-bottom: 1px solid var(--grx-ops-border) !important;
+    padding: 14px 22px 12px !important;
+}
+
+.o_web_client.grx-app-active .o_control_panel .o_searchview {
+    border: 1px solid var(--grx-ops-border) !important;
+    border-radius: 8px !important;
+    padding: 3px 10px !important;
+    background: #f8fafc !important;
+    transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.o_web_client.grx-app-active .o_control_panel .o_searchview:focus-within {
+    border-color: var(--grx-brand-primary) !important;
+    background: #ffffff !important;
+    box-shadow: var(--grx-ops-focus-ring);
+}
+
+.o_web_client.grx-app-active .o_list_renderer {
+    overflow-x: auto !important;
+    background: #ffffff;
+}
+
+.o_web_client.grx-app-active .o_list_renderer .o_list_table {
+    table-layout: auto !important;
+    width: 100%;
+}
+
+.o_web_client.grx-app-active .o_list_renderer .o_list_table thead th {
+    background: #f8fafc !important;
+    color: #475569 !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    padding: 10px 12px !important;
+    border-bottom: 1px solid var(--grx-ops-border) !important;
+}
+
+.o_web_client.grx-app-active .o_list_renderer .o_list_table tbody td {
+    padding: 10px 12px !important;
+    font-size: 0.85rem;
+    color: var(--grx-ink-primary);
+    border-bottom: 1px solid #f1f5f9 !important;
+    vertical-align: middle;
+    max-width: 320px;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.o_web_client.grx-app-active .o_list_renderer .o_list_table tbody tr:hover {
+    background: #f8fafc !important;
+}
+
+@media (max-width: 1200px) {
+    .grx-ops-kpi-band--five {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991px) {
+    .grx-ops-kpi-band--five {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .grx-ops-kpi-band--five {
+        grid-template-columns: minmax(0, 1fr);
+    }
 }

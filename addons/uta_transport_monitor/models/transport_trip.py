@@ -399,9 +399,29 @@ class TransportTrip(models.Model):
                 if v and v.is_simulated:
                     vals["source_type"] = "simulated"
 
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        if "transport.notification" in self.env:
+            notif_model = self.env["transport.notification"]
+            for trip in records:
+                if trip.driver_user_id and trip.state in ("scheduled", "in_progress"):
+                    route_label = trip.route_id.name or trip.name
+                    notif_model.notify_users(
+                        users=trip.driver_user_id,
+                        title="Nuevo recorrido asignado",
+                        message=f"Se te asignó el recorrido {trip.name} ({route_label}).",
+                        category="trip_assigned",
+                        severity="info",
+                        res_model="transport.trip",
+                        res_id=trip.id,
+                        dedup_key=f"trip_assigned:{trip.id}:{trip.driver_user_id.id}",
+                    )
+        return records
 
     def write(self, vals):
+        prev_meta = {
+            trip.id: (trip.state, trip.scheduled_start_utc, trip.vehicle_id.id, trip.driver_user_id.id)
+            for trip in self
+        }
         for trip in self:
             if trip.state == "draft":
                 override = vals.get(
@@ -446,6 +466,58 @@ class TransportTrip(models.Model):
                             visit.scheduled_at_utc = trip.scheduled_start_utc + timedelta(
                                 seconds=visit.route_stop_id.planned_offset_seconds
                             )
+
+        if "transport.notification" in self.env and any(
+            k in vals for k in ("state", "scheduled_start_utc", "vehicle_id", "driver_user_id")
+        ):
+            notif_model = self.env["transport.notification"]
+            for trip in self:
+                old_state, old_start, old_vehicle, old_driver = prev_meta.get(
+                    trip.id, (None, None, None, None)
+                )
+                if not trip.driver_user_id:
+                    continue
+                route_label = trip.route_id.name or trip.name
+                if vals.get("state") == "cancelled" and old_state != "cancelled":
+                    notif_model.notify_users(
+                        users=trip.driver_user_id,
+                        title="Recorrido cancelado",
+                        message=f"El recorrido {trip.name} ({route_label}) ha sido cancelado.",
+                        category="trip_cancelled",
+                        severity="warning",
+                        res_model="transport.trip",
+                        res_id=trip.id,
+                        dedup_key=f"trip_cancelled:{trip.id}",
+                    )
+                elif (
+                    "driver_user_id" in vals
+                    and trip.driver_user_id.id != old_driver
+                    and trip.state in ("scheduled", "in_progress")
+                ):
+                    notif_model.notify_users(
+                        users=trip.driver_user_id,
+                        title="Nuevo recorrido asignado",
+                        message=f"Se te asignó el recorrido {trip.name} ({route_label}).",
+                        category="trip_assigned",
+                        severity="info",
+                        res_model="transport.trip",
+                        res_id=trip.id,
+                        dedup_key=f"trip_assigned:{trip.id}:{trip.driver_user_id.id}",
+                    )
+                elif trip.state in ("scheduled", "in_progress") and (
+                    ("scheduled_start_utc" in vals and trip.scheduled_start_utc != old_start)
+                    or ("vehicle_id" in vals and trip.vehicle_id.id != old_vehicle)
+                ):
+                    notif_model.notify_users(
+                        users=trip.driver_user_id,
+                        title="Actualización en tu recorrido",
+                        message=f"Se actualizó el horario o vehículo asignado para {trip.name} ({route_label}).",
+                        category="trip_updated",
+                        severity="info",
+                        res_model="transport.trip",
+                        res_id=trip.id,
+                        dedup_key=f"trip_updated:{trip.id}:{trip.scheduled_start_utc}:{trip.vehicle_id.id}",
+                    )
 
         return res
 

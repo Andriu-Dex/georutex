@@ -48,7 +48,7 @@
     --grx-font-display: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
     --grx-font-editorial: "Instrument Serif", Georgia, serif;
     --grx-font-body: "Manrope", "Segoe UI", system-ui, sans-serif;
-    --grx-font-mono: ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace;
+    --grx-font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", "SFMono-Regular", monospace;
 
     --grx-text-xs: 0.75rem;
     --grx-text-sm: 0.875rem;
@@ -89,8 +89,8 @@
     --grx-ops-bg: #f7f6f2;
     --grx-ops-surface: #ffffff;
     --grx-ops-surface-soft: #f5f4ef;
-    --grx-ops-border: #e6e4dc;
-    --grx-ops-border-strong: #d3d0c6;
+    --grx-ops-border: #e2e8f0;
+    --grx-ops-border-strong: #cbd5e1;
     --grx-ops-hover: #f1f0ea;
     --grx-ops-topbar-h: 60px;
     --grx-ops-sidebar-w: 248px;

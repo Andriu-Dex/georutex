@@ -3,12 +3,11 @@
 
     <t t-name="uta_transport_monitor.LiveFleetMapAction" owl="1">
         <div class="o_georutex_live_fleet_view">
-            <!-- Sidebar -->
-            <aside class="o_georutex_live_sidebar" aria-label="Unidades monitoreadas">
+            <!-- Contextual Sidebar -->
+            <aside class="o_georutex_live_sidebar" aria-label="Panel cartográfico">
                 <div class="o_georutex_sidebar_header">
                     <div class="d-flex justify-content-between align-items-center gap-2">
                         <h4>
-                            <i class="fa fa-map-marker grx-ico-primary me-2" aria-hidden="true"/>
                             <t t-if="this.isDriverOnly">Mi mapa</t>
                             <t t-else="">Mapa en vivo</t>
                         </h4>
@@ -16,7 +15,7 @@
                             <button type="button"
                                     class="grx-btn grx-btn--sm grx-btn--icon"
                                     t-on-click="() => this.recenterAll()"
-                                    t-att-title="this.isDriverOnly ? 'Centrar en mi unidad' : 'Reencuadrar todas las unidades'"
+                                    t-att-title="this.isDriverOnly ? 'Centrar en mi ruta o unidad' : 'Reencuadrar todas las unidades'"
                                     aria-label="Reencuadrar mapa">
                                 <i class="fa fa-crosshairs" aria-hidden="true"/>
                             </button>
@@ -32,7 +31,7 @@
 
                     <div class="d-flex justify-content-between align-items-center gap-2">
                         <span class="grx-item-sub">
-                            Actualizado: <strong t-esc="state.lastUpdated || '—'"/>
+                            Actualizado: <strong class="grx-num" t-esc="state.lastUpdated || '—'"/>
                         </span>
                         <button type="button"
                                 t-attf-class="grx-pill #{state.autoRefresh ? 'is-green' : 'is-muted'}"
@@ -70,60 +69,115 @@
                     </t>
                 </div>
 
-                <!-- Vehicle list -->
-                <div class="o_georutex_vehicle_list">
-                    <t t-if="state.isLoading and !state.vehicles.length">
-                        <div class="grx-skeleton-stack p-2">
-                            <div class="grx-skeleton-line"/>
-                            <div class="grx-skeleton-line is-short"/>
-                            <div class="grx-skeleton-line"/>
+                <!-- DRIVER CONTEXTUAL PANEL (Current Trip, Unit, Next Stop & Planned Stops) -->
+                <t t-if="this.isDriverOnly">
+                    <div class="o_georutex_vehicle_list">
+                        <div t-if="state.driverTrip" class="grx-drv-map-summary">
+                            <div class="grx-drv-map-kicker">
+                                <span class="grx-pill is-blue"><t t-esc="state.driverTrip.state_label"/></span>
+                                <span class="grx-mono grx-code-tag"><t t-esc="state.driverTrip.name"/></span>
+                            </div>
+                            <h5 class="grx-drv-map-route"><t t-esc="state.driverTrip.route_name"/></h5>
+                            <p class="grx-item-sub mb-2">
+                                <t t-esc="state.driverTrip.origin_name"/> → <t t-esc="state.driverTrip.destination_name"/>
+                            </p>
+                            <div class="grx-drv-map-meta">
+                                <div>
+                                    <span class="grx-rail-label">Próxima parada</span>
+                                    <strong><t t-esc="state.driverTrip.next_stop_name"/></strong>
+                                </div>
+                                <div>
+                                    <span class="grx-rail-label">Conectividad</span>
+                                    <strong><t t-esc="this.driverConnectivityLabel"/></strong>
+                                </div>
+                                <div>
+                                    <span class="grx-rail-label">Velocidad</span>
+                                    <strong class="grx-num"><t t-esc="this.driverSpeedDisplay"/></strong>
+                                </div>
+                                <div>
+                                    <span class="grx-rail-label">Última posición</span>
+                                    <strong class="grx-num"><t t-esc="this.driverLastFixLabel"/></strong>
+                                </div>
+                            </div>
                         </div>
-                    </t>
-                    <t t-elif="filteredVehicles.length === 0">
-                        <div class="grx-empty">
-                            <i class="fa fa-bus" aria-hidden="true"/>
-                            <t t-if="this.isDriverOnly">
-                                <strong>Sin unidad vinculada</strong>
-                                <p>Cuando tengas un vehículo asignado con rastreo GPS, verás aquí su estado y ubicación en tiempo real.</p>
+
+                        <div t-if="state.driverTrip and state.driverTrip.stops.length" class="grx-drv-map-stops">
+                            <div class="grx-drv-map-stops-head">Paradas planificadas</div>
+                            <t t-foreach="state.driverTrip.stops" t-as="st" t-key="st.id">
+                                <button type="button"
+                                        t-attf-class="grx-stop-row #{st.visited ? 'is-done' : (st.order === state.driverTrip.next_stop_order ? 'is-next' : '')}"
+                                        t-on-click="() => this.focusDriverStop(st)">
+                                    <span class="grx-stop-bullet grx-num"><t t-esc="st.order"/></span>
+                                    <span class="grx-stop-copy">
+                                        <strong class="grx-stop-name"><t t-esc="st.name"/></strong>
+                                        <span class="grx-stop-meta">
+                                            <t t-if="st.visited">Verificada</t>
+                                            <t t-elif="st.order === state.driverTrip.next_stop_order">Siguiente parada</t>
+                                            <t t-else="">Pendiente</t>
+                                        </span>
+                                    </span>
+                                </button>
                             </t>
-                            <t t-else="">
+                        </div>
+
+                        <div t-if="!state.driverTrip and !state.isLoading" class="grx-empty">
+                            <i class="fa fa-map-signs" aria-hidden="true"/>
+                            <strong>Sin recorrido activo</strong>
+                            <p>Cuando tengas un recorrido asignado, verás aquí la ruta planificada y sus paradas.</p>
+                        </div>
+                    </div>
+                </t>
+
+                <!-- FLEET VEHICLE LIST (Admin / Analyst) -->
+                <t t-else="">
+                    <div class="o_georutex_vehicle_list">
+                        <t t-if="state.isLoading and !state.vehicles.length">
+                            <div class="grx-skeleton-stack p-2">
+                                <div class="grx-skeleton-line"/>
+                                <div class="grx-skeleton-line is-short"/>
+                                <div class="grx-skeleton-line"/>
+                            </div>
+                        </t>
+                        <t t-elif="filteredVehicles.length === 0">
+                            <div class="grx-empty">
+                                <i class="fa fa-bus" aria-hidden="true"/>
                                 <strong>Sin unidades para mostrar</strong>
                                 <p>Ajusta los filtros o espera el próximo reporte GPS.</p>
-                            </t>
-                        </div>
-                    </t>
-                    <t t-foreach="filteredVehicles" t-as="v" t-key="v.vehicle_id">
-                        <div class="o_georutex_vehicle_card"
-                             t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''"
-                             role="button"
-                             tabindex="0"
-                             t-on-click="() => this.selectVehicle(v)">
-                            <div class="o_georutex_vehicle_card_title">
-                                <span class="name" t-att-title="v.name"><t t-esc="v.name"/></span>
-                                <span t-if="v.freshness === 'fresh' or v.freshness === 'online'" class="grx-pill is-green">En línea</span>
-                                <span t-elif="v.freshness === 'stale'" class="grx-pill is-amber">Reciente</span>
-                                <span t-elif="v.freshness === 'offline'" class="grx-pill is-red">Sin señal</span>
-                                <span t-else="" class="grx-pill is-muted">Sin datos</span>
                             </div>
-                            <div class="o_georutex_vehicle_card_sub">
-                                <span><strong t-esc="v.license_plate || 'S/P'"/></span> ·
-                                <span><t t-esc="v.driver_name"/></span>
+                        </t>
+                        <t t-foreach="filteredVehicles" t-as="v" t-key="v.vehicle_id">
+                            <div class="o_georutex_vehicle_card"
+                                 t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''"
+                                 role="button"
+                                 tabindex="0"
+                                 t-on-click="() => this.selectVehicle(v)">
+                                <div class="o_georutex_vehicle_card_title">
+                                    <span class="name" t-att-title="v.name"><t t-esc="v.name"/></span>
+                                    <span t-if="v.freshness === 'fresh' or v.freshness === 'online'" class="grx-pill is-green">En línea</span>
+                                    <span t-elif="v.freshness === 'stale'" class="grx-pill is-amber">Reciente</span>
+                                    <span t-elif="v.freshness === 'offline'" class="grx-pill is-red">Sin señal</span>
+                                    <span t-else="" class="grx-pill is-muted">Sin datos</span>
+                                </div>
+                                <div class="o_georutex_vehicle_card_sub">
+                                    <span class="grx-mono"><t t-esc="v.license_plate || 'S/P'"/></span> ·
+                                    <span><t t-esc="v.driver_name"/></span>
+                                </div>
+                                <div class="o_georutex_vehicle_card_footer">
+                                    <span class="grx-num"><i class="fa fa-tachometer me-1" aria-hidden="true"/><t t-esc="this.formatSpeed(v)"/></span>
+                                    <span class="grx-num"><i class="fa fa-clock-o me-1" aria-hidden="true"/><t t-esc="v.fix_time_local"/></span>
+                                </div>
                             </div>
-                            <div class="o_georutex_vehicle_card_footer">
-                                <span class="grx-num"><i class="fa fa-tachometer me-1" aria-hidden="true"/><t t-esc="Math.round(v.speed || 0)"/> km/h</span>
-                                <span><i class="fa fa-clock-o me-1" aria-hidden="true"/><t t-esc="v.fix_time_local"/></span>
-                            </div>
-                        </div>
-                    </t>
-                </div>
+                        </t>
+                    </div>
+                </t>
             </aside>
 
             <!-- Main Map Area -->
             <div class="o_georutex_live_main">
                 <div t-ref="liveMapContainer" class="o_georutex_map"/>
-                <div t-if="!this.positionedCount and !state.isLoading" class="grx-map-empty-overlay">
+                <div t-if="!this.hasAnyMapGeometry and !state.isLoading" class="grx-map-empty-overlay">
                     <strong>Sin coordenadas GPS disponibles</strong>
-                    <div>Las posiciones verificadas de la flota aparecerán automáticamente en este mapa.</div>
+                    <div>Las posiciones verificadas o el trazado planificado aparecerán automáticamente en este mapa.</div>
                 </div>
             </div>
         </div>

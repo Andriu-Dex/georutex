@@ -11,10 +11,16 @@ from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError
 
 
+MODEL_INCIDENT = "transport.incident"
+MODEL_USERS = "res.users"
+GROUP_MANAGER = "uta_transport_monitor.group_transport_manager"
+GROUP_ANALYST = "uta_transport_monitor.group_transport_analyst"
+
+
 class TransportIncident(models.Model):
     """Operational incident recorded during a trip execution."""
 
-    _name = "transport.incident"
+    _name = MODEL_INCIDENT
     _description = "Incidencia Operacional de Transporte"
     _order = "timestamp_utc desc, id desc"
 
@@ -55,7 +61,7 @@ class TransportIncident(models.Model):
         readonly=True,
     )
     driver_user_id = fields.Many2one(
-        comodel_name="res.users",
+        comodel_name=MODEL_USERS,
         string="Usuario Conductor",
         related="trip_id.driver_user_id",
         store=True,
@@ -70,7 +76,7 @@ class TransportIncident(models.Model):
             ("delay_checkpoint", "Retraso en Punto de Control"),
             ("stop_missed", "Omisión de Parada Obligatoria"),
             ("route_deviation", "Desvío del Corredor de Ruta"),
-            ("gps_loss", "Pérdida de Señal GPS (Gap)"),
+            ("gps_loss", "Pérdida de señal GPS"),
             # Manual operational types (RF-28)
             ("traffic_congestion", "Congestión Vehicular Severa"),
             ("accident", "Accidente de Tránsito"),
@@ -157,7 +163,7 @@ class TransportIncident(models.Model):
         help="Motivo alegado para justificar la incidencia.",
     )
     justification_submitted_by = fields.Many2one(
-        comodel_name="res.users",
+        comodel_name=MODEL_USERS,
         string="Justificación Enviada Por",
         readonly=True,
     )
@@ -166,7 +172,7 @@ class TransportIncident(models.Model):
         readonly=True,
     )
     reviewed_by = fields.Many2one(
-        comodel_name="res.users",
+        comodel_name=MODEL_USERS,
         string="Revisado Por",
         readonly=True,
     )
@@ -182,7 +188,7 @@ class TransportIncident(models.Model):
     @api.model
     def _next_incident_code(self):
         return (
-            self.env["ir.sequence"].next_by_code("transport.incident")
+            self.env["ir.sequence"].next_by_code(MODEL_INCIDENT)
             or "INC-NUEVO"
         )
 
@@ -196,7 +202,28 @@ class TransportIncident(models.Model):
                 )
             if not vals.get("name") or vals.get("name") in ("Nuevo", "Borrador", "INC-NUEVO"):
                 vals["name"] = self._next_incident_code()
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        # Notify operational managers and analysts on real manual incident reports
+        notif_model = self.env["transport.notification"]
+        mgr_group = self.env.ref(GROUP_MANAGER, raise_if_not_found=False)
+        ana_group = self.env.ref(GROUP_ANALYST, raise_if_not_found=False)
+        recipients = (mgr_group.users if mgr_group else self.env[MODEL_USERS]) | (
+            ana_group.users if ana_group else self.env[MODEL_USERS]
+        )
+        for rec in records.filtered(lambda r: r.source == "manual"):
+            target_users = recipients - self.env.user
+            if target_users:
+                notif_model.notify_users(
+                    target_users,
+                    title=f"Nueva incidencia reportada ({rec.name})",
+                    message=f"{rec.route_id.name or rec.trip_id.name}: {dict(self._fields['incident_type'].selection).get(rec.incident_type, rec.incident_type)}.",
+                    category="incident_reported",
+                    severity="danger" if rec.severity in ("high", "critical") else "warning",
+                    res_model=MODEL_INCIDENT,
+                    res_id=rec.id,
+                    dedup_key=f"inc_new_{rec.id}",
+                )
+        return records
 
     def action_open_justify_wizard(self):
         """Open quick modal wizard to submit justification."""
@@ -232,12 +259,8 @@ class TransportIncident(models.Model):
         A driver CANNOT approve their own justifications.
         """
         self.ensure_one()
-        is_manager = self.env.user.has_group(
-            "uta_transport_monitor.group_transport_manager"
-        )
-        is_analyst = self.env.user.has_group(
-            "uta_transport_monitor.group_transport_analyst"
-        )
+        is_manager = self.env.user.has_group(GROUP_MANAGER)
+        is_analyst = self.env.user.has_group(GROUP_ANALYST)
 
         if not (is_manager or is_analyst):
             raise AccessError(
@@ -267,17 +290,25 @@ class TransportIncident(models.Model):
             latest = self.trip_id.evaluation_ids.sorted("id", reverse=True)[0]
             latest.compute_adjusted_compliance()
 
+        if self.trip_id.driver_user_id:
+            self.env["transport.notification"].notify_users(
+                self.trip_id.driver_user_id,
+                title=f"Justificación aprobada ({self.name})",
+                message=f"Tu justificación para el recorrido {self.route_id.name or self.trip_id.name} fue aprobada.",
+                category="incident_reviewed",
+                severity="success",
+                res_model=MODEL_INCIDENT,
+                res_id=self.id,
+                dedup_key=f"inc_rev_{self.id}_approved",
+            )
+
         return True
 
     def action_reject_justification(self):
         """Reject justification with segregation of duties (RF-29)."""
         self.ensure_one()
-        is_manager = self.env.user.has_group(
-            "uta_transport_monitor.group_transport_manager"
-        )
-        is_analyst = self.env.user.has_group(
-            "uta_transport_monitor.group_transport_analyst"
-        )
+        is_manager = self.env.user.has_group(GROUP_MANAGER)
+        is_analyst = self.env.user.has_group(GROUP_ANALYST)
 
         if not (is_manager or is_analyst):
             raise AccessError(

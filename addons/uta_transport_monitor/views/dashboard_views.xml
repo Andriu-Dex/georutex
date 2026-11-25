@@ -34,7 +34,7 @@
             <link rel="shortcut icon" href="/uta_transport_monitor/static/src/img/georutex_favicon.png" type="image/png"/>
             <link rel="preconnect" href="https://fonts.googleapis.com"/>
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap"/>
+            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap"/>
         </xpath>
         <xpath expr="//t[@t-set='body_classname']" position="after">
             <div id="grx-boot-splash" class="grx-boot-splash" role="status" aria-live="polite" aria-label="Cargando GeoRutex">

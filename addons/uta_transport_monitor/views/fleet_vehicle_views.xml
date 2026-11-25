@@ -25,6 +25,20 @@
                         help="Genera un identificador con 128 bits de entropía para Traccar Client."/>
             </xpath>
 
+            <!-- Restrict native Fleet maintenance/contract stat buttons to Fleet users (prevents AccessError on fleet.vehicle.log.services for Analysts/Drivers) -->
+            <xpath expr="//button[field[@name='service_count']]" position="attributes">
+                <attribute name="groups">fleet.fleet_group_user</attribute>
+            </xpath>
+            <xpath expr="//button[field[@name='contract_count']]" position="attributes">
+                <attribute name="groups">fleet.fleet_group_user</attribute>
+            </xpath>
+            <xpath expr="//button[field[@name='history_count']]" position="attributes">
+                <attribute name="groups">fleet.fleet_group_user</attribute>
+            </xpath>
+            <xpath expr="//button[field[@name='odometer_count']]" position="attributes">
+                <attribute name="groups">fleet.fleet_group_user</attribute>
+            </xpath>
+
             <!-- Smart button in button box -->
             <xpath expr="//div[@name='button_box']" position="inside">
                 <button name="action_view_positions"
@@ -158,11 +172,121 @@
         </field>
     </record>
 
+    <!-- Dedicated GeoRutex Monitored Fleet Tree View (avoids Fleet contracts/services AccessError for Analyst) -->
+    <record id="view_georutex_monitored_fleet_tree" model="ir.ui.view">
+        <field name="name">fleet.vehicle.tree.georutex.monitored</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="priority" eval="40"/>
+        <field name="arch" type="xml">
+            <tree string="Vehículos">
+                <field name="operational_name" string="Unidad"/>
+                <field name="license_plate" string="Placa"/>
+                <field name="model_id" string="Modelo"/>
+                <field name="driver_id" string="Conductor"/>
+                <field name="gps_connection_status" string="Conexión GPS" widget="badge"
+                       decoration-success="gps_connection_status == 'online'"
+                       decoration-info="gps_connection_status == 'recent'"
+                       decoration-warning="gps_connection_status == 'offline'"
+                       decoration-muted="gps_connection_status == 'unlinked'"/>
+                <field name="last_gps_time_local" string="Último reporte"/>
+                <field name="last_gps_speed" string="Velocidad (km/h)"/>
+                <field name="is_simulated" string="Simulado"/>
+                <field name="trip_count" string="Recorridos"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Dedicated GeoRutex Monitored Fleet Form View (clean mobility & telemetry without Fleet log.services/log.contract) -->
+    <record id="view_georutex_monitored_fleet_form" model="ir.ui.view">
+        <field name="name">fleet.vehicle.form.georutex.monitored</field>
+        <field name="model">fleet.vehicle</field>
+        <field name="priority" eval="40"/>
+        <field name="arch" type="xml">
+            <form string="Vehículo monitoreado">
+                <header groups="uta_transport_monitor.group_transport_manager">
+                    <button name="action_sync_gps_positions" type="object" string="Sincronizar GPS" class="btn-primary"/>
+                    <button name="action_test_traccar_connection" type="object" string="Probar conexión GPS" class="btn-secondary"/>
+                    <button name="action_generate_secure_unique_id" type="object" string="Generar identificador seguro" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <field name="id" invisible="1"/>
+                    <div class="oe_button_box" name="button_box" attrs="{'invisible': [('id', '=', False)]}">
+                        <button name="action_view_positions" type="object" class="oe_stat_button" icon="fa-location-arrow">
+                            <field name="position_count" widget="statinfo" string="Posiciones GPS"/>
+                        </button>
+                        <button name="action_view_trips" type="object" class="oe_stat_button" icon="fa-road">
+                            <field name="trip_count" widget="statinfo" string="Recorridos"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="operational_name" string="Nombre operativo de la unidad"/>
+                        <h1>
+                            <field name="operational_name" placeholder="Ej. Unidad 01"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Datos del vehículo">
+                            <field name="model_id" string="Modelo"/>
+                            <field name="license_plate" string="Placa"/>
+                            <field name="driver_id" string="Conductor asignado"/>
+                        </group>
+                        <group string="Configuración de rastreo GPS">
+                            <field name="gps_tracking_enabled" string="Rastreo GPS activo" widget="boolean_toggle"/>
+                            <field name="traccar_unique_id" string="Identificador de dispositivo"/>
+                            <field name="traccar_device_id" string="ID interno de servidor GPS" groups="uta_transport_monitor.group_transport_manager"/>
+                            <field name="is_physical_accredited" string="Dispositivo físico acreditado" widget="boolean_toggle"/>
+                            <field name="is_simulated" string="Unidad de simulación" widget="boolean_toggle"/>
+                        </group>
+                    </group>
+                    <notebook attrs="{'invisible': [('id', '=', False)]}">
+                        <page string="Telemetría reciente" name="georutex_telemetry">
+                            <group>
+                                <group string="Estado de señal">
+                                    <field name="gps_connection_status" string="Conexión GPS" widget="badge"/>
+                                    <field name="gps_freshness_state" string="Frescura de señal" widget="badge"/>
+                                    <field name="last_gps_time_local" string="Último reporte (ECT)"/>
+                                    <field name="last_gps_speed" string="Velocidad (km/h)"/>
+                                </group>
+                                <group string="Última ubicación">
+                                    <field name="last_gps_latitude" string="Latitud"
+                                           attrs="{'invisible': [('last_gps_latitude', '=', 0), ('last_gps_longitude', '=', 0)]}"/>
+                                    <field name="last_gps_longitude" string="Longitud"
+                                           attrs="{'invisible': [('last_gps_latitude', '=', 0), ('last_gps_longitude', '=', 0)]}"/>
+                                    <div class="text-muted small py-1" colspan="2"
+                                         attrs="{'invisible': ['|', ('last_gps_latitude', '!=', 0), ('last_gps_longitude', '!=', 0)]}">
+                                        Sin posición GPS válida registrada todavía.
+                                    </div>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Ubicación en vivo" name="vehicle_live_map">
+                            <field name="id" widget="vehicle_map_widget" nolabel="1"/>
+                        </page>
+                        <page string="Recorridos asignados" name="georutex_trips">
+                            <field name="trip_ids" readonly="1">
+                                <tree string="Recorridos">
+                                    <field name="name" string="Código"/>
+                                    <field name="route_id" string="Ruta"/>
+                                    <field name="scheduled_start_utc" string="Inicio previsto"/>
+                                    <field name="source_type" string="Origen" widget="badge"/>
+                                    <field name="state" string="Estado" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <!-- Dedicated GeoRutex Monitored Fleet Action -->
     <record id="action_transport_monitored_fleet" model="ir.actions.act_window">
-        <field name="name">Vehículos Monitoreados</field>
+        <field name="name">Vehículos</field>
         <field name="res_model">fleet.vehicle</field>
-        <field name="view_mode">kanban,tree,form,activity</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_georutex_monitored_fleet_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_georutex_monitored_fleet_form')})]"/>
         <field name="context">{'search_default_filter_gps_monitored': 1}</field>
         <field name="help" type="html">
             <div class="grx-nocontent">

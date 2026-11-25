@@ -84,8 +84,8 @@ export class GeoRutexAdminHomeAction extends Component {
             this._initMap();
             await this.loadAdminHome(false);
             this._revertMotion = runGeorutexEntrance(this.rootRef.el, [
-                { selector: ".grx-kpi-card", y: 12, duration: 0.36, stagger: 0.035 },
-                { selector: ".grx-card", y: 14, duration: 0.38, stagger: 0.045 },
+                { selector: ".grx-ops-kpi-band", y: 10, duration: 0.32, stagger: 0 },
+                { selector: ".grx-surface-panel", y: 12, duration: 0.36, stagger: 0.045 },
             ]);
             this._revertCounters = animateGeorutexCounters(this.rootRef.el);
             window.addEventListener("resize", this._onWindowResize);
