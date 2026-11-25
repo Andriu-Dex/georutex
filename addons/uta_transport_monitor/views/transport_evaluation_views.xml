@@ -5,7 +5,9 @@
         <field name="name">transport.trip.evaluation.tree</field>
         <field name="model">transport.trip.evaluation</field>
         <field name="arch" type="xml">
-            <tree string="Evaluaciones de Recorridos"
+            <tree string="Evaluaciones"
+                  create="false"
+                  edit="false"
                   decoration-success="is_compliant_adjusted"
                   decoration-danger="not is_compliant_adjusted and integrity_status != 'insufficient_data'"
                   decoration-warning="integrity_status == 'insufficient_data'">
@@ -31,23 +33,23 @@
         <field name="name">transport.trip.evaluation.form</field>
         <field name="model">transport.trip.evaluation</field>
         <field name="arch" type="xml">
-            <form string="Evaluación de Cumplimiento de Recorrido">
+            <form string="Evaluación de recorrido" create="false" edit="false">
                 <sheet>
                     <div class="oe_title">
-                        <label for="name" string="Código de Evaluación"/>
+                        <label for="name" string="Código de evaluación"/>
                         <h1>
                             <field name="name"/>
                         </h1>
                     </div>
                     <group>
-                        <group string="Datos del Recorrido">
+                        <group string="Datos del recorrido">
                             <field name="trip_id" options="{'no_create': True}"/>
                             <field name="vehicle_id"/>
                             <field name="route_id"/>
                             <field name="route_version_id"/>
                             <field name="driver_id"/>
                         </group>
-                        <group string="Metadatos de Evaluación">
+                        <group string="Información de evaluación">
                             <field name="evaluation_date"/>
                             <field name="evaluator_user_id"/>
                             <field name="rules_version"/>
@@ -104,7 +106,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Parámetros Congelados">
+                        <page string="Parámetros de evaluación">
                             <group>
                                 <field name="parameter_snapshot_json" readonly="1"/>
                             </group>
@@ -142,14 +144,16 @@
 
     <!-- Window Action -->
     <record id="action_transport_trip_evaluation" model="ir.actions.act_window">
-        <field name="name">Evaluaciones de Recorridos</field>
+        <field name="name">Evaluaciones</field>
         <field name="res_model">transport.trip.evaluation</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_trip_evaluation_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No hay evaluaciones registradas.
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-eval"/>
+                <h3>Sin evaluaciones registradas</h3>
+                <p>Las evaluaciones se generan automáticamente desde cada recorrido finalizado mediante el motor de cumplimiento de GeoRutex.</p>
+            </div>
         </field>
     </record>
 </odoo>

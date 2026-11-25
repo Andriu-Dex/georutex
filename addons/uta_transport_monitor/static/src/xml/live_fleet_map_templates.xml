@@ -4,76 +4,129 @@
     <t t-name="uta_transport_monitor.LiveFleetMapAction" owl="1">
         <div class="o_georutex_live_fleet_view">
             <!-- Sidebar -->
-            <div class="o_georutex_live_sidebar">
+            <aside class="o_georutex_live_sidebar" aria-label="Unidades monitoreadas">
                 <div class="o_georutex_sidebar_header">
-                    <h4><i class="fa fa-map-marker text-primary me-2" aria-hidden="true"/>Monitoreo en Vivo</h4>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="text-muted">
-                            Última actualización: <b t-esc="state.lastUpdated"/>
-                        </small>
-                        <button type="button" class="btn btn-sm btn-outline-primary o_georutex_refresh_button" t-on-click="() => this.loadFleetData(true)" title="Refrescar posiciones" aria-label="Actualizar posiciones">
-                            <i class="fa fa-refresh" t-att-class="state.isLoading ? 'fa-spin' : ''"/>
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <h4>
+                            <i class="fa fa-map-marker grx-ico-primary me-2" aria-hidden="true"/>
+                            <t t-if="this.isDriverOnly">Mi mapa</t>
+                            <t t-else="">Mapa en vivo</t>
+                        </h4>
+                        <div class="d-flex align-items-center gap-1">
+                            <button type="button"
+                                    class="grx-btn grx-btn--sm grx-btn--icon"
+                                    t-on-click="() => this.recenterAll()"
+                                    t-att-title="this.isDriverOnly ? 'Centrar en mi unidad' : 'Reencuadrar todas las unidades'"
+                                    aria-label="Reencuadrar mapa">
+                                <i class="fa fa-crosshairs" aria-hidden="true"/>
+                            </button>
+                            <button type="button"
+                                    class="grx-btn grx-btn--sm grx-btn--icon"
+                                    t-on-click="() => this.loadFleetData(true)"
+                                    title="Actualizar posiciones"
+                                    aria-label="Actualizar posiciones">
+                                <i class="fa fa-refresh" t-att-class="state.isLoading ? 'fa-spin' : ''" aria-hidden="true"/>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <span class="grx-item-sub">
+                            Actualizado: <strong t-esc="state.lastUpdated || '—'"/>
+                        </span>
+                        <button type="button"
+                                t-attf-class="grx-pill #{state.autoRefresh ? 'is-green' : 'is-muted'}"
+                                style="border:0;cursor:pointer;"
+                                t-on-click="() => this.toggleAutoRefresh()"
+                                title="Activar o pausar actualización cada 30 segundos">
+                            <t t-if="state.autoRefresh">Auto 30 s</t>
+                            <t t-else="">Pausado</t>
                         </button>
                     </div>
 
-                    <!-- Filter buttons -->
-                    <div class="btn-group btn-group-sm w-100" role="group">
-                        <button type="button" class="btn" t-att-class="state.filter === 'all' ? 'btn-primary' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('all')">
-                            Todos (<t t-esc="state.vehicles.length"/>)
-                        </button>
-                        <button type="button" class="btn" t-att-class="state.filter === 'fresh' ? 'btn-success' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('fresh')">
-                            En Vivo
-                        </button>
-                        <button type="button" class="btn" t-att-class="state.filter === 'stale' ? 'btn-warning' : 'btn-outline-secondary'" t-on-click="() => this.setFilter('stale')">
-                            Sin Reporte
-                        </button>
-                    </div>
+                    <t t-if="!this.isDriverOnly">
+                        <input type="search"
+                               class="grx-search-input w-100"
+                               style="min-width: 0;"
+                               placeholder="Buscar unidad, placa o conductor..."
+                               t-model="state.search"
+                               t-on-input="() => this.updateMarkers()"
+                               aria-label="Buscar unidad"/>
+
+                        <div class="grx-segmented w-100" role="group" aria-label="Filtrar por estado de señal">
+                            <button type="button" class="flex-fill" t-att-class="state.filter === 'all' ? 'is-active' : ''" t-on-click="() => this.setFilter('all')">
+                                Todas (<t t-esc="state.vehicles.length"/>)
+                            </button>
+                            <button type="button" class="flex-fill" t-att-class="state.filter === 'fresh' ? 'is-active' : ''" t-on-click="() => this.setFilter('fresh')">
+                                En línea
+                            </button>
+                            <button type="button" class="flex-fill" t-att-class="state.filter === 'stale' ? 'is-active' : ''" t-on-click="() => this.setFilter('stale')">
+                                Reciente
+                            </button>
+                            <button type="button" class="flex-fill" t-att-class="state.filter === 'offline' ? 'is-active' : ''" t-on-click="() => this.setFilter('offline')">
+                                Sin señal
+                            </button>
+                        </div>
+                    </t>
                 </div>
 
                 <!-- Vehicle list -->
                 <div class="o_georutex_vehicle_list">
-                    <t t-if="filteredVehicles.length === 0">
-                        <div class="text-center text-muted p-4">
-                            <i class="fa fa-bus fa-2x mb-2 d-block"/>
-                            No hay vehículos con el filtro seleccionado
+                    <t t-if="state.isLoading and !state.vehicles.length">
+                        <div class="grx-skeleton-stack p-2">
+                            <div class="grx-skeleton-line"/>
+                            <div class="grx-skeleton-line is-short"/>
+                            <div class="grx-skeleton-line"/>
+                        </div>
+                    </t>
+                    <t t-elif="filteredVehicles.length === 0">
+                        <div class="grx-empty">
+                            <i class="fa fa-bus" aria-hidden="true"/>
+                            <t t-if="this.isDriverOnly">
+                                <strong>Sin unidad vinculada</strong>
+                                <p>Cuando tengas un vehículo asignado con rastreo GPS, verás aquí su estado y ubicación en tiempo real.</p>
+                            </t>
+                            <t t-else="">
+                                <strong>Sin unidades para mostrar</strong>
+                                <p>Ajusta los filtros o espera el próximo reporte GPS.</p>
+                            </t>
                         </div>
                     </t>
                     <t t-foreach="filteredVehicles" t-as="v" t-key="v.vehicle_id">
-                        <div class="o_georutex_vehicle_card" t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''" t-on-click="() => this.selectVehicle(v)">
+                        <div class="o_georutex_vehicle_card"
+                             t-att-class="state.selectedVehicleId === v.vehicle_id ? 'active' : ''"
+                             role="button"
+                             tabindex="0"
+                             t-on-click="() => this.selectVehicle(v)">
                             <div class="o_georutex_vehicle_card_title">
                                 <span class="name" t-att-title="v.name"><t t-esc="v.name"/></span>
-                                <t t-if="v.freshness === 'fresh'">
-                                    <span class="badge bg-success">En vivo</span>
-                                </t>
-                                <t t-elif="v.freshness === 'stale'">
-                                    <span class="badge bg-warning text-dark">Reciente</span>
-                                </t>
-                                <t t-elif="v.freshness === 'offline'">
-                                    <span class="badge bg-danger">Sin señal</span>
-                                </t>
-                                <t t-else="">
-                                    <span class="badge bg-secondary">Sin datos</span>
-                                </t>
+                                <span t-if="v.freshness === 'fresh' or v.freshness === 'online'" class="grx-pill is-green">En línea</span>
+                                <span t-elif="v.freshness === 'stale'" class="grx-pill is-amber">Reciente</span>
+                                <span t-elif="v.freshness === 'offline'" class="grx-pill is-red">Sin señal</span>
+                                <span t-else="" class="grx-pill is-muted">Sin datos</span>
                             </div>
                             <div class="o_georutex_vehicle_card_sub">
-                                <span>Placa: <b t-esc="v.license_plate || 'S/P'"/></span> | 
-                                <span>Conductor: <t t-esc="v.driver_name"/></span>
+                                <span><strong t-esc="v.license_plate || 'S/P'"/></span> ·
+                                <span><t t-esc="v.driver_name"/></span>
                             </div>
                             <div class="o_georutex_vehicle_card_footer">
-                                <span><i class="fa fa-tachometer me-1" aria-hidden="true"/> <t t-esc="v.speed"/> km/h</span>
-                                <span class="text-muted"><i class="fa fa-clock-o me-1" aria-hidden="true"/> <t t-esc="v.fix_time_local"/></span>
+                                <span class="grx-num"><i class="fa fa-tachometer me-1" aria-hidden="true"/><t t-esc="Math.round(v.speed || 0)"/> km/h</span>
+                                <span><i class="fa fa-clock-o me-1" aria-hidden="true"/><t t-esc="v.fix_time_local"/></span>
                             </div>
                         </div>
                     </t>
                 </div>
-            </div>
+            </aside>
 
             <!-- Main Map Area -->
             <div class="o_georutex_live_main">
                 <div t-ref="liveMapContainer" class="o_georutex_map"/>
+                <div t-if="!this.positionedCount and !state.isLoading" class="grx-map-empty-overlay">
+                    <strong>Sin coordenadas GPS disponibles</strong>
+                    <div>Las posiciones verificadas de la flota aparecerán automáticamente en este mapa.</div>
+                </div>
             </div>
         </div>
     </t>
 
 </templates>
-

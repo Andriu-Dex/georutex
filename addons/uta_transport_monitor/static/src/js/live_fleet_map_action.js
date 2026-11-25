@@ -3,9 +3,14 @@
 import { registry } from "@web/core/registry";
 import { Component, onMounted, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
+import { session } from "@web/session";
 
 export class LiveFleetMapAction extends Component {
     static template = "uta_transport_monitor.LiveFleetMapAction";
+
+    get isDriverOnly() {
+        return Boolean(session.georutex_is_driver_only);
+    }
 
     setup() {
         this.orm = useService("orm");
@@ -15,9 +20,16 @@ export class LiveFleetMapAction extends Component {
         this.markers = {};
         this.refreshTimer = null;
 
+        this._onWindowResize = () => {
+            if (this.map) {
+                this.map.invalidateSize({ pan: false });
+            }
+        };
+
         this.state = useState({
             vehicles: [],
-            filter: "all", // all, fresh, stale, offline
+            filter: "all",
+            search: "",
             selectedVehicleId: null,
             isLoading: false,
             autoRefresh: true,
@@ -31,9 +43,11 @@ export class LiveFleetMapAction extends Component {
             if (this.state.autoRefresh) {
                 this.startAutoRefresh();
             }
+            window.addEventListener("resize", this._onWindowResize);
         });
 
         onWillUnmount(() => {
+            window.removeEventListener("resize", this._onWindowResize);
             this.stopAutoRefresh();
             if (this.map) {
                 this.map.remove();
@@ -49,12 +63,14 @@ export class LiveFleetMapAction extends Component {
             return;
         }
 
-        // Center default at Ambato, Ecuador
         this.map = window.L.map(this.mapRef.el).setView([-1.249, -78.625], 13);
         window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(this.map);
+        window.setTimeout(() => {
+            if (this.map) this.map.invalidateSize();
+        }, 160);
     }
 
     startAutoRefresh() {
@@ -63,7 +79,7 @@ export class LiveFleetMapAction extends Component {
             if (this.state.autoRefresh) {
                 void this.loadFleetData(false);
             }
-        }, 30000); // 30 seconds interval
+        }, 30000);
     }
 
     stopAutoRefresh() {
@@ -91,7 +107,7 @@ export class LiveFleetMapAction extends Component {
             this.state.hasLoadError = false;
             this.updateMarkers();
             if (showNotice) {
-                this.notification.add("Datos de flota actualizados correctamente", {
+                this.notification.add("Posiciones de flota actualizadas.", {
                     type: "info",
                     sticky: false,
                 });
@@ -111,16 +127,40 @@ export class LiveFleetMapAction extends Component {
     }
 
     get filteredVehicles() {
-        if (this.state.filter === "all") {
-            return this.state.vehicles;
+        let list = this.state.vehicles || [];
+        if (this.state.filter === "fresh") {
+            list = list.filter((v) => v.freshness === "fresh" || v.freshness === "online");
+        } else if (this.state.filter === "stale") {
+            list = list.filter((v) => v.freshness === "stale");
+        } else if (this.state.filter === "offline") {
+            list = list.filter((v) => v.freshness !== "fresh" && v.freshness !== "online" && v.freshness !== "stale");
         }
-        return this.state.vehicles.filter((v) => v.freshness === this.state.filter);
+        const q = (this.state.search || "").trim().toLowerCase();
+        if (q) {
+            list = list.filter((v) =>
+                [v.name, v.license_plate, v.driver_name]
+                    .filter(Boolean)
+                    .some((f) => String(f).toLowerCase().includes(q))
+            );
+        }
+        return list;
+    }
+
+    get positionedCount() {
+        return this.filteredVehicles.filter((v) => v.has_coordinates).length;
+    }
+
+    _escapeHtml(str) {
+        return String(str || "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
     }
 
     updateMarkers() {
-        if (!this.map) return;
+        if (!this.map || typeof window.L === "undefined") return;
 
-        // Remove old markers
         Object.keys(this.markers).forEach((vId) => {
             this.markers[vId].remove();
             delete this.markers[vId];
@@ -130,15 +170,23 @@ export class LiveFleetMapAction extends Component {
 
         this.filteredVehicles.forEach((v) => {
             if (!v.has_coordinates) return;
-            const pos = [v.latitude, v.longitude];
+            const pos = [Number(v.latitude), Number(v.longitude)];
+            if (!Number.isFinite(pos[0]) || !Number.isFinite(pos[1])) return;
             bounds.push(pos);
+
+            const statusCls =
+                v.freshness === "fresh" || v.freshness === "online"
+                    ? "fresh"
+                    : v.freshness === "stale"
+                    ? "stale"
+                    : "offline";
 
             const busIcon = window.L.divIcon({
                 className: "custom-div-icon",
                 html: `
-                    <div class="georutex-live-bus-marker ${v.freshness}">
-                        <i class="fa fa-bus" style="font-size: 16px;"></i>
-                        <div class="georutex-pulse-ring"></div>
+                    <div class="georutex-live-bus-marker ${statusCls}">
+                        ${statusCls === "fresh" ? '<div class="georutex-pulse-ring"></div>' : ""}
+                        <i class="fa fa-bus" style="font-size: 15px;"></i>
                     </div>
                 `,
                 iconSize: [36, 36],
@@ -146,15 +194,22 @@ export class LiveFleetMapAction extends Component {
             });
 
             const marker = window.L.marker(pos, { icon: busIcon }).addTo(this.map);
+            const sourceLabel = v.is_simulated
+                ? "Simulado"
+                : v.is_physical_accredited
+                ? "Real acreditado"
+                : "No acreditado";
+            const statusLabel =
+                statusCls === "fresh" ? "En línea" : statusCls === "stale" ? "Reciente" : "Sin señal";
+
             marker.bindPopup(`
-                <div style="font-size: 15px; line-height: 1.5;">
-                    <strong style="font-size: 17px;">${v.name}</strong><br/>
-                    <b>Placa:</b> ${v.license_plate || "S/P"}<br/>
-                    <b>Conductor:</b> ${v.driver_name}<br/>
-                    <b>Velocidad:</b> ${v.speed} km/h<br/>
-                    <b>Hora local:</b> ${v.fix_time_local}<br/>
-                    <b>Estado de señal:</b> <span class="badge ${v.freshness === 'fresh' ? 'bg-success' : 'bg-warning'}">${v.freshness.toUpperCase()}</span><br/>
-                    <b>Tipo:</b> ${v.is_simulated ? "Simulado" : (v.is_physical_accredited ? "Real Acreditado" : "No Acreditado")}
+                <div style="font-size: 13px; line-height: 1.45;">
+                    <strong style="font-size: 14px;">${this._escapeHtml(v.name)}</strong><br/>
+                    <b>Placa:</b> ${this._escapeHtml(v.license_plate || "S/P")}<br/>
+                    <b>Conductor:</b> ${this._escapeHtml(v.driver_name)}<br/>
+                    <b>Velocidad:</b> ${Math.round(Number(v.speed) || 0)} km/h<br/>
+                    <b>Último reporte:</b> ${this._escapeHtml(v.fix_time_local)}<br/>
+                    <b>Señal:</b> ${statusLabel} · <b>Origen:</b> ${sourceLabel}
                 </div>
             `);
 
@@ -162,16 +217,27 @@ export class LiveFleetMapAction extends Component {
         });
 
         if (bounds.length > 0 && !this.state.selectedVehicleId) {
-            this.map.fitBounds(bounds, { padding: [40, 40] });
+            this.map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
         }
+    }
+
+    recenterAll() {
+        this.state.selectedVehicleId = null;
+        this.updateMarkers();
     }
 
     selectVehicle(vehicle) {
         this.state.selectedVehicleId = vehicle.vehicle_id;
-        if (!this.map || !vehicle.has_coordinates) return;
+        if (!this.map || !vehicle.has_coordinates) {
+            this.notification.add(`${vehicle.name} aún no tiene coordenadas registradas.`, {
+                type: "info",
+                sticky: false,
+            });
+            return;
+        }
 
-        const pos = [vehicle.latitude, vehicle.longitude];
-        this.map.setView(pos, 16, { animate: true });
+        const pos = [Number(vehicle.latitude), Number(vehicle.longitude)];
+        this.map.flyTo(pos, 16, { duration: 0.65 });
 
         const marker = this.markers[vehicle.vehicle_id];
         if (marker) {
@@ -186,4 +252,3 @@ export class LiveFleetMapAction extends Component {
 }
 
 registry.category("actions").add("uta_transport_live_fleet_map", LiveFleetMapAction);
-

@@ -3,7 +3,7 @@
 import { registry } from "@web/core/registry";
 import { Component, onMounted, onWillUnmount, useRef, useState } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { runGeorutexEntrance } from "./georutex_motion";
+import { runGeorutexEntrance, animateGeorutexCounters } from "./georutex_motion";
 
 export class GeoRutexAdminHomeAction extends Component {
     static template = "uta_transport_monitor.GeoRutexAdminHomeAction";
@@ -23,7 +23,17 @@ export class GeoRutexAdminHomeAction extends Component {
         this._trendChart = null;
         this._refreshTimer = null;
         this._revertMotion = null;
+        this._revertCounters = null;
         this._hasCenteredMap = false;
+
+        this._onWindowResize = () => {
+            if (this._trendChart && typeof this._trendChart.resize === "function") {
+                this._trendChart.resize();
+            }
+            if (this._map) {
+                this._map.invalidateSize({ pan: false });
+            }
+        };
 
         this.state = useState({
             isLoading: true,
@@ -73,14 +83,18 @@ export class GeoRutexAdminHomeAction extends Component {
             this._initMap();
             await this.loadAdminHome(false);
             this._revertMotion = runGeorutexEntrance(this.rootRef.el, [
-                { selector: ".tblr-kpi-tile", y: 12, duration: 0.36, stagger: 0.04 },
+                { selector: ".grx-kpi-card", y: 12, duration: 0.36, stagger: 0.035 },
+                { selector: ".grx-card", y: 14, duration: 0.38, stagger: 0.045 },
             ]);
+            this._revertCounters = animateGeorutexCounters(this.rootRef.el);
+            window.addEventListener("resize", this._onWindowResize);
             this._refreshTimer = window.setInterval(() => {
                 void this.loadAdminHome(false, true);
             }, 30000);
         });
 
         onWillUnmount(() => {
+            window.removeEventListener("resize", this._onWindowResize);
             if (this._refreshTimer) {
                 window.clearInterval(this._refreshTimer);
                 this._refreshTimer = null;
@@ -89,9 +103,12 @@ export class GeoRutexAdminHomeAction extends Component {
                 this._revertMotion();
                 this._revertMotion = null;
             }
+            if (this._revertCounters) {
+                this._revertCounters();
+                this._revertCounters = null;
+            }
             if (this._trendChart) {
                 if (typeof this._trendChart.dispose === "function") this._trendChart.dispose();
-                else if (typeof this._trendChart.destroy === "function") this._trendChart.destroy();
                 this._trendChart = null;
             }
             if (this._map) {
@@ -210,6 +227,7 @@ export class GeoRutexAdminHomeAction extends Component {
 
             const marker = window.L.marker([lat, lon], { icon }).addTo(this._markersLayer);
             const popupDiv = document.createElement("div");
+            popupDiv.className = "grx-map-popup";
             popupDiv.innerHTML =
                 `<strong>${this._escapeHtml(v.name)}</strong><br/>` +
                 `<span>Placa: ${this._escapeHtml(v.license_plate || "S/P")}</span><br/>` +
@@ -238,7 +256,6 @@ export class GeoRutexAdminHomeAction extends Component {
     _renderTrendChart() {
         if (this._trendChart) {
             if (typeof this._trendChart.dispose === "function") this._trendChart.dispose();
-            else if (typeof this._trendChart.destroy === "function") this._trendChart.destroy();
             this._trendChart = null;
         }
         if (!this.hasTrendData || !this.trendChartRef.el || !window.echarts) return;
@@ -247,29 +264,61 @@ export class GeoRutexAdminHomeAction extends Component {
         this._trendChart.setOption({
             tooltip: {
                 trigger: "axis",
-                backgroundColor: "#182433",
-                borderColor: "#182433",
+                backgroundColor: "#111827",
+                borderColor: "#111827",
                 textStyle: { color: "#ffffff", fontSize: 12 },
             },
-            legend: { bottom: 0, data: ["Cumplimiento MT-01", "Puntualidad MT-02"], textStyle: { fontSize: 11 } },
-            grid: { left: 40, right: 16, top: 16, bottom: 34 },
-            xAxis: { type: "category", boundaryGap: false, data: tr.labels, axisLabel: { fontSize: 11, color: "#667382" } },
-            yAxis: { type: "value", min: 0, max: 100, axisLabel: { formatter: "{value}%", fontSize: 11, color: "#667382" }, splitLine: { lineStyle: { color: "#eef2f7" } } },
+            legend: {
+                bottom: 0,
+                data: ["Cumplimiento (MT-01)", "Puntualidad (MT-02)"],
+                textStyle: { fontSize: 12, color: "#475569" },
+            },
+            grid: { left: 42, right: 16, top: 18, bottom: 36 },
+            xAxis: {
+                type: "category",
+                boundaryGap: false,
+                data: tr.labels,
+                axisLine: { lineStyle: { color: "#e5e7eb" } },
+                axisLabel: { fontSize: 11, color: "#64748b" },
+            },
+            yAxis: {
+                type: "value",
+                min: 0,
+                max: 100,
+                axisLabel: { formatter: "{value}%", fontSize: 11, color: "#64748b" },
+                splitLine: { lineStyle: { color: "#f1f5f9" } },
+            },
             series: [
                 {
-                    name: "Cumplimiento MT-01",
+                    name: "Cumplimiento (MT-01)",
                     type: "line",
-                    smooth: 0.3,
+                    smooth: 0.35,
+                    symbolSize: 7,
                     data: tr.gross_compliance,
-                    itemStyle: { color: "#066fd1" },
-                    areaStyle: { color: "rgba(6, 111, 209, 0.09)" },
+                    itemStyle: { color: "#1a56db" },
+                    lineStyle: { width: 2.5 },
+                    areaStyle: {
+                        color: {
+                            type: "linear",
+                            x: 0,
+                            y: 0,
+                            x2: 0,
+                            y2: 1,
+                            colorStops: [
+                                { offset: 0, color: "rgba(26, 86, 219, 0.16)" },
+                                { offset: 1, color: "rgba(26, 86, 219, 0.01)" },
+                            ],
+                        },
+                    },
                 },
                 {
-                    name: "Puntualidad MT-02",
+                    name: "Puntualidad (MT-02)",
                     type: "line",
-                    smooth: 0.3,
+                    smooth: 0.35,
+                    symbolSize: 7,
                     data: tr.punctuality,
-                    itemStyle: { color: "#2fb344" },
+                    itemStyle: { color: "#0bbcd7" },
+                    lineStyle: { width: 2.5 },
                 },
             ],
         });
@@ -288,12 +337,12 @@ export class GeoRutexAdminHomeAction extends Component {
         this.state.selectedVehicleId = v.vehicle_id;
         if (!this._map) return;
         if (v.has_coordinates) {
-            this._map.flyTo([Number(v.latitude), Number(v.longitude)], 15, { duration: 0.7 });
+            this._map.flyTo([Number(v.latitude), Number(v.longitude)], 15, { duration: 0.65 });
             const marker = this._markersById.get(v.vehicle_id);
             if (marker) marker.openPopup();
         } else {
             this.notification.add(
-                `${v.name} aún no reporta coordenadas GPS desde Traccar.`,
+                `${v.name} aún no reporta coordenadas GPS.`,
                 { type: "info", sticky: false }
             );
         }
@@ -374,7 +423,7 @@ export class GeoRutexAdminHomeAction extends Component {
             const msg =
                 res.error_count > 0
                     ? `Sincronizados ${res.synced_count}/${res.tracked_count} vehículos (${res.error_count} con aviso).`
-                    : `Sincronización Traccar completada (${res.synced_count} vehículos).`;
+                    : `Sincronización GPS completada (${res.synced_count} vehículos).`;
             this.notification.add(msg, {
                 type: res.error_count > 0 ? "warning" : "success",
                 sticky: false,
@@ -383,7 +432,7 @@ export class GeoRutexAdminHomeAction extends Component {
         } catch (err) {
             console.error("GeoRutexAdminHome sync error:", err);
             this.notification.add(
-                "No se pudo completar la sincronización con Traccar.",
+                "No se pudo completar la sincronización GPS.",
                 { type: "danger", sticky: false }
             );
         } finally {
@@ -500,7 +549,7 @@ export class GeoRutexAdminHomeAction extends Component {
     }
 
     getFreshnessDotClass(freshness) {
-        if (freshness === "fresh" || freshness === "online") return "is-green is-animated";
+        if (freshness === "fresh" || freshness === "online") return "is-green is-pulse";
         if (freshness === "stale") return "is-amber";
         return "is-red";
     }

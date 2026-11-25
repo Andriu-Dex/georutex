@@ -106,12 +106,11 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_vehicle_position_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No hay posiciones registradas todavía.
-            </p>
-            <p>
-                Las posiciones se sincronizan automáticamente desde Traccar Server o mediante datos móviles.
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-gps"/>
+                <h3>Sin historial GPS registrado</h3>
+                <p>Las posiciones sincronizadas desde los dispositivos vinculados aparecerán aquí automáticamente.</p>
+            </div>
         </field>
     </record>
 </odoo>

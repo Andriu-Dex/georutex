@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <!-- Extend Odoo 16 NavBar: GeoRutex Shell when inside GeoRutex, clean native topbar for other Odoo apps -->
+    <t t-name="uta_transport_monitor.NavBar" t-inherit="web.NavBar" t-inherit-mode="extension" owl="1">
+        <xpath expr="//t[@t-call='web.NavBar.AppsMenu']" position="before">
+            <button t-if="this.isGeoRutexApp()"
+                    type="button"
+                    class="grx-sidebar-toggle"
+                    t-on-click="() => this.toggleGeoRutexSidebar()"
+                    t-att-aria-expanded="(!grxNav.collapsed).toString()"
+                    aria-controls="grx-sidebar-nav"
+                    t-att-title="grxNav.collapsed ? 'Expandir menú lateral' : 'Contraer menú lateral'"
+                    aria-label="Alternar navegación lateral">
+                <i class="fa fa-bars" aria-hidden="true"/>
+            </button>
+        </xpath>
+
+        <xpath expr="//DropdownItem[@t-if='currentApp']" position="replace">
+            <div t-if="currentApp" class="grx-topbar-brand-wrap">
+                <a class="o_menu_brand grx-topbar-brand"
+                   t-att-href="getMenuItemHref(currentApp)"
+                   t-att-data-menu-xmlid="currentApp.xmlid"
+                   t-att-data-section="currentApp.id"
+                   t-on-click.prevent="() => this.onGeoRutexBrandClick(currentApp)">
+                    <img t-if="this.isGeoRutexApp()"
+                         class="grx-topbar-logo"
+                         src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
+                         alt="GeoRutex"
+                         width="30"
+                         height="30"/>
+                    <span class="grx-topbar-brand-text">
+                        <span class="grx-topbar-brand-name" t-esc="currentApp.name"/>
+                        <span t-if="this.isGeoRutexApp()" class="grx-topbar-role-pill" t-esc="grxNav.roleLabel"/>
+                    </span>
+                </a>
+                <button t-if="!this.isGeoRutexApp() and this.getGeoRutexRootApp()"
+                        type="button"
+                        class="grx-back-to-grx-btn"
+                        t-on-click="() => this.returnToGeoRutex()"
+                        title="Volver a la plataforma GeoRutex">
+                    <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
+                         alt=""
+                         width="18"
+                         height="18"
+                         aria-hidden="true"/>
+                    <span>GeoRutex</span>
+                </button>
+            </div>
+        </xpath>
+
+        <xpath expr="//nav" position="after">
+            <div t-if="this.isGeoRutexApp() and grxNav.mobileOpen"
+                 class="grx-sidebar-backdrop"
+                 t-on-click="() => this.closeMobileSidebar()"
+                 aria-hidden="true"/>
+        </xpath>
+    </t>
+
+    <!-- Render GeoRutex vertical sidebar ONLY for GeoRutex; render clean horizontal sections for foreign Odoo apps -->
+    <t t-name="uta_transport_monitor.NavBar.SectionsMenu"
+       t-inherit="web.NavBar.SectionsMenu"
+       t-inherit-mode="extension"
+       owl="1">
+        <xpath expr="//div[@t-ref='appSubMenus']" position="replace">
+            <aside t-if="this.isGeoRutexApp()"
+                   id="grx-sidebar-nav"
+                   class="o_menu_sections grx-sidebar"
+                   t-ref="appSubMenus"
+                   role="navigation"
+                   aria-label="Navegación principal">
+
+                <div class="grx-sidebar-mobile-head">
+                    <div class="grx-sidebar-mobile-brand">
+                        <img src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png"
+                             alt="GeoRutex"
+                             width="28"
+                             height="28"/>
+                        <div>
+                            <div class="grx-sb-brand-title">GeoRutex</div>
+                            <div class="grx-sb-brand-role" t-esc="grxNav.roleLabel"/>
+                        </div>
+                    </div>
+                    <button type="button"
+                            class="grx-sb-close-btn"
+                            t-on-click="() => this.closeMobileSidebar()"
+                            aria-label="Cerrar menú">
+                        <i class="fa fa-times" aria-hidden="true"/>
+                    </button>
+                </div>
+
+                <div class="grx-sidebar-scroll">
+                    <t t-foreach="sections" t-as="section" t-key="section.id">
+                        <!-- Direct top-level menu item (no children) -->
+                        <t t-if="!section.childrenTree.length">
+                            <a t-attf-class="o_nav_entry grx-sb-item #{this.isMenuActive(section) ? 'is-active active' : ''}"
+                               t-att-href="getMenuItemHref(section)"
+                               t-att-title="this.getMenuDisplayName(section)"
+                               t-att-data-menu-xmlid="section.xmlid"
+                               t-att-data-section="section.id"
+                               t-on-click.prevent="() => this.selectGeoRutexMenu(section)">
+                                <span class="grx-sb-icon">
+                                    <i t-attf-class="fa #{this.getMenuIcon(section)}" aria-hidden="true"/>
+                                </span>
+                                <span class="grx-sb-label" t-esc="this.getMenuDisplayName(section)"/>
+                            </a>
+                        </t>
+
+                        <!-- Collapsible grouped section -->
+                        <t t-else="">
+                            <div t-attf-class="grx-sb-group #{this.isGroupOpen(section) ? 'is-open' : 'is-closed'}">
+                                <button type="button"
+                                        class="grx-sb-group-head"
+                                        t-att-title="section.name"
+                                        t-att-data-menu-xmlid="section.xmlid"
+                                        t-att-aria-expanded="this.isGroupOpen(section).toString()"
+                                        t-on-click="() => this.toggleGeoRutexGroup(section)">
+                                    <span class="grx-sb-group-title" t-esc="section.name"/>
+                                    <i class="fa fa-angle-down grx-sb-chevron" aria-hidden="true"/>
+                                </button>
+
+                                <div class="grx-sb-group-items">
+                                    <t t-foreach="section.childrenTree" t-as="item" t-key="item.id">
+                                        <t t-if="!item.childrenTree.length">
+                                            <a t-attf-class="dropdown-item grx-sb-item #{this.isMenuActive(item) ? 'is-active active' : ''}"
+                                               t-att-href="getMenuItemHref(item)"
+                                               t-att-title="this.getMenuDisplayName(item)"
+                                               t-att-data-menu-xmlid="item.xmlid"
+                                               t-att-data-section="item.id"
+                                               t-on-click.prevent="() => this.selectGeoRutexMenu(item, section)">
+                                                <span class="grx-sb-icon">
+                                                    <i t-attf-class="fa #{this.getMenuIcon(item)}" aria-hidden="true"/>
+                                                </span>
+                                                <span class="grx-sb-label" t-esc="this.getMenuDisplayName(item)"/>
+                                            </a>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="grx-sb-subgroup-label" t-esc="item.name"/>
+                                            <t t-foreach="item.childrenTree" t-as="subitem" t-key="subitem.id">
+                                                <a t-attf-class="dropdown-item grx-sb-item grx-sb-item--sub #{this.isMenuActive(subitem) ? 'is-active active' : ''}"
+                                                   t-att-href="getMenuItemHref(subitem)"
+                                                   t-att-title="this.getMenuDisplayName(subitem)"
+                                                   t-att-data-menu-xmlid="subitem.xmlid"
+                                                   t-att-data-section="subitem.id"
+                                                   t-on-click.prevent="() => this.selectGeoRutexMenu(subitem, section)">
+                                                    <span class="grx-sb-icon">
+                                                        <i t-attf-class="fa #{this.getMenuIcon(subitem)}" aria-hidden="true"/>
+                                                    </span>
+                                                    <span class="grx-sb-label" t-esc="this.getMenuDisplayName(subitem)"/>
+                                                </a>
+                                            </t>
+                                        </t>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </div>
+
+                <div class="grx-sidebar-footer">
+                    <button type="button"
+                            class="grx-sb-collapse-btn"
+                            t-on-click="() => this.toggleGeoRutexSidebar()"
+                            t-att-title="grxNav.collapsed ? 'Expandir menú' : 'Contraer menú'">
+                        <i t-attf-class="fa #{grxNav.collapsed ? 'fa-angle-double-right' : 'fa-angle-double-left'}" aria-hidden="true"/>
+                        <span class="grx-sb-label">Contraer menú</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Native horizontal sections bar for non-GeoRutex Odoo apps (Fleet, Settings, Discuss, etc.) -->
+            <div t-else=""
+                 class="o_menu_sections grx-foreign-sections d-flex align-items-center flex-nowrap"
+                 t-ref="appSubMenus"
+                 role="menu">
+                <t t-foreach="sections" t-as="section" t-key="section.id">
+                    <t t-if="!section.childrenTree.length">
+                        <a class="o_nav_entry grx-foreign-link"
+                           t-att-href="getMenuItemHref(section)"
+                           t-att-data-menu-xmlid="section.xmlid"
+                           t-att-data-section="section.id"
+                           t-on-click.prevent="() => this.selectForeignMenu(section)">
+                            <t t-esc="section.name"/>
+                        </a>
+                    </t>
+                    <t t-else="">
+                        <div class="dropdown grx-foreign-dropdown position-relative">
+                            <button type="button"
+                                    class="dropdown-toggle grx-foreign-link"
+                                    t-att-aria-expanded="(grxNav.openForeignDropdownId === section.id).toString()"
+                                    t-on-click.stop="() => this.toggleForeignDropdown(section.id)">
+                                <span t-esc="section.name"/>
+                            </button>
+                            <div t-if="grxNav.openForeignDropdownId === section.id"
+                                 class="dropdown-menu show grx-foreign-menu">
+                                <t t-foreach="section.childrenTree" t-as="item" t-key="item.id">
+                                    <t t-if="!item.childrenTree.length">
+                                        <a class="dropdown-item"
+                                           t-att-href="getMenuItemHref(item)"
+                                           t-att-data-menu-xmlid="item.xmlid"
+                                           t-on-click.prevent="() => this.selectForeignMenu(item)">
+                                            <t t-esc="item.name"/>
+                                        </a>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="dropdown-header" t-esc="item.name"/>
+                                        <t t-foreach="item.childrenTree" t-as="subitem" t-key="subitem.id">
+                                            <a class="dropdown-item ps-4"
+                                               t-att-href="getMenuItemHref(subitem)"
+                                               t-att-data-menu-xmlid="subitem.xmlid"
+                                               t-on-click.prevent="() => this.selectForeignMenu(subitem)">
+                                                <t t-esc="subitem.name"/>
+                                            </a>
+                                        </t>
+                                    </t>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </div>
+        </xpath>
+    </t>
+
+</templates>

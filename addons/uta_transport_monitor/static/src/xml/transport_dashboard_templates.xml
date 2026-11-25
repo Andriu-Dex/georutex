@@ -1,423 +1,442 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="uta_transport_monitor.TransportDashboardAction" owl="1">
-        <div class="georutex-dashboard-container">
-            <header class="tblr-page-header px-4 pt-3 pb-2 mb-0 bg-white">
-                <div>
-                    <div class="tblr-pretitle">ANALÍTICA ESTADÍSTICA · ISO/IEC 25010</div>
-                    <h1 class="tblr-page-title">Monitoreo y Métricas de Transporte (MT-01..08 · MCS-01..04)</h1>
-                </div>
-                <div class="tblr-header-right">
-                    <button type="button"
-                            class="tblr-btn"
-                            t-on-click="openEvaluationsList"
-                            title="Consultar evaluaciones y sus parámetros guardados">
-                        <i class="fa fa-history" aria-hidden="true"/>
-                        <span>Auditoría de Evaluaciones</span>
-                    </button>
-                </div>
-            </header>
-
-            <div class="georutex-dashboard-toolbar">
-                <div class="georutex-period-pills" role="group" aria-label="Período del dashboard">
-                    <button type="button"
-                            t-attf-class="georutex-period-button #{state.activePreset == 'today' ? 'active' : ''}"
-                            t-on-click="() => this.setDatePreset('today')">Hoy</button>
-                    <button type="button"
-                            t-attf-class="georutex-period-button #{state.activePreset == 'week' ? 'active' : ''}"
-                            t-on-click="() => this.setDatePreset('week')">Esta semana</button>
-                    <button type="button"
-                            t-attf-class="georutex-period-button #{state.activePreset == 'month' ? 'active' : ''}"
-                            t-on-click="() => this.setDatePreset('month')">Este mes</button>
-                    <button type="button"
-                            t-attf-class="georutex-period-button #{state.activePreset == 'all' ? 'active' : ''}"
-                            t-on-click="() => this.setDatePreset('all')">Histórico</button>
-                </div>
-                <div class="georutex-toolbar-actions">
-                    <button type="button"
-                            class="btn georutex-button-light"
-                            t-on-click="refreshDashboard"
-                            title="Actualizar métricas y posiciones GPS">
-                        <i class="fa fa-refresh me-1"/> Actualizar
-                    </button>
-                    <button type="button"
-                            class="btn georutex-button-blue"
-                            t-att-aria-expanded="state.filtersOpen"
-                            t-on-click="toggleFilterPanel">
-                        <i class="fa fa-filter me-1"/> Filtrar
-                    </button>
-                </div>
-            </div>
-
-            <form t-if="state.filtersOpen"
-                  class="georutex-filter-panel"
-                  t-on-submit="onFilterSubmit">
-                <div class="georutex-filter-field">
-                    <label for="georutex-date-from">Desde</label>
-                    <input id="georutex-date-from" type="date" t-model="state.filters.date_from"/>
-                </div>
-                <div class="georutex-filter-field">
-                    <label for="georutex-date-to">Hasta</label>
-                    <input id="georutex-date-to" type="date" t-model="state.filters.date_to"/>
-                </div>
-                <div class="georutex-filter-field">
-                    <label for="georutex-route-filter">Ruta</label>
-                    <select id="georutex-route-filter" t-model="state.filters.route_id">
-                        <option value="">Todas las rutas</option>
-                        <t t-foreach="state.availableRoutes" t-as="route" t-key="route.id">
-                            <option t-att-value="route.id"><t t-esc="route.name"/></option>
-                        </t>
-                    </select>
-                </div>
-                <div class="georutex-filter-field">
-                    <label for="georutex-vehicle-filter">Vehículo</label>
-                    <select id="georutex-vehicle-filter" t-model="state.filters.vehicle_id">
-                        <option value="">Todos los vehículos</option>
-                        <t t-foreach="state.availableVehicles" t-as="vehicle" t-key="vehicle.id">
-                            <option t-att-value="vehicle.id"><t t-esc="vehicle.name"/></option>
-                        </t>
-                    </select>
-                </div>
-                <div class="georutex-filter-field">
-                    <label for="georutex-source-filter">Fuente</label>
-                    <select id="georutex-source-filter" t-model="state.filters.source_type">
-                        <option value="combined">Real y simulado</option>
-                        <option value="real">Solo real</option>
-                        <option value="simulated">Solo simulado</option>
-                    </select>
-                </div>
-                <div class="georutex-filter-field">
-                    <span class="d-block" aria-hidden="true">&#160;</span>
-                    <button type="submit" class="btn georutex-button-blue">
-                        Aplicar filtros
-                    </button>
-                </div>
-                <div class="georutex-filter-field">
-                    <span class="d-block" aria-hidden="true">&#160;</span>
-                    <button type="button"
-                            class="btn georutex-button-light"
-                            t-on-click="onResetFilters">
-                        Limpiar
-                    </button>
-                </div>
-            </form>
-
-            <main class="georutex-dashboard-content">
-                <t t-if="state.isLoading">
-                    <div class="georutex-dashboard-loading" role="status" aria-live="polite">
-                        <span class="spinner-border" aria-hidden="true"/>
-                        <span class="visually-hidden">Cargando métricas…</span>
+        <div class="grx-ops-page grx-analytics-page" t-ref="analyticsRoot">
+            <div class="grx-ops-container">
+                <!-- 1. ANALYST HEADER: "ANÁLISIS DEL SERVICIO" -->
+                <header class="grx-page-header">
+                    <div class="grx-page-heading">
+                        <div class="grx-eyebrow">
+                            <span class="grx-eyebrow-dot" aria-hidden="true"/>
+                            <span>Evaluación e indicadores</span>
+                            <span class="grx-eyebrow-sep">·</span>
+                            <span>
+                                Fuente:
+                                <t t-esc="state.filters.source_type == 'real' ? 'Solo real' : (state.filters.source_type == 'simulated' ? 'Solo simulado' : 'Combinado')"/>
+                            </span>
+                        </div>
+                        <h1 class="grx-page-title">Análisis del servicio</h1>
                     </div>
-                </t>
+                    <div class="grx-header-actions">
+                        <button type="button"
+                                class="grx-btn"
+                                t-on-click="openEvaluationsList"
+                                title="Consultar evaluaciones guardadas y sus parámetros">
+                            <i class="fa fa-history" aria-hidden="true"/>
+                            <span>Auditoría de evaluaciones</span>
+                        </button>
+                        <button type="button"
+                                class="grx-btn"
+                                t-on-click="refreshDashboard"
+                                t-att-disabled="state.isLoading"
+                                title="Actualizar indicadores y posiciones">
+                            <i t-attf-class="fa fa-refresh #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
+                            <span>Actualizar</span>
+                        </button>
+                    </div>
+                </header>
 
-                <section class="georutex-dashboard-section georutex-summary-grid"
-                         aria-label="Resumen operativo">
-                    <button type="button"
-                            class="georutex-summary-card georutex-summary-card--blue"
-                            t-on-click="() => this.openTripsList('all')">
-                        <span class="georutex-summary-label">
-                            Recorridos evaluados
-                            <i class="fa fa-bus georutex-summary-icon" aria-hidden="true"/>
-                        </span>
-                        <span class="georutex-summary-value-row">
-                            <strong class="georutex-summary-value">
+                <!-- 2. COMPACT ANALYTICAL FILTER TOOLBAR (Always visible Real / Simulated / Combined separation!) -->
+                <section class="grx-card grx-filter-bar-card" aria-label="Filtros de análisis">
+                    <div class="grx-filter-bar-row">
+                        <div class="grx-filter-bar-group">
+                            <span class="grx-filter-bar-label">Período</span>
+                            <div class="grx-segmented" role="group" aria-label="Período del análisis">
+                                <button type="button" t-att-class="state.activePreset === 'today' ? 'is-active' : ''" t-on-click="() => this.setDatePreset('today')">Hoy</button>
+                                <button type="button" t-att-class="state.activePreset === 'week' ? 'is-active' : ''" t-on-click="() => this.setDatePreset('week')">Semana</button>
+                                <button type="button" t-att-class="state.activePreset === 'month' ? 'is-active' : ''" t-on-click="() => this.setDatePreset('month')">Mes</button>
+                                <button type="button" t-att-class="state.activePreset === 'all' ? 'is-active' : ''" t-on-click="() => this.setDatePreset('all')">Histórico</button>
+                            </div>
+                        </div>
+
+                        <div class="grx-filter-bar-group">
+                            <span class="grx-filter-bar-label">Fuente de datos</span>
+                            <div class="grx-segmented" role="group" aria-label="Fuente de datos">
+                                <button type="button" t-att-class="state.filters.source_type === 'combined' ? 'is-active' : ''" t-on-click="() => this.onSourceTypeChange('combined')">Combinado</button>
+                                <button type="button" t-att-class="state.filters.source_type === 'real' ? 'is-active' : ''" t-on-click="() => this.onSourceTypeChange('real')">Real</button>
+                                <button type="button" t-att-class="state.filters.source_type === 'simulated' ? 'is-active' : ''" t-on-click="() => this.onSourceTypeChange('simulated')">Simulado</button>
+                            </div>
+                        </div>
+
+                        <div class="grx-filter-bar-actions">
+                            <button type="button"
+                                    t-attf-class="grx-btn #{state.filtersOpen ? 'grx-btn--primary' : ''}"
+                                    t-att-aria-expanded="state.filtersOpen"
+                                    t-on-click="toggleFilterPanel">
+                                <i class="fa fa-sliders" aria-hidden="true"/>
+                                <span>Más filtros</span>
+                            </button>
+                            <button t-if="this.hasActiveFilters"
+                                    type="button"
+                                    class="grx-btn grx-btn--sm"
+                                    t-on-click="onResetFilters">
+                                Limpiar
+                            </button>
+                        </div>
+                    </div>
+
+                    <form t-if="state.filtersOpen"
+                          class="grx-filter-drawer"
+                          t-on-submit="onFilterSubmit">
+                        <div class="grx-filter-field">
+                            <label for="georutex-date-from">Desde</label>
+                            <input id="georutex-date-from" type="date" t-model="state.filters.date_from"/>
+                        </div>
+                        <div class="grx-filter-field">
+                            <label for="georutex-date-to">Hasta</label>
+                            <input id="georutex-date-to" type="date" t-model="state.filters.date_to"/>
+                        </div>
+                        <div class="grx-filter-field">
+                            <label for="georutex-route-filter">Ruta</label>
+                            <select id="georutex-route-filter" t-model="state.filters.route_id">
+                                <option value="">Todas las rutas</option>
+                                <t t-foreach="state.availableRoutes" t-as="route" t-key="route.id">
+                                    <option t-att-value="route.id"><t t-esc="route.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="grx-filter-field">
+                            <label for="georutex-vehicle-filter">Vehículo</label>
+                            <select id="georutex-vehicle-filter" t-model="state.filters.vehicle_id">
+                                <option value="">Todos los vehículos</option>
+                                <t t-foreach="state.availableVehicles" t-as="vehicle" t-key="vehicle.id">
+                                    <option t-att-value="vehicle.id"><t t-esc="vehicle.name"/></option>
+                                </t>
+                            </select>
+                        </div>
+                        <div class="grx-filter-drawer-btns">
+                            <button type="submit" class="grx-btn grx-btn--primary">Aplicar</button>
+                            <button type="button" class="grx-btn" t-on-click="onResetFilters">Restablecer</button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- 3. FOUR EXECUTIVE SUMMARY CARDS -->
+                <section class="grx-summary-grid" aria-label="Resumen ejecutivo del servicio">
+                    <article class="grx-summary-card is-blue" role="button" tabindex="0" t-on-click="() => this.openTripsList('all')">
+                        <div class="grx-kpi-head">
+                            <span>Recorridos evaluados</span>
+                            <i class="fa fa-bus grx-kpi-ico" aria-hidden="true"/>
+                        </div>
+                        <div class="grx-summary-row">
+                            <strong class="grx-kpi-val" data-grx-counter="1">
                                 <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].sample_size : 0"/>
                             </strong>
-                            <span class="georutex-status-pill georutex-status-pill--blue">Evaluables</span>
-                        </span>
-                        <span class="georutex-summary-note">Muestra usada en MT-01</span>
-                    </button>
+                            <span class="grx-pill is-blue">Muestra n</span>
+                        </div>
+                        <div class="grx-item-sub">Base evaluable de cumplimiento</div>
+                    </article>
 
-                    <button type="button"
-                            class="georutex-summary-card georutex-summary-card--green"
-                            t-on-click="() => this.openTripsList('compliant')">
-                        <span class="georutex-summary-label">
-                            Recorridos conformes
-                            <i class="fa fa-check-circle georutex-summary-icon" aria-hidden="true"/>
-                        </span>
-                        <span class="georutex-summary-value-row">
-                            <strong class="georutex-summary-value">
+                    <article class="grx-summary-card is-green" role="button" tabindex="0" t-on-click="() => this.openTripsList('compliant')">
+                        <div class="grx-kpi-head">
+                            <span>Recorridos conformes</span>
+                            <i class="fa fa-check-circle grx-kpi-ico" aria-hidden="true"/>
+                        </div>
+                        <div class="grx-summary-row">
+                            <strong class="grx-kpi-val" data-grx-counter="1">
                                 <t t-esc="state.summary.compliant_trips_gross || 0"/>
                             </strong>
-                            <span t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na"
-                                  class="georutex-status-pill georutex-status-pill--green">
+                            <span t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na" class="grx-pill is-green">
                                 <t t-esc="state.kpis['MT-01'].display_value"/>
                             </span>
-                            <span t-else="" class="georutex-status-pill georutex-status-pill--amber">N/A</span>
-                        </span>
-                        <span class="georutex-summary-note">
-                            Bruto: <t t-esc="state.summary.compliant_trips_gross || 0"/>
-                            <span class="mx-1">·</span>
-                            Ajustado: <t t-esc="state.summary.compliant_trips_adjusted || 0"/>
-                        </span>
-                    </button>
+                            <span t-else="" class="grx-pill is-amber">N/A</span>
+                        </div>
+                        <div class="grx-item-sub">
+                            Bruto: <strong t-esc="state.summary.compliant_trips_gross || 0"/> · Ajustado: <strong t-esc="state.summary.compliant_trips_adjusted || 0"/>
+                        </div>
+                    </article>
 
-                    <button type="button"
-                            class="georutex-summary-card georutex-summary-card--red"
-                            t-on-click="openIncidentsList">
-                        <span class="georutex-summary-label">
-                            Incidencias totales
-                            <i class="fa fa-exclamation-triangle georutex-summary-icon" aria-hidden="true"/>
-                        </span>
-                        <span class="georutex-summary-value-row">
-                            <strong class="georutex-summary-value">
+                    <article class="grx-summary-card is-red" role="button" tabindex="0" t-on-click="openIncidentsList">
+                        <div class="grx-kpi-head">
+                            <span>Incidencias registradas</span>
+                            <i class="fa fa-exclamation-triangle grx-kpi-ico" aria-hidden="true"/>
+                        </div>
+                        <div class="grx-summary-row">
+                            <strong class="grx-kpi-val" data-grx-counter="1">
                                 <t t-esc="state.summary.total_incidents || 0"/>
                             </strong>
-                            <span t-if="state.summary.total_incidents"
-                                  class="georutex-status-pill georutex-status-pill--red">Revisar</span>
-                            <span t-else="" class="georutex-status-pill georutex-status-pill--green">Sin incidencias</span>
-                        </span>
-                        <span class="georutex-summary-note">Automáticas y reportadas</span>
-                    </button>
+                            <span t-if="state.summary.total_incidents" class="grx-pill is-red">Revisar</span>
+                            <span t-else="" class="grx-pill is-green">Sin novedades</span>
+                        </div>
+                        <div class="grx-item-sub">Detecciones automáticas y manuales</div>
+                    </article>
 
-                    <button type="button"
-                            class="georutex-summary-card georutex-summary-card--amber"
-                            t-on-click="() => this.openTripsList('all')">
-                        <span class="georutex-summary-label">
-                            Puntualidad general
-                            <i class="fa fa-clock-o georutex-summary-icon" aria-hidden="true"/>
-                        </span>
-                        <span class="georutex-summary-value-row">
-                            <strong class="georutex-summary-value">
+                    <article class="grx-summary-card is-amber" role="button" tabindex="0" t-on-click="() => this.openTripsList('all')">
+                        <div class="grx-kpi-head">
+                            <span>Puntualidad general</span>
+                            <i class="fa fa-clock-o grx-kpi-ico" aria-hidden="true"/>
+                        </div>
+                        <div class="grx-summary-row">
+                            <strong class="grx-kpi-val">
                                 <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].display_value : 'N/A'"/>
                             </strong>
-                            <span t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na"
-                                  class="georutex-status-pill georutex-status-pill--amber">Calculada</span>
-                            <span t-else="" class="georutex-status-pill georutex-status-pill--amber">Sin muestra</span>
-                        </span>
-                        <span class="georutex-summary-note">
-                            n =
-                            <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/>
-                        </span>
+                            <span t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na" class="grx-pill is-blue">Calculada</span>
+                            <span t-else="" class="grx-pill is-muted">Sin muestra</span>
+                        </div>
+                        <div class="grx-item-sub">
+                            Muestra n = <t t-esc="state.kpis['MT-02'] ? state.kpis['MT-02'].sample_size : 0"/>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- COMPACT ANALYTICAL EMPTY BANNER (when n=0 so KPIs remain visible without giant void) -->
+                <div t-if="!state.isLoading and state.kpis['MT-01'] and state.kpis['MT-01'].sample_size === 0"
+                     class="grx-ana-empty-banner" role="status">
+                    <div class="grx-ana-empty-banner-icon" aria-hidden="true">
+                        <i class="fa fa-bar-chart"/>
+                    </div>
+                    <div class="grx-ana-empty-banner-copy">
+                        <strong>Sin recorridos evaluados para el corte seleccionado (n = 0)</strong>
+                        <span>Los indicadores muestran <strong>N/A</strong> por ausencia de muestra verificada. Amplía el período a <em>Histórico</em> o registra y evalúa recorridos para generar curvas reales.</span>
+                    </div>
+                    <button t-if="state.activePreset !== 'all'"
+                            type="button"
+                            class="grx-btn grx-btn--sm grx-btn--primary"
+                            t-on-click="() => this.setDatePreset('all')">
+                        Ver histórico
                     </button>
-                </section>
+                </div>
 
-                <!-- Interactive Apache ECharts Circular KPI Gauges (MT-01 & MT-02) -->
-                <section class="georutex-dashboard-section tblr-gauge-row" aria-label="Indicadores circulares de cumplimiento y puntualidad">
-                    <article class="georutex-surface-card">
-                        <div class="georutex-card-heading">
+                <!-- 4. GAUGES + DAILY TREND + FLEET PREVIEW -->
+                <section class="grx-ana-main-grid">
+                    <div class="grx-card">
+                        <div class="grx-card-header">
                             <div>
-                                <h2>MT-01 · Cumplimiento de rutas</h2>
-                                <p>Progreso circular interactivo · fuente <t t-esc="state.filters.source_type"/></p>
+                                <h2 class="grx-card-title">Evolución de cumplimiento y puntualidad</h2>
+                                <p class="grx-card-sub">Tendencia diaria por recorridos evaluados (bruto, ajustado y puntualidad)</p>
                             </div>
-                            <span class="tblr-badge is-blue">Meta ≥ 90%</span>
+                            <span class="grx-code-tag">MT-01 · MT-02</span>
                         </div>
-                        <div t-ref="mt01GaugeBox" class="tblr-echart-gauge"/>
-                    </article>
-                    <article class="georutex-surface-card">
-                        <div class="georutex-card-heading">
-                            <div>
-                                <h2>MT-02 · Puntualidad general</h2>
-                                <p>Salida y llegada evaluadas dentro de ventana</p>
+                        <div class="grx-card-body">
+                            <div t-if="this.hasDailyTrendData"
+                                 t-ref="trendChartCanvas"
+                                 class="grx-echart-box grx-echart-box--lg"
+                                 role="img"
+                                 aria-label="Tendencia de cumplimiento y puntualidad"/>
+                            <div t-else="" class="grx-empty grx-empty--compact">
+                                <i class="fa fa-line-chart" aria-hidden="true"/>
+                                <strong>Sin serie diaria en este período</strong>
+                                <p>Las líneas de cumplimiento bruto, ajustado y puntualidad aparecerán al evaluar recorridos.</p>
                             </div>
-                            <span class="tblr-badge is-green">Meta ≥ 85%</span>
                         </div>
-                        <div t-ref="mt02GaugeBox" class="tblr-echart-gauge"/>
-                    </article>
-                </section>
+                    </div>
 
-                <section class="georutex-dashboard-section georutex-main-grid">
-                    <article class="georutex-surface-card">
-                        <div class="georutex-card-heading">
-                            <div>
-                                <h2>Cumplimiento y puntualidad (Apache ECharts)</h2>
-                                <p>Tendencia diaria interactiva · porcentajes calculados sobre su muestra</p>
-                            </div>
-                            <i class="fa fa-line-chart text-primary" aria-hidden="true"/>
-                        </div>
-                        <t t-if="this.hasDailyTrendData">
-                            <div t-ref="trendChartCanvas" class="tblr-echart-box" role="img" aria-label="Gráfico interactivo de cumplimiento y puntualidad"/>
-                        </t>
-                        <t t-else="">
-                            <div class="georutex-chart-empty">
-                                No hay recorridos evaluables para graficar en este período.
-                            </div>
-                        </t>
-                    </article>
+                    <div class="grx-ana-side-col">
+                        <div class="grx-gauge-pair">
+                            <article class="grx-card">
+                                <div class="grx-card-header">
+                                    <div>
+                                        <h2 class="grx-card-title">Cumplimiento de rutas</h2>
+                                        <p class="grx-card-sub">Meta operativa ≥ 90%</p>
+                                    </div>
+                                    <span class="grx-code-tag">MT-01</span>
+                                </div>
+                                <div class="grx-card-body grx-gauge-body">
+                                    <div t-if="state.kpis['MT-01'] and !state.kpis['MT-01'].is_na" t-ref="mt01GaugeBox" class="grx-echart-gauge"/>
+                                    <div t-else="" class="grx-gauge-na">
+                                        <strong>N/A</strong>
+                                        <span>Sin muestra evaluada (n = 0)</span>
+                                    </div>
+                                </div>
+                            </article>
 
-                    <article class="georutex-surface-card">
-                        <div class="georutex-card-heading">
-                            <div>
-                                <h2>Ubicaciones de flota</h2>
-                                <p>Posiciones GPS disponibles · actualización cada 30 s</p>
-                            </div>
-                            <i class="fa fa-map-marker text-primary" aria-hidden="true"/>
+                            <article class="grx-card">
+                                <div class="grx-card-header">
+                                    <div>
+                                        <h2 class="grx-card-title">Puntualidad general</h2>
+                                        <p class="grx-card-sub">Meta operativa ≥ 85%</p>
+                                    </div>
+                                    <span class="grx-code-tag">MT-02</span>
+                                </div>
+                                <div class="grx-card-body grx-gauge-body">
+                                    <div t-if="state.kpis['MT-02'] and !state.kpis['MT-02'].is_na" t-ref="mt02GaugeBox" class="grx-echart-gauge"/>
+                                    <div t-else="" class="grx-gauge-na">
+                                        <strong>N/A</strong>
+                                        <span>Sin muestra evaluada (n = 0)</span>
+                                    </div>
+                                </div>
+                            </article>
                         </div>
-                        <div class="georutex-map-preview">
-                            <div t-ref="mapPreviewCanvas" class="georutex-map-preview-canvas"/>
-                            <div class="georutex-map-preview-topline">
-                                <span class="georutex-map-count">
-                                    <t t-esc="state.livePositionCount"/> con ubicación
-                                </span>
-                                <button type="button"
-                                        class="georutex-map-link"
-                                        t-on-click="openLiveMap">
-                                    Abrir mapa <i class="fa fa-external-link ms-1" aria-hidden="true"/>
+
+                        <article class="grx-card">
+                            <div class="grx-card-header">
+                                <div>
+                                    <h2 class="grx-card-title">Ubicaciones activas</h2>
+                                    <p class="grx-card-sub"><t t-esc="state.livePositionCount"/> unidades con posición GPS</p>
+                                </div>
+                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="openLiveMap">
+                                    <span>Abrir mapa</span>
+                                    <i class="fa fa-external-link" aria-hidden="true"/>
                                 </button>
                             </div>
-                            <div t-if="state.liveMapStatus == 'empty'"
-                                 class="georutex-map-preview-empty">
-                                <img src="/uta_transport_monitor/static/src/img/mapa.webp"
-                                     alt="Vista ilustrativa de buses y rutas; no representa posiciones GPS reales."/>
-                                <div class="georutex-map-preview-message">
-                                    <span class="georutex-status-pill georutex-status-pill--amber">Vista ilustrativa</span>
-                                    <strong>Sin posiciones GPS disponibles</strong>
-                                    <span>El mapa real se mostrará cuando ingresen coordenadas válidas.</span>
+                            <div class="grx-map-wrap grx-map-wrap--preview">
+                                <div t-ref="mapPreviewCanvas" class="grx-map-canvas"/>
+                                <div t-if="state.liveMapStatus === 'empty'" class="grx-map-empty-overlay">
+                                    <strong>Sin posiciones GPS activas</strong>
+                                    <div>Las unidades aparecerán al registrar coordenadas válidas.</div>
+                                </div>
+                                <div t-if="state.liveMapStatus === 'error'" class="grx-map-empty-overlay">
+                                    <strong>Mapa no disponible</strong>
+                                    <div><t t-esc="state.liveMapError"/></div>
                                 </div>
                             </div>
-                            <div t-if="state.liveMapStatus == 'error'"
-                                 class="georutex-map-error"
-                                 role="status">
-                                <i class="fa fa-exclamation-circle me-1" aria-hidden="true"/>
-                                <t t-esc="state.liveMapError"/>
-                            </div>
-                            <span t-if="state.liveMapStatus == 'loading'"
-                                  class="georutex-map-count georutex-map-loading">
-                                Consultando GPS…
-                            </span>
-                        </div>
-                    </article>
+                        </article>
+                    </div>
                 </section>
 
-                <section class="georutex-dashboard-section">
-                    <div class="georutex-section-heading">
-                        <h2>Métricas de control · MT-01 a MT-08</h2>
-                        <span class="georutex-section-meta">
-                            Fuente:
-                            <t t-esc="state.filters.source_type == 'real' ? 'Real' : (state.filters.source_type == 'simulated' ? 'Simulado' : 'Combinado')"/>
-                            <span class="mx-1">·</span>
-                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].period : 'Todo el período'"/>
+                <!-- 5. OPERATIONAL INDICATORS GRID (MT-01 .. MT-08) -->
+                <section class="grx-section-block" aria-label="Indicadores de desempeño operativo">
+                    <div class="grx-section-head">
+                        <div>
+                            <h2>Indicadores de desempeño operativo</h2>
+                            <p>Pasa el cursor sobre cualquier tarjeta para consultar fórmula, fuente, versión de reglas y muestra.</p>
+                        </div>
+                        <span class="grx-pill is-muted">
+                            <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].period : 'Histórico completo'"/>
                         </span>
                     </div>
-                    <div class="georutex-metric-grid">
+                    <div class="grx-metric-grid">
                         <t t-foreach="this.transportMetricCards" t-as="metric" t-key="metric.id">
                             <button type="button"
-                                    t-attf-class="georutex-metric-card georutex-tone-#{metric.tone}"
+                                    t-attf-class="grx-metric-card is-#{metric.tone}"
                                     t-att-title="this.getMetricTooltip(metric.metric)"
-                                    t-att-aria-label="metric.id + ' ' + metric.title + '. ' + this.getMetricTooltip(metric.metric)"
+                                    t-att-aria-label="metric.title + ' (' + metric.id + '). ' + this.getMetricTooltip(metric.metric)"
                                     t-on-click="() => this.openMetric(metric.id)">
-                                <span class="georutex-metric-topline">
-                                    <span class="georutex-metric-code"><t t-esc="metric.id"/></span>
-                                    <i class="fa fa-info-circle text-muted" aria-hidden="true"/>
-                                </span>
-                                <span class="georutex-metric-title"><t t-esc="metric.title"/></span>
-                                <strong class="georutex-metric-value">
+                                <div class="grx-metric-top">
+                                    <span class="grx-metric-title"><t t-esc="metric.title"/></span>
+                                    <span class="grx-code-tag"><t t-esc="metric.id"/></span>
+                                </div>
+                                <strong class="grx-metric-val">
                                     <t t-esc="metric.metric.display_value || 'N/A'"/>
                                 </strong>
-                                <span class="georutex-metric-secondary">
-                                    <t t-esc="this.getMetricSecondary(metric.id, metric.metric)"/>
+                                <span class="grx-metric-sub">
+                                    <t t-esc="this.getMetricSecondary(metric.id, metric.metric) || (metric.metric.is_na ? 'Sin muestra suficiente' : 'Resultado calculado')"/>
                                 </span>
-                                <span class="georutex-metric-segments" aria-hidden="true">
+                                <div class="grx-metric-bar" aria-hidden="true">
                                     <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
                                         <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
                                     </t>
-                                </span>
-                                <span class="georutex-metric-meta">
-                                    <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 'N/A'"/></span>
+                                </div>
+                                <div class="grx-metric-foot">
+                                    <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></span>
                                     <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
-                                </span>
+                                </div>
                             </button>
                         </t>
                     </div>
                 </section>
 
-                <details class="georutex-detail-section" t-on-toggle="onDetailsToggle">
-                    <summary>Comparativas, incidencias y métricas complementarias</summary>
-                    <div class="georutex-detail-content">
-                        <div class="georutex-section-heading">
-                            <h2>Métricas de calidad del software · MCS-01 a MCS-04</h2>
-                            <button type="button"
-                                    class="btn georutex-button-light"
-                                    t-on-click="onRunQualityBenchmarks"
-                                    t-att-disabled="state.qualityRunning">
-                                <i t-attf-class="fa #{state.qualityRunning ? 'fa-spinner fa-spin' : 'fa-play'} me-1"/>
-                                Ejecutar medición
-                            </button>
+                <!-- 6. ROUTE COMPARISON + INCIDENTS DISTRIBUTION -->
+                <section class="grx-two-col">
+                    <article class="grx-card">
+                        <div class="grx-card-header">
+                            <div>
+                                <h2 class="grx-card-title">Comparativa por ruta</h2>
+                                <p class="grx-card-sub">Cumplimiento bruto frente a cumplimiento ajustado con incidencias justificadas</p>
+                            </div>
                         </div>
-                        <div class="georutex-metric-grid">
+                        <div class="grx-card-body">
+                            <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
+                                <div t-ref="routeChartBox" class="grx-echart-box mb-3"/>
+                                <div class="grx-table-wrap">
+                                    <table class="grx-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Ruta</th>
+                                                <th>Recorridos</th>
+                                                <th>Bruto</th>
+                                                <th>Ajustado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <t t-foreach="state.charts.route_comparison" t-as="route" t-key="route.route_name">
+                                                <tr>
+                                                    <td><strong><t t-esc="route.route_name"/></strong></td>
+                                                    <td class="grx-num"><t t-esc="route.total_trips"/></td>
+                                                    <td class="grx-num"><t t-esc="route.compliance_gross_pct !== null ? route.compliance_gross_pct + ' %' : 'N/A'"/></td>
+                                                    <td class="grx-num"><t t-esc="route.compliance_adj_pct !== null ? route.compliance_adj_pct + ' %' : 'N/A'"/></td>
+                                                </tr>
+                                            </t>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </t>
+                            <div t-else="" class="grx-empty">
+                                <i class="fa fa-map-signs" aria-hidden="true"/>
+                                <strong>Sin rutas evaluadas en este período</strong>
+                                <p>Las comparativas aparecerán al registrar evaluaciones de recorridos.</p>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="grx-card">
+                        <div class="grx-card-header">
+                            <div>
+                                <h2 class="grx-card-title">Distribución de incidencias</h2>
+                                <p class="grx-card-sub">Eventos por categoría para el período y fuente seleccionados</p>
+                            </div>
+                            <button type="button" class="grx-btn grx-btn--sm" t-on-click="openIncidentsList">Ver registro</button>
+                        </div>
+                        <div class="grx-card-body">
+                            <div t-if="this.hasIncidentChartData"
+                                 t-ref="incidentChartCanvas"
+                                 class="grx-echart-box"
+                                 role="img"
+                                 aria-label="Distribución de incidencias por tipo"/>
+                            <div t-else="" class="grx-empty grx-empty--chart">
+                                <i class="fa fa-check-circle" aria-hidden="true"/>
+                                <strong>Sin incidencias registradas</strong>
+                                <p>No se han detectado ni reportado incidencias en este corte.</p>
+                            </div>
+                        </div>
+                    </article>
+                </section>
+
+                <!-- 7. TECHNICAL QUALITY INDICATORS (MCS-01 .. MCS-04) -->
+                <section class="grx-card grx-quality-card" aria-label="Calidad técnica del servicio">
+                    <div class="grx-card-header">
+                        <div>
+                            <h2 class="grx-card-title">Calidad técnica y telemetría</h2>
+                            <p class="grx-card-sub">Integridad GPS, sincronización, tiempo de respuesta y detección (MCS-01 a MCS-04)</p>
+                        </div>
+                        <button type="button"
+                                class="grx-btn grx-btn--sm"
+                                t-on-click="onRunQualityBenchmarks"
+                                t-att-disabled="state.qualityRunning">
+                            <i t-attf-class="fa #{state.qualityRunning ? 'fa-spinner fa-spin' : 'fa-play'}" aria-hidden="true"/>
+                            <span>Ejecutar medición</span>
+                        </button>
+                    </div>
+                    <div class="grx-card-body">
+                        <div class="grx-metric-grid">
                             <t t-foreach="this.qualityMetricCards" t-as="metric" t-key="metric.id">
-                                <article t-attf-class="georutex-metric-card georutex-tone-#{metric.tone}"
+                                <article t-attf-class="grx-metric-card is-#{metric.tone}"
                                          t-att-title="this.getMetricTooltip(metric.metric)">
-                                    <span class="georutex-metric-topline">
-                                        <span class="georutex-metric-code"><t t-esc="metric.id"/></span>
-                                        <i class="fa fa-info-circle text-muted" aria-hidden="true"/>
-                                    </span>
-                                    <span class="georutex-metric-title"><t t-esc="metric.title"/></span>
-                                    <strong class="georutex-metric-value">
+                                    <div class="grx-metric-top">
+                                        <span class="grx-metric-title"><t t-esc="metric.title"/></span>
+                                        <span class="grx-code-tag"><t t-esc="metric.id"/></span>
+                                    </div>
+                                    <strong class="grx-metric-val">
                                         <t t-esc="metric.metric.display_value || 'N/A'"/>
                                     </strong>
-                                    <span class="georutex-metric-secondary">
-                                        <t t-esc="metric.metric.is_na ? 'Sin muestra' : (metric.metric.unit || 'Resultado medido')"/>
+                                    <span class="grx-metric-sub">
+                                        <t t-esc="metric.metric.is_na ? 'Sin muestra suficiente' : (metric.metric.unit || 'Medición registrada')"/>
                                     </span>
-                                    <span class="georutex-metric-segments" aria-hidden="true">
+                                    <div class="grx-metric-bar" aria-hidden="true">
                                         <t t-foreach="[1, 2, 3, 4, 5]" t-as="segment" t-key="segment">
                                             <span t-att-class="this.getMetricSegmentClass(metric.metric, segment)"/>
                                         </t>
-                                    </span>
-                                    <span class="georutex-metric-meta">
-                                        <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 'N/A'"/></span>
+                                    </div>
+                                    <div class="grx-metric-foot">
+                                        <span>n = <t t-esc="metric.metric.sample_size !== undefined ? metric.metric.sample_size : 0"/></span>
                                         <span><t t-esc="this.getMetricSource(metric.metric)"/></span>
-                                    </span>
+                                    </div>
                                 </article>
                             </t>
                         </div>
-
-                        <div class="georutex-secondary-grid mt-3">
-                            <article class="georutex-surface-card">
-                                <div class="georutex-card-heading">
-                                    <div>
-                                        <h2>Comparativa por ruta</h2>
-                                        <p>Cumplimiento bruto y ajustado</p>
-                                    </div>
-                                </div>
-                                <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
-                                    <div t-ref="routeChartBox" class="tblr-echart-box mb-3" style="height: 220px;"/>
-                                </t>
-                                <table class="georutex-data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Ruta</th>
-                                            <th>Recorridos</th>
-                                            <th>Bruto</th>
-                                            <th>Ajustado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <t t-if="state.charts.route_comparison and state.charts.route_comparison.length">
-                                            <t t-foreach="state.charts.route_comparison" t-as="route" t-key="route.route_name">
-                                                <tr>
-                                                    <td><t t-esc="route.route_name"/></td>
-                                                    <td><t t-esc="route.total_trips"/></td>
-                                                    <td><t t-esc="route.compliance_gross_pct !== null ? route.compliance_gross_pct + ' %' : 'N/A'"/></td>
-                                                    <td><t t-esc="route.compliance_adj_pct !== null ? route.compliance_adj_pct + ' %' : 'N/A'"/></td>
-                                                </tr>
-                                            </t>
-                                        </t>
-                                        <t t-else="">
-                                            <tr><td colspan="4" class="text-center">Sin rutas evaluadas en el período.</td></tr>
-                                        </t>
-                                    </tbody>
-                                </table>
-                            </article>
-
-                            <article class="georutex-surface-card">
-                                <div class="georutex-card-heading">
-                                    <div>
-                                        <h2>Incidencias por tipo</h2>
-                                        <p>Registros del período y fuente seleccionados</p>
-                                    </div>
-                                </div>
-                                <t t-if="this.hasIncidentChartData">
-                                    <div t-ref="incidentChartCanvas" class="tblr-echart-box" role="img" aria-label="Distribución de incidencias por tipo"/>
-                                </t>
-                                <t t-else="">
-                                    <div class="georutex-empty-state">Sin incidencias registradas en este período.</div>
-                                </t>
-                            </article>
-                        </div>
                     </div>
-                </details>
-            </main>
+                </section>
+            </div>
         </div>
     </t>
 </templates>

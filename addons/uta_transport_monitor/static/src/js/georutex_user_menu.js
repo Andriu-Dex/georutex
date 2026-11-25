@@ -2,6 +2,7 @@
 
 import { registry } from "@web/core/registry";
 import { browser } from "@web/core/browser/browser";
+import "@web/webclient/user_menu/user_menu_items";
 
 const userMenuRegistry = registry.category("user_menuitems");
 

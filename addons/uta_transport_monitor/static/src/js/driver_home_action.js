@@ -12,6 +12,7 @@ export class GeoRutexDriverHomeAction extends Component {
         this.orm = useService("orm");
         this.actionService = useService("action");
         this.notification = useService("notification");
+        this.userService = useService("user");
 
         this.rootRef = useRef("driverHomeRoot");
         this.mapRef = useRef("driverMapCanvas");
@@ -22,6 +23,12 @@ export class GeoRutexDriverHomeAction extends Component {
         this._refreshTimer = null;
         this._revertMotion = null;
         this._hasFittedMap = false;
+
+        this._onWindowResize = () => {
+            if (this._map) {
+                this._map.invalidateSize({ pan: false });
+            }
+        };
 
         this.state = useState({
             isLoading: true,
@@ -47,17 +54,19 @@ export class GeoRutexDriverHomeAction extends Component {
         });
 
         onMounted(async () => {
-            this._initMap();
             await this.loadDriverHome(false);
+            this._ensureMapAndRender();
             this._revertMotion = runGeorutexEntrance(this.rootRef.el, [
-                { selector: ".drv-stat-tile", y: 12, duration: 0.38, stagger: 0.04 },
+                { selector: ".grx-drv-unassigned-card, .grx-drv-tile, .grx-card", y: 12, duration: 0.36, stagger: 0.04 },
             ]);
+            window.addEventListener("resize", this._onWindowResize);
             this._refreshTimer = window.setInterval(() => {
                 void this.loadDriverHome(false, true);
             }, 30000);
         });
 
         onWillUnmount(() => {
+            window.removeEventListener("resize", this._onWindowResize);
             if (this._refreshTimer) {
                 window.clearInterval(this._refreshTimer);
                 this._refreshTimer = null;
@@ -79,13 +88,17 @@ export class GeoRutexDriverHomeAction extends Component {
         return this.state.vehicles.length ? this.state.vehicles[0] : null;
     }
 
+    get hasAnyTrips() {
+        return Boolean(this.state.featuredTrip) || (this.state.trips && this.state.trips.length > 0);
+    }
+
     get gpsStatusInfo() {
         const v = this.primaryVehicle;
         if (!v) {
-            return { label: "Sin unidad vinculada", dot: "is-amber", tone: "is-muted", lastFix: "Sin registro" };
+            return { label: "Sin unidad vinculada", dot: "is-muted", tone: "is-muted", lastFix: "Sin registro" };
         }
         if (v.freshness === "online" || v.freshness === "fresh") {
-            return { label: "GPS En vivo", dot: "is-green is-animated", tone: "is-green", lastFix: v.last_gps_time_local };
+            return { label: "GPS en línea", dot: "is-green is-pulse", tone: "is-green", lastFix: v.last_gps_time_local };
         }
         if (v.freshness === "stale") {
             return { label: "Señal reciente", dot: "is-amber", tone: "is-amber", lastFix: v.last_gps_time_local };
@@ -123,22 +136,32 @@ export class GeoRutexDriverHomeAction extends Component {
         return hasStops || hasVeh;
     }
 
-    _initMap() {
-        if (!this.mapRef.el || typeof window.L === "undefined") return;
-        this._map = window.L.map(this.mapRef.el, {
-            zoomControl: true,
-            attributionControl: true,
-        }).setView([-1.249, -78.625], 13);
+    _ensureMapAndRender() {
+        if (!this.mapRef.el || typeof window.L === "undefined") {
+            if (this._map) {
+                this._map.remove();
+                this._map = null;
+                this._layerGroup = null;
+            }
+            return;
+        }
+        if (!this._map) {
+            this._map = window.L.map(this.mapRef.el, {
+                zoomControl: true,
+                attributionControl: true,
+            }).setView([-1.249, -78.625], 13);
 
-        window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        }).addTo(this._map);
+            window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+            }).addTo(this._map);
 
-        this._layerGroup = window.L.layerGroup().addTo(this._map);
-        window.setTimeout(() => {
-            if (this._map) this._map.invalidateSize();
-        }, 180);
+            this._layerGroup = window.L.layerGroup().addTo(this._map);
+            window.setTimeout(() => {
+                if (this._map) this._map.invalidateSize();
+            }, 160);
+        }
+        this._renderMap();
     }
 
     _renderMap() {
@@ -149,31 +172,29 @@ export class GeoRutexDriverHomeAction extends Component {
         const boundsPts = [];
         const ft = this.state.featuredTrip;
 
-        // 1. Reference route polyline
         if (ft && Array.isArray(ft.reference_polyline) && ft.reference_polyline.length >= 2) {
             window.L.polyline(ft.reference_polyline, {
-                color: "#066fd1",
+                color: "#1a56db",
                 weight: 4,
                 opacity: 0.85,
             }).addTo(this._layerGroup);
             ft.reference_polyline.forEach((pt) => boundsPts.push(pt));
         }
 
-        // 2. Route checkpoints
         if (ft && Array.isArray(ft.stops)) {
             ft.stops.forEach((st) => {
                 if (!st.has_coords) return;
                 const lat = Number(st.latitude);
                 const lon = Number(st.longitude);
                 if (!Number.isFinite(lat) || !Number.isFinite(lon)) return;
-                const cls = st.visited
-                    ? "georutex-stop-marker georutex-stop-origin"
+                const bg = st.visited
+                    ? "#15803d"
                     : st.order === ft.next_stop_order
-                    ? "georutex-stop-marker"
-                    : "georutex-stop-marker";
+                    ? "#1a56db"
+                    : "#64748b";
                 const icon = window.L.divIcon({
                     className: "custom-div-icon",
-                    html: `<div class="${cls}" style="${st.visited ? "" : st.order === ft.next_stop_order ? "background:#066fd1;" : "background:#64748b;"}">${st.order}</div>`,
+                    html: `<div class="georutex-stop-marker" style="background:${bg};">${st.order}</div>`,
                     iconSize: [28, 28],
                     iconAnchor: [14, 14],
                 });
@@ -187,7 +208,6 @@ export class GeoRutexDriverHomeAction extends Component {
             });
         }
 
-        // 3. Assigned vehicle live position
         const vehLat = ft && ft.vehicle_has_coords ? Number(ft.vehicle_lat) : (this.primaryVehicle && this.primaryVehicle.has_coordinates ? Number(this.primaryVehicle.latitude) : null);
         const vehLon = ft && ft.vehicle_has_coords ? Number(ft.vehicle_lon) : (this.primaryVehicle && this.primaryVehicle.has_coordinates ? Number(this.primaryVehicle.longitude) : null);
         if (vehLat !== null && vehLon !== null && Number.isFinite(vehLat) && Number.isFinite(vehLon)) {
@@ -212,7 +232,7 @@ export class GeoRutexDriverHomeAction extends Component {
     focusStop(stop) {
         this.state.selectedStopId = stop.id;
         if (!this._map || !stop.has_coords) return;
-        this._map.flyTo([Number(stop.latitude), Number(stop.longitude)], 16, { duration: 0.7 });
+        this._map.flyTo([Number(stop.latitude), Number(stop.longitude)], 16, { duration: 0.65 });
         const marker = this._stopMarkers.get(stop.id);
         if (marker) marker.openPopup();
     }
@@ -244,7 +264,7 @@ export class GeoRutexDriverHomeAction extends Component {
             this.state.incidents = payload.incidents || [];
             this.state.error = "";
 
-            this._renderMap();
+            window.setTimeout(() => this._ensureMapAndRender(), 40);
 
             if (showNotice) {
                 this.notification.add("Jornada operativa actualizada.", {
@@ -297,12 +317,22 @@ export class GeoRutexDriverHomeAction extends Component {
         }
     }
 
+    async openProfile() {
+        try {
+            const actionDescription = await this.orm.call("res.users", "action_get", []);
+            actionDescription.res_id = this.userService.userId;
+            this.actionService.doAction(actionDescription);
+        } catch (err) {
+            console.error("Error opening driver profile:", err);
+        }
+    }
+
     openNewIncident(tripId = false) {
         const context = { default_source: "manual" };
         if (tripId) context.default_trip_id = tripId;
         this.actionService.doAction({
             type: "ir.actions.act_window",
-            name: "Nueva Incidencia Operacional",
+            name: "Reportar Incidencia Operacional",
             res_model: "transport.incident",
             views: [[false, "form"]],
             view_mode: "form",

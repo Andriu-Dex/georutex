@@ -57,7 +57,7 @@
                         </h3>
                     </div>
                     <group>
-                        <group string="Parámetros Canónicos de Tolerancia (Sección 7.1)">
+                        <group string="Parámetros de tolerancia">
                             <field name="stop_radius_m" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="route_corridor_m" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="lateness_tolerance_s" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
@@ -146,12 +146,11 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_route_version_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Crea una versión de trazado y parámetros para una ruta
-            </p>
-            <p>
-                Cada versión define parámetros canónicos congelables (radio de parada, corredor, tolerancias) y sus puntos de control secuenciales (RF-14).
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-route"/>
+                <h3>Sin versiones de ruta</h3>
+                <p>Crea una versión de trazado con sus paradas y parámetros de evaluación para habilitar recorridos.</p>
+            </div>
         </field>
     </record>
 </odoo>

@@ -1,336 +1,387 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="uta_transport_monitor.GeoRutexDriverHomeAction" owl="1">
-        <div class="tblr-ops-page drv-cockpit-page" t-ref="driverHomeRoot">
-            <div class="tblr-container">
-                <!-- COMPACT DRIVER SHIFT HEADER (Mobile-First, Safe-Stop Focus) -->
-                <header class="tblr-page-header">
-                    <div>
-                        <div class="tblr-pretitle">CABINA OPERATIVA DEL CONDUCTOR · UTA</div>
-                        <h1 class="tblr-page-title">
-                            Hola, <t t-esc="state.driverName"/>
+        <div class="grx-ops-page grx-driver-home" t-ref="driverHomeRoot">
+            <div class="grx-ops-container">
+                <!-- COMPACT DRIVER HEADER (Mobile-First, Safe-Stop Focus) -->
+                <header class="grx-page-header">
+                    <div class="grx-page-heading">
+                        <div class="grx-eyebrow">
+                            <span class="grx-eyebrow-dot" aria-hidden="true"/>
+                            <span>Espacio del conductor</span>
+                            <span t-if="state.localDateLabel" class="grx-eyebrow-sep">·</span>
+                            <span t-if="state.localDateLabel"><t t-esc="state.localDateLabel"/></span>
+                        </div>
+                        <h1 class="grx-page-title">
+                            Hola, <t t-esc="state.driverName || 'Conductor'"/>
                             <t t-if="this.primaryVehicle">
-                                <span class="tblr-item-sub ms-2 fw-normal">
+                                <span class="grx-page-sub-inline">
                                     · <t t-esc="this.primaryVehicle.name"/>
                                     <t t-if="this.primaryVehicle.license_plate"> (<t t-esc="this.primaryVehicle.license_plate"/>)</t>
                                 </span>
                             </t>
                         </h1>
                     </div>
-                    <div class="tblr-header-right">
-                        <span class="tblr-status-chip">
-                            <span t-attf-class="tblr-status-dot #{this.gpsStatusInfo.dot}"/>
+                    <div class="grx-header-actions">
+                        <span t-if="this.primaryVehicle or state.featuredTrip" class="grx-status-chip">
+                            <span t-attf-class="grx-dot #{this.gpsStatusInfo.dot}"/>
                             <span><t t-esc="this.gpsStatusInfo.label"/></span>
                         </span>
-                        <span class="tblr-status-chip">
-                            <i class="fa fa-clock-o text-muted" aria-hidden="true"/>
+                        <span class="grx-status-chip">
+                            <i class="fa fa-clock-o" aria-hidden="true"/>
                             <span><t t-esc="state.localTimeLabel || 'ECT'"/></span>
                         </span>
-                        <button type="button" class="tblr-btn" t-on-click="() => this.loadDriverHome(true)" t-att-disabled="state.isLoading" title="Actualizar jornada">
+                        <button type="button"
+                                class="grx-btn grx-btn--icon"
+                                t-on-click="() => this.loadDriverHome(true)"
+                                t-att-disabled="state.isLoading"
+                                title="Actualizar jornada"
+                                aria-label="Actualizar jornada">
                             <i t-attf-class="fa fa-refresh #{state.isLoading ? 'fa-spin' : ''}" aria-hidden="true"/>
                         </button>
-                        <button type="button" class="tblr-btn tblr-btn--primary" t-on-click="() => this.openNewIncident(state.featuredTrip ? state.featuredTrip.id : false)">
+                        <button type="button"
+                                class="grx-btn grx-btn--primary"
+                                t-att-disabled="!this.hasAnyTrips"
+                                t-att-title="this.hasAnyTrips ? 'Reportar novedad en tu recorrido' : 'Necesitas al menos un recorrido asignado para reportar una incidencia'"
+                                t-on-click="() => this.openNewIncident(state.featuredTrip ? state.featuredTrip.id : false)">
                             <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
-                            <span>Reportar Incidencia</span>
+                            <span>Reportar incidencia</span>
                         </button>
                     </div>
                 </header>
 
                 <!-- Error Alert State -->
-                <div t-if="state.error" class="tblr-alert-error" role="alert">
+                <div t-if="state.error" class="grx-alert-error" role="alert">
                     <span><i class="fa fa-exclamation-triangle me-2" aria-hidden="true"/><t t-esc="state.error"/></span>
-                    <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.loadDriverHome(false)">Reintentar</button>
+                    <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.loadDriverHome(false)">Reintentar</button>
                 </div>
 
-                <!-- PROTAGONIST 2-COLUMN DRIVER COCKPIT (ELLIBUS Telemetry + Tabler MapDeliveryTracker) -->
-                <section class="drv-cockpit-grid mb-3">
-                    <!-- LEFT: SHIFT TELEMETRY & STOP PROGRESS -->
-                    <div class="tblr-card">
-                        <div class="tblr-card-header">
-                            <h2 class="tblr-card-title">
-                                <i class="fa fa-tachometer text-primary" aria-hidden="true"/>
-                                <t t-if="state.featuredTrip">
-                                    Recorrido Actual · <t t-esc="state.featuredTrip.name"/>
-                                </t>
-                                <t t-else="">
-                                    Jornada Operativa
-                                </t>
-                            </h2>
-                            <span t-if="state.featuredTrip" t-attf-class="tblr-badge #{this.getStateBadgeClass(state.featuredTrip.state)}">
-                                <t t-esc="state.featuredTrip.state_label"/>
-                            </span>
+                <!-- CASE A: COMPACT UNASSIGNED STATE (No duplicate labels or broken actions!) -->
+                <t t-if="!state.featuredTrip and !state.isLoading">
+                    <section class="grx-drv-unassigned-card">
+                        <div class="grx-drv-unassigned-main">
+                            <div class="grx-drv-unassigned-icon" aria-hidden="true">
+                                <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                                    <path d="M5 19V9a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2Z" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M5 13h18" stroke="currentColor" stroke-width="1.6"/>
+                                    <circle cx="9.5" cy="17" r="1.4" fill="currentColor"/>
+                                    <circle cx="18.5" cy="17" r="1.4" fill="currentColor"/>
+                                    <path d="M8 21v2M20 21v2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                </svg>
+                            </div>
+                            <div class="grx-drv-unassigned-copy">
+                                <span class="grx-pill is-blue mb-2">Jornada en espera</span>
+                                <h2>Sin recorrido asignado en este momento</h2>
+                                <p>
+                                    Cuando el coordinador programe tu próxima ruta, aparecerán aquí tu recorrido activo, el mapa paso a paso y el control de paradas.
+                                </p>
+                                <div class="grx-drv-unassigned-meta">
+                                    <span>
+                                        <i class="fa fa-bus me-1" aria-hidden="true"/>
+                                        <strong>Unidad:</strong>
+                                        <t t-if="this.primaryVehicle">
+                                            <t t-esc="this.primaryVehicle.name"/>
+                                            <t t-if="this.primaryVehicle.license_plate"> (<t t-esc="this.primaryVehicle.license_plate"/>)</t>
+                                        </t>
+                                        <t t-else="">Sin vehículo vinculado</t>
+                                    </span>
+                                    <span t-if="this.primaryVehicle">
+                                        <i class="fa fa-signal me-1" aria-hidden="true"/>
+                                        <strong>GPS:</strong> <t t-esc="this.gpsStatusInfo.label"/>
+                                    </span>
+                                    <span>
+                                        <i class="fa fa-check-circle me-1" aria-hidden="true"/>
+                                        <strong>Completados:</strong> <t t-esc="state.stats.completed_trips"/>
+                                    </span>
+                                </div>
+                                <p t-if="!this.hasAnyTrips" class="grx-drv-hint-note">
+                                    <i class="fa fa-info-circle me-1" aria-hidden="true"/>
+                                    El reporte de incidencias se habilita automáticamente al contar con un recorrido asignado.
+                                </p>
+                            </div>
                         </div>
+                        <div class="grx-drv-unassigned-actions">
+                            <button type="button" class="grx-btn grx-btn--primary" t-on-click="() => this.openMyTrips()">
+                                <i class="fa fa-road" aria-hidden="true"/>
+                                <span>Mis recorridos</span>
+                            </button>
+                            <button type="button" class="grx-btn" t-on-click="() => this.openLiveMap()">
+                                <i class="fa fa-map-marker" aria-hidden="true"/>
+                                <span>Mi mapa</span>
+                            </button>
+                        </div>
+                    </section>
+                </t>
 
-                        <div class="tblr-card-body">
-                            <!-- Active Trip Context Bar -->
-                            <div t-if="state.featuredTrip" class="drv-route-banner mb-3">
-                                <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
-                                    <div>
-                                        <div class="tblr-pretitle mb-1"><t t-esc="state.featuredTrip.route_code"/> · <t t-esc="state.featuredTrip.route_name"/></div>
-                                        <div class="fw-bold"><t t-esc="state.featuredTrip.origin_name"/> → <t t-esc="state.featuredTrip.destination_name"/></div>
-                                        <div class="tblr-item-sub mt-1">
-                                            Inicio programado: <strong><t t-esc="state.featuredTrip.scheduled_start_local"/></strong>
+                <!-- CASE B: ACTIVE / ASSIGNED TRIP COCKPIT -->
+                <t t-elif="state.featuredTrip">
+                    <section class="grx-drv-cockpit-grid">
+                        <!-- LEFT: ACTIVE TRIP HERO + 6 REAL TELEMETRY TILES + STOP PROGRESS -->
+                        <div class="grx-card">
+                            <div class="grx-card-header">
+                                <div class="grx-card-title-wrap">
+                                    <h2 class="grx-card-title">
+                                        <i class="fa fa-compass grx-ico-primary" aria-hidden="true"/>
+                                        <span>Recorrido actual · <t t-esc="state.featuredTrip.name"/></span>
+                                    </h2>
+                                </div>
+                                <span t-attf-class="grx-pill #{this.getStateBadgeClass(state.featuredTrip.state)}">
+                                    <t t-esc="state.featuredTrip.state_label"/>
+                                </span>
+                            </div>
+
+                            <div class="grx-card-body">
+                                <div class="grx-drv-route-hero">
+                                    <div class="grx-drv-route-info">
+                                        <div class="grx-drv-route-code">
+                                            <t t-esc="state.featuredTrip.route_code"/> · <t t-esc="state.featuredTrip.route_name"/>
+                                        </div>
+                                        <div class="grx-drv-route-endpoints">
+                                            <t t-esc="state.featuredTrip.origin_name"/> → <t t-esc="state.featuredTrip.destination_name"/>
+                                        </div>
+                                        <div class="grx-item-sub mt-1">
+                                            Programado: <strong><t t-esc="state.featuredTrip.scheduled_start_local"/></strong>
                                             · <t t-esc="state.featuredTrip.position_count"/> pts GPS
                                         </div>
                                     </div>
-                                    <div class="d-flex gap-2 flex-wrap">
+                                    <div class="grx-drv-route-ctas">
                                         <button t-if="state.featuredTrip.can_start"
                                                 type="button"
-                                                class="tblr-btn tblr-btn--primary"
+                                                class="grx-btn grx-btn--primary"
                                                 t-att-disabled="state.isTransitioning"
                                                 t-on-click="() => this.transitionTrip(state.featuredTrip.id, 'start')">
-                                            <i class="fa fa-play" aria-hidden="true"/> Iniciar Recorrido
+                                            <i class="fa fa-play" aria-hidden="true"/>
+                                            <span>Iniciar recorrido</span>
                                         </button>
                                         <button t-if="state.featuredTrip.can_complete"
                                                 type="button"
-                                                class="tblr-btn tblr-btn--primary"
+                                                class="grx-btn grx-btn--success"
                                                 t-att-disabled="state.isTransitioning"
                                                 t-on-click="() => this.transitionTrip(state.featuredTrip.id, 'complete')">
-                                            <i class="fa fa-flag-checkered" aria-hidden="true"/> Finalizar
+                                            <i class="fa fa-flag-checkered" aria-hidden="true"/>
+                                            <span>Finalizar</span>
                                         </button>
-                                        <button type="button" class="tblr-btn" t-on-click="() => this.openTripDetail(state.featuredTrip.id)">
+                                        <button type="button" class="grx-btn" t-on-click="() => this.openTripDetail(state.featuredTrip.id)">
                                             Detalle
                                         </button>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div t-elif="!state.isLoading" class="drv-route-banner mb-3">
-                                <div class="fw-bold">Sin recorrido activo en este momento</div>
-                                <div class="tblr-item-sub">Cuando el Administrador programe tu siguiente ruta aparecerá automáticamente con tus paradas, telemetría y mapa.</div>
-                            </div>
-
-                            <!-- 6 REAL TELEMETRY TILES (2x3 ELLIBUS Grid) -->
-                            <div class="drv-telemetry-grid mb-3">
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Próxima Parada</span><i class="fa fa-map-marker text-primary"/></span>
-                                    <div class="drv-stat-val text-truncate" t-att-title="state.featuredTrip ? state.featuredTrip.next_stop_name : 'Sin ruta'">
-                                        <t t-esc="state.featuredTrip ? state.featuredTrip.next_stop_name : 'Sin asignación'"/>
+                                <div class="grx-drv-telemetry-grid">
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Próxima parada</span>
+                                        <div class="grx-drv-tile-val" t-att-title="state.featuredTrip.next_stop_name">
+                                            <t t-esc="state.featuredTrip.next_stop_name"/>
+                                        </div>
+                                        <span class="grx-item-sub">Quedan <t t-esc="state.featuredTrip.remaining_stops"/> paradas</span>
                                     </div>
-                                    <div class="tblr-item-sub">
-                                        <t t-if="state.featuredTrip">Quedan <t t-esc="state.featuredTrip.remaining_stops"/> paradas</t>
-                                        <t t-else="">En espera de ruta</t>
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Velocidad actual</span>
+                                        <div class="grx-drv-tile-val grx-num"><t t-esc="this.currentSpeedDisplay"/></div>
+                                        <span class="grx-item-sub">Último reporte GPS</span>
+                                    </div>
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Distancia</span>
+                                        <div class="grx-drv-tile-val grx-num"><t t-esc="state.featuredTrip.distance_display"/></div>
+                                        <span class="grx-item-sub">Recorrido registrado</span>
+                                    </div>
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Tiempo transcurrido</span>
+                                        <div class="grx-drv-tile-val grx-num"><t t-esc="state.featuredTrip.elapsed_display"/></div>
+                                        <span class="grx-item-sub">Hora Ecuador (ECT)</span>
+                                    </div>
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Puntualidad</span>
+                                        <div class="grx-drv-tile-val"><t t-esc="state.featuredTrip.punctuality_label"/></div>
+                                        <span class="grx-item-sub">Evaluación del servicio</span>
+                                    </div>
+                                    <div class="grx-drv-tile">
+                                        <span class="grx-drv-tile-label">Señal GPS</span>
+                                        <div class="grx-drv-tile-val"><t t-esc="this.gpsStatusInfo.label"/></div>
+                                        <span class="grx-item-sub"><t t-esc="this.gpsStatusInfo.lastFix"/></span>
                                     </div>
                                 </div>
 
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Velocidad Actual</span><i class="fa fa-tachometer text-muted"/></span>
-                                    <div class="drv-stat-val"><t t-esc="this.currentSpeedDisplay"/></div>
-                                    <div class="tblr-item-sub">Último reporte Traccar</div>
-                                </div>
-
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Distancia Recorrida</span><i class="fa fa-road text-muted"/></span>
-                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.distance_display : 'N/A'"/></div>
-                                    <div class="tblr-item-sub">Cálculo GPS real</div>
-                                </div>
-
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Tiempo Transcurrido</span><i class="fa fa-clock-o text-muted"/></span>
-                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.elapsed_display : 'Sin iniciar'"/></div>
-                                    <div class="tblr-item-sub">Hora oficial Ecuador</div>
-                                </div>
-
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Puntualidad</span><i class="fa fa-check-circle text-muted"/></span>
-                                    <div class="drv-stat-val"><t t-esc="state.featuredTrip ? state.featuredTrip.punctuality_label : 'N/A'"/></div>
-                                    <div class="tblr-item-sub">Evaluación del recorrido</div>
-                                </div>
-
-                                <div class="drv-stat-tile">
-                                    <span class="tblr-subheader"><span>Conexión GPS</span><span t-attf-class="tblr-status-dot #{this.gpsStatusInfo.dot}"/></span>
-                                    <div class="drv-stat-val"><t t-esc="this.gpsStatusInfo.label"/></div>
-                                    <div class="tblr-item-sub text-truncate"><t t-esc="this.gpsStatusInfo.lastFix"/></div>
-                                </div>
-                            </div>
-
-                            <!-- Interactive Dotted Stop Progress Bar (ELLIBUS-inspired) -->
-                            <div class="drv-stop-progress-box">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="tblr-pretitle mb-0">PROGRESO DE PARADAS</span>
-                                    <strong class="small">
-                                        <t t-if="state.featuredTrip">
+                                <div t-if="state.featuredTrip.total_stops" class="grx-drv-progress-box">
+                                    <div class="grx-drv-progress-head">
+                                        <span>Progreso de paradas</span>
+                                        <strong class="grx-num">
                                             <t t-esc="state.featuredTrip.visited_stops"/> / <t t-esc="state.featuredTrip.total_stops"/> (<t t-esc="state.featuredTrip.progress_pct"/>%)
+                                        </strong>
+                                    </div>
+                                    <div class="grx-drv-stop-dots">
+                                        <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
+                                            <button type="button"
+                                                    t-attf-class="grx-drv-stop-dot #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}"
+                                                    t-att-title="st.order + '. ' + st.name"
+                                                    t-on-click="() => this.focusStop(st)">
+                                                <t t-esc="st.order"/>
+                                            </button>
                                         </t>
-                                        <t t-else="">0 / 0 (0%)</t>
-                                    </strong>
-                                </div>
-                                <div t-if="state.featuredTrip and state.featuredTrip.stops.length" class="drv-stop-dots mb-2">
-                                    <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
-                                        <button type="button"
-                                                t-attf-class="drv-stop-dot #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}"
-                                                t-att-title="st.order + '. ' + st.name"
-                                                t-on-click="() => this.focusStop(st)">
-                                            <t t-esc="st.order"/>
-                                        </button>
-                                    </t>
-                                </div>
-                                <div class="tblr-progress-sm">
-                                    <div t-attf-style="width: #{state.featuredTrip ? state.featuredTrip.progress_pct : 0}%;"/>
+                                    </div>
+                                    <div class="grx-progress-track">
+                                        <div class="grx-progress-fill" t-attf-style="width: #{state.featuredTrip.progress_pct}%;"/>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Non-intrusive Compact Animated Bus Rail -->
-                        <div class="tblr-vehicle-rail" aria-hidden="true">
-                            <svg class="tblr-vehicle-rail-svg" viewBox="0 0 1000 46" preserveAspectRatio="xMidYMid slice">
-                                <line x1="0" y1="35" x2="1000" y2="35" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="14 10" class="grx-road-dashes"/>
-                                <g class="grx-bus-ltr">
-                                    <g class="grx-bus-float">
-                                        <rect x="8" y="13" width="62" height="20" rx="5" fill="#182433"/>
-                                        <rect x="8" y="26" width="62" height="3" fill="#066fd1"/>
-                                        <rect x="14" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
-                                        <rect x="29" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
-                                        <rect x="44" y="16" width="12" height="7" rx="1.5" fill="#dbeafe"/>
-                                        <rect x="59" y="16" width="8" height="7" rx="1.5" fill="#93c5fd"/>
-                                        <circle cx="21" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
-                                        <circle cx="57" cy="34" r="4.5" fill="#0f172a" stroke="#e2e8f0" stroke-width="1.5"/>
-                                    </g>
-                                </g>
-                            </svg>
-                            <span class="tblr-rail-meta">
-                                Recorridos asignados: <strong><t t-esc="state.stats.total_trips"/></strong>
-                            </span>
-                            <span class="tblr-rail-meta">
-                                Finalizados: <strong><t t-esc="state.stats.completed_trips"/></strong>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- RIGHT: TABLER MAP DELIVERY TRACKER + INTERACTIVE STOP TIMELINE -->
-                    <div class="tblr-card">
-                        <div class="tblr-card-header">
-                            <h2 class="tblr-card-title">
-                                <i class="fa fa-map-marker text-primary" aria-hidden="true"/>
-                                Mapa de Ruta y Paradas
-                            </h2>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.recenterMap()" title="Centrar mapa">
-                                    <i class="fa fa-crosshairs" aria-hidden="true"/>
-                                </button>
-                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openLiveMap()">
-                                    Mapa completo <i class="fa fa-external-link" aria-hidden="true"/>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Tabler MapDeliveryTracker Map + Floating Overlay Card -->
-                        <div class="tblr-map-wrap" style="height: 270px;">
-                            <div t-ref="driverMapCanvas" class="tblr-map-canvas"/>
-                            <div t-if="state.featuredTrip" class="tblr-map-float-card">
-                                <div class="tblr-pretitle mb-1"><t t-esc="state.featuredTrip.name"/></div>
-                                <div class="fw-bold small text-truncate"><t t-esc="state.featuredTrip.next_stop_name"/></div>
-                                <div class="tblr-progress-sm mt-2">
-                                    <div t-attf-style="width: #{state.featuredTrip.progress_pct}%; background: #2fb344;"/>
+                        <!-- RIGHT: ROUTE MAP & INTERACTIVE STOP TIMELINE -->
+                        <div class="grx-card">
+                            <div class="grx-card-header">
+                                <h2 class="grx-card-title">
+                                    <i class="fa fa-map-marker grx-ico-primary" aria-hidden="true"/>
+                                    <span>Mapa de ruta y paradas</span>
+                                </h2>
+                                <div class="grx-card-controls">
+                                    <button type="button" class="grx-btn grx-btn--sm grx-btn--icon" t-on-click="() => this.recenterMap()" title="Centrar mapa" aria-label="Centrar mapa">
+                                        <i class="fa fa-crosshairs" aria-hidden="true"/>
+                                    </button>
+                                    <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openLiveMap()">
+                                        <span>Mapa completo</span>
+                                        <i class="fa fa-external-link" aria-hidden="true"/>
+                                    </button>
                                 </div>
                             </div>
-                            <div t-if="!this.hasMapPoints and !state.isLoading" class="tblr-map-empty-overlay">
-                                <strong>Sin coordenadas GPS o paradas activas</strong>
-                                <div>El trazado y tu unidad aparecerán aquí en cuanto tengas una ruta asignada o señal Traccar.</div>
-                            </div>
-                        </div>
 
-                        <!-- Interactive Vertical Stop Timeline (click stop -> map.flyTo) -->
-                        <div class="tblr-card-header py-2">
-                            <span class="tblr-pretitle mb-0">LÍNEA DE TIEMPO DE PARADAS (CLIC PARA ENFOCAR)</span>
-                        </div>
-                        <div t-if="state.featuredTrip and state.featuredTrip.stops.length" class="tblr-list-scroll" style="max-height: 210px;">
-                            <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
-                                <div t-attf-class="tblr-list-item #{state.selectedStopId === st.id ? 'is-selected' : ''}"
-                                     role="button" tabindex="0"
-                                     t-on-click="() => this.focusStop(st)">
-                                    <div class="d-flex align-items-center gap-2 min-w-0">
-                                        <span t-attf-class="drv-tl-badge #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}">
-                                            <t t-esc="st.order"/>
-                                        </span>
-                                        <div class="min-w-0">
-                                            <div class="tblr-item-title text-truncate"><t t-esc="st.name"/></div>
-                                            <div class="tblr-item-sub">
-                                                <t t-if="st.visited">Visitada · <t t-esc="st.arrival_local || 'Registrada'"/></t>
-                                                <t t-else="">Pendiente <t t-if="st.scheduled_local">· Previsto <t t-esc="st.scheduled_local"/></t></t>
+                            <div class="grx-map-wrap grx-map-wrap--drv">
+                                <div t-ref="driverMapCanvas" class="grx-map-canvas"/>
+                                <div t-if="!this.hasMapPoints and !state.isLoading" class="grx-map-empty-overlay">
+                                    <strong>Sin coordenadas disponibles</strong>
+                                    <div>El trazado aparecerá en cuanto se reciban datos de ruta o señal GPS.</div>
+                                </div>
+                            </div>
+
+                            <div t-if="state.featuredTrip.stops.length" class="grx-list-scroll grx-list-scroll--sm">
+                                <t t-foreach="state.featuredTrip.stops" t-as="st" t-key="st.id">
+                                    <div t-attf-class="grx-list-item #{state.selectedStopId === st.id ? 'is-selected' : ''}"
+                                         role="button" tabindex="0"
+                                         t-on-click="() => this.focusStop(st)">
+                                        <div class="grx-item-lead">
+                                            <span t-attf-class="grx-drv-tl-dot #{st.visited ? 'is-done' : (st.order === state.featuredTrip.next_stop_order ? 'is-next' : '')}">
+                                                <t t-esc="st.order"/>
+                                            </span>
+                                            <div class="grx-item-text">
+                                                <div class="grx-item-title"><t t-esc="st.name"/></div>
+                                                <div class="grx-item-sub">
+                                                    <t t-if="st.visited">Visitada · <t t-esc="st.arrival_local || 'Registrada'"/></t>
+                                                    <t t-else="">Pendiente <t t-if="st.scheduled_local">· Previsto <t t-esc="st.scheduled_local"/></t></t>
+                                                </div>
                                             </div>
                                         </div>
+                                        <span t-if="st.visited" class="grx-pill is-green">OK</span>
+                                        <span t-elif="st.order === state.featuredTrip.next_stop_order" class="grx-pill is-blue">Siguiente</span>
+                                        <span t-else="" class="grx-pill is-muted">Pendiente</span>
                                     </div>
-                                    <span t-if="st.visited" class="tblr-badge is-green">OK</span>
-                                    <span t-elif="st.order === state.featuredTrip.next_stop_order" class="tblr-badge is-blue">Siguiente</span>
-                                    <span t-else="" class="tblr-badge is-muted">Pendiente</span>
-                                </div>
-                            </t>
+                                </t>
+                            </div>
                         </div>
-                        <div t-else="" class="tblr-empty py-3">
-                            <i class="fa fa-map-signs" aria-hidden="true"/>
-                            <p>Sin paradas activas en el recorrido seleccionado.</p>
-                        </div>
-                    </div>
-                </section>
+                    </section>
+                </t>
 
-                <!-- BOTTOM 2-COLUMN WORKSPACE: TRIP HISTORY + REPORTED INCIDENTS -->
-                <section class="tblr-mid-grid">
-                    <!-- Trip History -->
-                    <div class="tblr-card">
-                        <div class="tblr-card-header">
-                            <h2 class="tblr-card-title">
-                                <i class="fa fa-history text-primary" aria-hidden="true"/>
-                                Historial de Mis Recorridos
+                <!-- LOADING SKELETON -->
+                <t t-else="">
+                    <section class="grx-card">
+                        <div class="grx-card-body grx-skeleton-stack">
+                            <div class="grx-skeleton-line"/>
+                            <div class="grx-skeleton-line is-short"/>
+                            <div class="grx-skeleton-line"/>
+                        </div>
+                    </section>
+                </t>
+
+                <!-- BOTTOM 2-COLUMN WORKSPACE: MY TRIPS + MY INCIDENTS -->
+                <section class="grx-two-col">
+                    <div class="grx-card">
+                        <div class="grx-card-header">
+                            <h2 class="grx-card-title">
+                                <i class="fa fa-history grx-ico-primary" aria-hidden="true"/>
+                                <span>Historial de mis recorridos</span>
                             </h2>
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="tblr-btn-group" role="group">
+                            <div class="grx-card-controls">
+                                <div class="grx-segmented" role="group">
                                     <button type="button" t-att-class="state.tripFilter === 'all' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'all'; }">Todos</button>
                                     <button type="button" t-att-class="state.tripFilter === 'active' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'active'; }">Activos</button>
                                     <button type="button" t-att-class="state.tripFilter === 'completed' ? 'is-active' : ''" t-on-click="() => { state.tripFilter = 'completed'; }">Finalizados</button>
                                 </div>
-                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openMyTrips()">Ver todos</button>
+                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openMyTrips()">Ver todos</button>
                             </div>
                         </div>
-                        <div t-if="!this.filteredTrips.length" class="tblr-empty">
+                        <div t-if="!this.filteredTrips.length" class="grx-empty">
                             <i class="fa fa-road" aria-hidden="true"/>
                             <strong>Sin recorridos registrados</strong>
-                            <p>Aquí aparecerá tu historial completo de recorridos asignados y finalizados.</p>
+                            <p>Aquí verás tu historial de recorridos asignados y finalizados.</p>
                         </div>
-                        <div t-else="" class="tblr-list-scroll">
+                        <div t-else="" class="grx-list-scroll">
                             <t t-foreach="this.filteredTrips" t-as="trip" t-key="trip.id">
-                                <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openTripDetail(trip.id)">
-                                    <div class="min-w-0">
-                                        <div class="tblr-item-title text-truncate"><t t-esc="trip.name"/> · <t t-esc="trip.route_name"/></div>
-                                        <div class="tblr-item-sub"><t t-esc="trip.scheduled_start_local"/> · <t t-esc="trip.position_count"/> pts GPS</div>
+                                <div class="grx-list-item" role="button" tabindex="0" t-on-click="() => this.openTripDetail(trip.id)">
+                                    <div class="grx-item-text">
+                                        <div class="grx-item-title"><t t-esc="trip.name"/> · <t t-esc="trip.route_name"/></div>
+                                        <div class="grx-item-sub"><t t-esc="trip.scheduled_start_local"/> · <t t-esc="trip.position_count"/> pts GPS</div>
                                     </div>
-                                    <span t-attf-class="tblr-badge #{this.getStateBadgeClass(trip.state)}"><t t-esc="trip.state_label"/></span>
+                                    <span t-attf-class="grx-pill #{this.getStateBadgeClass(trip.state)}"><t t-esc="trip.state_label"/></span>
                                 </div>
                             </t>
                         </div>
                     </div>
 
-                    <!-- Reported Incidents -->
-                    <div class="tblr-card">
-                        <div class="tblr-card-header">
-                            <h2 class="tblr-card-title">
-                                <i class="fa fa-exclamation-triangle text-primary" aria-hidden="true"/>
-                                Mis Incidencias Reportadas
+                    <div class="grx-card">
+                        <div class="grx-card-header">
+                            <h2 class="grx-card-title">
+                                <i class="fa fa-exclamation-triangle grx-ico-primary" aria-hidden="true"/>
+                                <span>Mis incidencias</span>
                             </h2>
-                            <div class="d-flex gap-2">
-                                <button type="button" class="tblr-btn tblr-btn--sm" t-on-click="() => this.openAllIncidents()">Ver todas</button>
-                                <button type="button" class="tblr-btn tblr-btn--sm tblr-btn--primary" t-on-click="() => this.openNewIncident(false)">+ Nueva</button>
+                            <div class="grx-card-controls">
+                                <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.openAllIncidents()">Ver todas</button>
+                                <button t-if="this.hasAnyTrips"
+                                        type="button"
+                                        class="grx-btn grx-btn--sm grx-btn--primary"
+                                        t-on-click="() => this.openNewIncident(state.featuredTrip ? state.featuredTrip.id : false)">+ Nueva</button>
                             </div>
                         </div>
-                        <div t-if="!state.incidents.length" class="tblr-empty">
+                        <div t-if="!state.incidents.length" class="grx-empty">
                             <i class="fa fa-check-circle" aria-hidden="true"/>
                             <strong>Sin incidencias reportadas</strong>
-                            <p>Si ocurre tráfico, bloqueo vial o novedad mecánica, repórtala desde aquí con un toque.</p>
+                            <p>Si ocurre tráfico, bloqueo vial o novedad mecánica, repórtala desde aquí cuando estés detenido.</p>
                         </div>
-                        <div t-else="" class="tblr-list-scroll">
+                        <div t-else="" class="grx-list-scroll">
                             <t t-foreach="state.incidents" t-as="inc" t-key="inc.id">
-                                <div class="tblr-list-item" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
-                                    <div class="min-w-0">
-                                        <div class="tblr-item-title text-truncate"><t t-esc="inc.name"/> · <t t-esc="inc.incident_type_label"/></div>
-                                        <div class="tblr-item-sub"><t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/></div>
+                                <div class="grx-list-item" role="button" tabindex="0" t-on-click="() => this.openIncidentDetail(inc.id)">
+                                    <div class="grx-item-text">
+                                        <div class="grx-item-title"><t t-esc="inc.name"/> · <t t-esc="inc.incident_type_label"/></div>
+                                        <div class="grx-item-sub"><t t-esc="inc.trip_name"/> · <t t-esc="inc.timestamp_local"/></div>
                                     </div>
-                                    <span t-attf-class="tblr-badge #{this.getSeverityBadgeClass(inc.severity)}"><t t-esc="inc.severity_label"/></span>
+                                    <span t-attf-class="grx-pill #{this.getSeverityBadgeClass(inc.severity)}"><t t-esc="inc.severity_label"/></span>
                                 </div>
                             </t>
                         </div>
                     </div>
                 </section>
             </div>
+
+            <!-- MOBILE BOTTOM NAVIGATION BAR (visible < 768px for comfortable thumb access) -->
+            <nav class="grx-mobile-bottom-nav" aria-label="Accesos rápidos del conductor">
+                <button type="button" class="grx-mbnav-item is-active" t-on-click="() => this.loadDriverHome(true)">
+                    <i class="fa fa-home" aria-hidden="true"/>
+                    <span>Inicio</span>
+                </button>
+                <button type="button" class="grx-mbnav-item" t-on-click="() => this.openLiveMap()">
+                    <i class="fa fa-map-marker" aria-hidden="true"/>
+                    <span>Mapa</span>
+                </button>
+                <button type="button" class="grx-mbnav-item" t-on-click="() => this.openMyTrips()">
+                    <i class="fa fa-road" aria-hidden="true"/>
+                    <span>Recorridos</span>
+                </button>
+                <button type="button" class="grx-mbnav-item" t-on-click="() => this.openNewIncident(state.featuredTrip ? state.featuredTrip.id : false)">
+                    <i class="fa fa-exclamation-triangle" aria-hidden="true"/>
+                    <span>Incidencia</span>
+                </button>
+                <button type="button" class="grx-mbnav-item" t-on-click="() => this.openProfile()">
+                    <i class="fa fa-user" aria-hidden="true"/>
+                    <span>Perfil</span>
+                </button>
+            </nav>
         </div>
     </t>
 </templates>

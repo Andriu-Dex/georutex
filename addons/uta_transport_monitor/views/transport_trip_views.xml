@@ -82,7 +82,7 @@
                                             GPS Real
                                         </span>
                                         <span class="small text-muted">
-                                            <i class="fa fa-map-pin me-1" aria-hidden="true"/><field name="position_count"/> pts
+                                            <i class="fa fa-map-pin me-1" title="Posiciones GPS"/><field name="position_count"/> pts
                                         </span>
                                     </div>
                                     <button name="action_report_incident"
@@ -170,7 +170,7 @@
                             <field name="manual_duration_override_reason" attrs="{'invisible': [('is_manual_duration_override', '=', False)], 'required': [('is_manual_duration_override', '=', True)], 'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="manual_duration_override_user_id" attrs="{'invisible': [('is_manual_duration_override', '=', False)]}" readonly="1"/>
                         </group>
-                        <group string="Ejecución Real y Comparativa (RF-20)">
+                        <group string="Ejecución real y comparativa">
                             <field name="actual_duration_display" string="Duración Real Observada" readonly="1"/>
                             <field name="actual_start_utc" string="Salida Real"/>
                             <field name="actual_start_evidence"/>
@@ -197,7 +197,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Evaluación de Cumplimiento (RF-26)" name="evaluation_page">
+                        <page string="Evaluación de cumplimiento" name="evaluation_page">
                             <field name="evaluation_ids" readonly="1">
                                 <tree string="Historial de Evaluaciones">
                                     <field name="name"/>
@@ -246,7 +246,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Snapshot de Parámetros Congelados (RF-14)" name="parameters_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
+                        <page string="Parámetros congelados" name="parameters_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
                             <group>
                                 <group string="Tolerancias Congeladas">
                                     <field name="stop_radius_m"/>
@@ -306,12 +306,11 @@
         <field name="view_mode">tree,kanban,form</field>
         <field name="search_view_id" ref="view_transport_trip_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Planifica y agenda un nuevo recorrido de transporte
-            </p>
-            <p>
-                Asigna vehículo, conductor, ruta, versión aprobada y horario previsto, con validación de conflictos y prevención de solapamientos (RF-12).
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-route"/>
+                <h3>No hay recorridos programados</h3>
+                <p>Crea un recorrido asignando vehículo, conductor, ruta aprobada y horario previsto para iniciar el monitoreo.</p>
+            </div>
         </field>
     </record>
 
@@ -324,12 +323,11 @@
         <field name="context">{'search_default_filter_my_trips': 1}</field>
         <field name="search_view_id" ref="view_transport_trip_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                Bienvenido a tu espacio operativo en GeoRutex
-            </p>
-            <p>
-                Aún no tienes recorridos asignados. Cuando el administrador programe tu jornada, verás aquí tus rutas, horarios, mapa en vivo y acceso directo para reportar incidencias operacionales.
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-route"/>
+                <h3>Aún no tienes recorridos asignados</h3>
+                <p>Cuando el coordinador programe tu jornada, verás aquí tus horarios, rutas y seguimiento en tiempo real.</p>
+            </div>
         </field>
     </record>
 </odoo>

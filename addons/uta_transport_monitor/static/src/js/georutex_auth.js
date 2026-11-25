@@ -1,12 +1,64 @@
-/* GeoRutex Unified Authentication Motion & UX (GSAP 3.13.0)
- * - Editorial 3-scene carousel with Clip-Path mask reveal, DrawSVG route,
- *   MotionPath beacon, manual controls, and auto-pause on form input focus.
- * - Deferred-until-interaction validation aligned with server rules.
- * - Smooth password checklist with GSAP Flip, 6-digit OTP UX, cooldown timer,
- *   double-submit prevention, and full prefers-reduced-motion compliance.
+/* GeoRutex Unified Authentication — Dynamic Colorimetry & GSAP 3.13.0 Motion
+ * - Scene-linked CSS variable colorimetry (Seguimiento #E5EEF8, Organización #E5EFEB, Evaluación #ECEAF4)
+ * - Coordinated exit/color/enter carousel timelines (Clip-Path, SplitText, DrawSVG, MotionPath, Flip)
+ * - Real continuous progress bar with pause/resume without reset + visibilitychange pause
+ * - Cross-route scene persistence & first-visit-only entrance choreography via sessionStorage
+ * - Atomic GSAP-driven password composition indicator ("Requisitos cumplidos (5/5)")
+ * - Accessible deferred validation, 6-digit OTP UX, cooldown timer, double-submit guard
  */
 (function () {
     "use strict";
+
+    const SCENE_STORAGE_KEY = "grx.auth.sceneIdx";
+    const INTRO_SEEN_KEY = "grx.auth.introSeen";
+
+    const SCENE_THEMES = [
+        {
+            name: "Seguimiento",
+            bg: "#e5eef8",
+            accent: "#1a56db",
+            accentSoft: "rgba(26, 86, 219, 0.14)",
+            dot: "#0bbcd7",
+            scrimBot: "rgba(15, 29, 54, 0.88)",
+            border: "rgba(26, 86, 219, 0.14)",
+            arc1: "#0bbcd7",
+            arc2: "#0bbcd7",
+            arc3: "#1a56db",
+            beaconStroke: "#1a56db",
+            beaconHalo: "rgba(11, 188, 215, 0.36)",
+            nodeProgress: 0.14,
+        },
+        {
+            name: "Organización",
+            bg: "#e5efeb",
+            accent: "#0f766e",
+            accentSoft: "rgba(15, 118, 110, 0.14)",
+            dot: "#14b8a6",
+            scrimBot: "rgba(14, 34, 38, 0.90)",
+            border: "rgba(15, 118, 110, 0.16)",
+            arc1: "#14b8a6",
+            arc2: "#0d9488",
+            arc3: "#0f766e",
+            beaconStroke: "#0f766e",
+            beaconHalo: "rgba(20, 184, 166, 0.36)",
+            nodeProgress: 0.52,
+        },
+        {
+            name: "Evaluación",
+            bg: "#eceaf4",
+            accent: "#3730a3",
+            accentSoft: "rgba(55, 48, 163, 0.14)",
+            dot: "#fc0154",
+            scrimBot: "rgba(20, 19, 44, 0.89)",
+            border: "rgba(55, 48, 163, 0.16)",
+            arc1: "#6366f1",
+            arc2: "#3730a3",
+            arc3: "#fc0154",
+            beaconStroke: "#3730a3",
+            beaconHalo: "rgba(252, 1, 84, 0.34)",
+            nodeProgress: 0.88,
+        },
+    ];
 
     const EMAIL_RE = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
     const ALLOWED_NAME_CHARS_RE = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ\s'\u2019-]+$/;
@@ -31,6 +83,12 @@
         "yahoo.con": "yahoo.com",
         "yaho.com": "yahoo.com",
     };
+
+    const cleanupHandlers = [];
+
+    function registerCleanup(fn) {
+        if (typeof fn === "function") cleanupHandlers.push(fn);
+    }
 
     // =========================================================================
     // 1. VALIDATION HELPERS (MIRRORS domain/auth_validation.py)
@@ -128,7 +186,7 @@
     }
 
     // =========================================================================
-    // 2. ACCESSIBLE FIELD FEEDBACK & PASSWORD TOGGLES
+    // 2. ACCESSIBLE FIELD FEEDBACK, TOGGLES & ATOMIC GSAP PASSWORD METER
     // =========================================================================
     function getOrCreateFeedback(input) {
         const anchor = input.closest(".grx-pwd-group") || input;
@@ -144,10 +202,11 @@
         return feedback;
     }
 
-    function setFieldState(input, errorMessage) {
+    function setFieldState(input, errorMessage, gsap, reduceMotion) {
         if (!input) return true;
         const feedback = getOrCreateFeedback(input);
         if (errorMessage) {
+            const wasInvalid = input.classList.contains("is-invalid");
             input.classList.add("is-invalid");
             input.classList.remove("is-valid");
             input.setAttribute("aria-invalid", "true");
@@ -155,6 +214,13 @@
                 input.setAttribute("aria-describedby", feedback.id);
                 feedback.textContent = errorMessage;
                 feedback.classList.add("is-visible");
+                if (!wasInvalid && gsap && !reduceMotion) {
+                    gsap.fromTo(
+                        feedback,
+                        { y: -4, opacity: 0 },
+                        { y: 0, opacity: 1, duration: 0.2, ease: "power2.out", clearProps: "transform,opacity" }
+                    );
+                }
             }
             return false;
         }
@@ -201,19 +267,19 @@
     }
 
     function setSubmitLoading(form, loadingText) {
-        const btn = form.querySelector('button[type="submit"]:not([name])') || form.querySelector('button[type="submit"]');
-        if (!btn) return;
-        if (btn.dataset.grxSubmitting === "1") return;
+        const btn =
+            form.querySelector('button[type="submit"]:not([name])') ||
+            form.querySelector('button[type="submit"]');
+        if (!btn || btn.dataset.grxSubmitting === "1") return;
         btn.dataset.grxSubmitting = "1";
         btn.classList.add("is-loading");
         btn.disabled = true;
         btn.setAttribute("aria-busy", "true");
         const label = btn.querySelector(".grx-btn-label");
-        if (label && loadingText) {
-            label.textContent = loadingText;
-        }
+        if (label && loadingText) label.textContent = loadingText;
     }
 
+    // Single source of truth for composition checklist, bar progress, color, and text
     function updatePasswordMeter(form, pwd, gsap, reduceMotion) {
         const meter = form.querySelector(".grx-password-meter");
         if (!meter) return;
@@ -243,37 +309,70 @@
                     gsap.fromTo(
                         icon,
                         { scale: 0.72 },
-                        { scale: 1, duration: 0.24, ease: "back.out(2.2)", clearProps: "transform" }
+                        { scale: 1, duration: 0.22, ease: "back.out(2.2)", clearProps: "transform" }
                     );
                 }
             }
         });
 
         const fill = meter.querySelector(".grx-meter-fill");
+        const track = meter.querySelector(".grx-meter-track");
         const label = meter.querySelector(".grx-meter-label");
         const pct = pwd ? Math.round((score / 5) * 100) : 0;
 
-        if (fill) {
-            fill.style.width = pct + "%";
-            fill.classList.remove("is-medium", "is-good", "is-strong");
-            if (score === 3) fill.classList.add("is-medium");
-            else if (score === 4) fill.classList.add("is-good");
-            else if (score === 5) fill.classList.add("is-strong");
+        let barColor = "#94a3b8";
+        let stateClass = "";
+        let statusText = "0 de 5 requisitos";
+
+        if (!pwd) {
+            barColor = "#94a3b8";
+            statusText = "0 de 5 requisitos";
+        } else if (score <= 2) {
+            barColor = "#dc2626";
+            stateClass = "is-weak";
+            statusText = `${score} de 5 requisitos`;
+        } else if (score === 3) {
+            barColor = "#d97706";
+            stateClass = "is-medium";
+            statusText = "3 de 5 requisitos";
+        } else if (score === 4) {
+            barColor = "#0bbcd7";
+            stateClass = "is-medium";
+            statusText = "4 de 5 requisitos";
+        } else {
+            barColor = "#15803d";
+            stateClass = "is-strong";
+            statusText = "Requisitos cumplidos (5/5)";
         }
+
+        if (track) track.setAttribute("aria-valuenow", String(score));
+
+        if (fill) {
+            if (gsap && !reduceMotion) {
+                gsap.to(fill, {
+                    width: pct + "%",
+                    backgroundColor: barColor,
+                    duration: 0.28,
+                    ease: "power2.out",
+                    overwrite: "auto",
+                });
+            } else {
+                fill.style.width = pct + "%";
+                fill.style.backgroundColor = barColor;
+            }
+        }
+
         if (label) {
-            const labels = ["Sin ingresar", "Débil", "Regular", "Aceptable", "Buena", "Segura"];
-            label.textContent = pwd ? labels[score] : labels[0];
+            label.textContent = statusText;
             label.classList.remove("is-weak", "is-medium", "is-strong");
-            if (pwd && score <= 2) label.classList.add("is-weak");
-            else if (score === 3 || score === 4) label.classList.add("is-medium");
-            else if (score === 5) label.classList.add("is-strong");
+            if (stateClass) label.classList.add(stateClass);
         }
     }
 
     // =========================================================================
-    // 3. FORM CONTROLLERS (DEFERRED ERRORS UNTIL INTERACTION / SUBMIT)
+    // 3. FORM CONTROLLERS (DEFERRED ERRORS, REAL LOADING, ZERO DUPLICATES)
     // =========================================================================
-    function initLoginForm() {
+    function initLoginForm(gsap, reduceMotion) {
         const form = document.querySelector("form.oe_login_form");
         if (!form) return;
 
@@ -286,17 +385,17 @@
             loginInput.addEventListener("blur", function () {
                 if ((loginInput.value || "").trim()) {
                     touched = true;
-                    setFieldState(loginInput, validateEmail(loginInput.value, true));
+                    setFieldState(loginInput, validateEmail(loginInput.value, true), gsap, reduceMotion);
                 }
             });
             loginInput.addEventListener("input", function () {
-                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, true));
+                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, true), gsap, reduceMotion);
             });
         }
         if (pwdInput) {
             pwdInput.addEventListener("input", function () {
                 if (pwdInput.classList.contains("is-invalid") && pwdInput.value) {
-                    setFieldState(pwdInput, "");
+                    setFieldState(pwdInput, "", gsap, reduceMotion);
                 }
             });
         }
@@ -308,11 +407,11 @@
             }
             let ok = true;
             if (loginInput) {
-                ok = setFieldState(loginInput, validateEmail(loginInput.value, true)) && ok;
+                ok = setFieldState(loginInput, validateEmail(loginInput.value, true), gsap, reduceMotion) && ok;
             }
             if (pwdInput) {
                 const pwdErr = pwdInput.value ? "" : "Ingresa tu contraseña.";
-                ok = setFieldState(pwdInput, pwdErr) && ok;
+                ok = setFieldState(pwdInput, pwdErr, gsap, reduceMotion) && ok;
             }
             if (!ok) {
                 event.preventDefault();
@@ -344,11 +443,11 @@
                 loginInput.value = (loginInput.value || "").trim().toLowerCase();
                 if (loginInput.value) {
                     touched = true;
-                    setFieldState(loginInput, validateEmail(loginInput.value, false));
+                    setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion);
                 }
             });
             loginInput.addEventListener("input", function () {
-                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, false));
+                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion);
             });
         }
 
@@ -357,11 +456,11 @@
             nameInput.addEventListener("blur", function () {
                 if ((nameInput.value || "").trim()) {
                     touched = true;
-                    setFieldState(nameInput, validateName(nameInput.value));
+                    setFieldState(nameInput, validateName(nameInput.value), gsap, reduceMotion);
                 }
             });
             nameInput.addEventListener("input", function () {
-                if (touched) setFieldState(nameInput, validateName(nameInput.value));
+                if (touched) setFieldState(nameInput, validateName(nameInput.value), gsap, reduceMotion);
             });
         }
 
@@ -370,24 +469,24 @@
             const onPwdInput = function () {
                 updatePasswordMeter(form, pwdInput.value, gsap, reduceMotion);
                 if (touched) {
-                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value));
+                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion);
                 }
                 if (confirmInput && confirmInput.value) {
                     const matchErr =
                         confirmInput.value === pwdInput.value
                             ? ""
                             : "Las contraseñas ingresadas no coinciden.";
-                    setFieldState(confirmInput, matchErr);
+                    setFieldState(confirmInput, matchErr, gsap, reduceMotion);
                 }
             };
             pwdInput.addEventListener("input", onPwdInput);
             pwdInput.addEventListener("blur", function () {
                 if (pwdInput.value) {
                     touched = true;
-                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value));
+                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion);
                 }
             });
-            if (pwdInput.value) updatePasswordMeter(form, pwdInput.value, gsap, reduceMotion);
+            updatePasswordMeter(form, pwdInput.value, gsap, true);
         }
 
         if (confirmInput) {
@@ -397,7 +496,7 @@
                     confirmInput.value === (pwdInput ? pwdInput.value : "")
                         ? ""
                         : "Las contraseñas ingresadas no coinciden.";
-                setFieldState(confirmInput, matchErr);
+                setFieldState(confirmInput, matchErr, gsap, reduceMotion);
             };
             confirmInput.addEventListener("blur", function () {
                 if (confirmInput.value) {
@@ -420,22 +519,22 @@
             let ok = true;
             if (loginInput) {
                 loginInput.value = (loginInput.value || "").trim().toLowerCase();
-                ok = setFieldState(loginInput, validateEmail(loginInput.value, false)) && ok;
+                ok = setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion) && ok;
             }
             if (nameInput) {
                 nameInput.value = (nameInput.value || "").trim();
-                ok = setFieldState(nameInput, validateName(nameInput.value)) && ok;
+                ok = setFieldState(nameInput, validateName(nameInput.value), gsap, reduceMotion) && ok;
             }
             if (pwdInput) {
                 updatePasswordMeter(form, pwdInput.value, gsap, reduceMotion);
-                ok = setFieldState(pwdInput, validateStrongPassword(pwdInput.value)) && ok;
+                ok = setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion) && ok;
             }
             if (confirmInput) {
                 const matchErr =
                     confirmInput.value === (pwdInput ? pwdInput.value : "")
                         ? ""
                         : "Las contraseñas ingresadas no coinciden.";
-                ok = setFieldState(confirmInput, matchErr) && ok;
+                ok = setFieldState(confirmInput, matchErr, gsap, reduceMotion) && ok;
             }
             if (!ok) {
                 event.preventDefault();
@@ -466,11 +565,11 @@
                 loginInput.value = (loginInput.value || "").trim().toLowerCase();
                 if (loginInput.value) {
                     touched = true;
-                    setFieldState(loginInput, validateEmail(loginInput.value, false));
+                    setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion);
                 }
             });
             loginInput.addEventListener("input", function () {
-                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, false));
+                if (touched) setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion);
             });
         }
 
@@ -478,21 +577,22 @@
             let touched = false;
             pwdInput.addEventListener("input", function () {
                 updatePasswordMeter(form, pwdInput.value, gsap, reduceMotion);
-                if (touched) setFieldState(pwdInput, validateStrongPassword(pwdInput.value));
+                if (touched) setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion);
                 if (confirmInput && confirmInput.value) {
                     const matchErr =
                         confirmInput.value === pwdInput.value
                             ? ""
                             : "Las contraseñas ingresadas no coinciden.";
-                    setFieldState(confirmInput, matchErr);
+                    setFieldState(confirmInput, matchErr, gsap, reduceMotion);
                 }
             });
             pwdInput.addEventListener("blur", function () {
                 if (pwdInput.value) {
                     touched = true;
-                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value));
+                    setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion);
                 }
             });
+            updatePasswordMeter(form, pwdInput.value, gsap, true);
         }
 
         if (confirmInput) {
@@ -504,7 +604,7 @@
                         confirmInput.value === (pwdInput ? pwdInput.value : "")
                             ? ""
                             : "Las contraseñas ingresadas no coinciden.";
-                    setFieldState(confirmInput, matchErr);
+                    setFieldState(confirmInput, matchErr, gsap, reduceMotion);
                 }
             });
             confirmInput.addEventListener("input", function () {
@@ -513,7 +613,7 @@
                         confirmInput.value === (pwdInput ? pwdInput.value : "")
                             ? ""
                             : "Las contraseñas ingresadas no coinciden.";
-                    setFieldState(confirmInput, matchErr);
+                    setFieldState(confirmInput, matchErr, gsap, reduceMotion);
                 }
             });
         }
@@ -526,18 +626,18 @@
             let ok = true;
             if (loginInput && !pwdInput) {
                 loginInput.value = (loginInput.value || "").trim().toLowerCase();
-                ok = setFieldState(loginInput, validateEmail(loginInput.value, false)) && ok;
+                ok = setFieldState(loginInput, validateEmail(loginInput.value, false), gsap, reduceMotion) && ok;
             }
             if (pwdInput) {
                 updatePasswordMeter(form, pwdInput.value, gsap, reduceMotion);
-                ok = setFieldState(pwdInput, validateStrongPassword(pwdInput.value)) && ok;
+                ok = setFieldState(pwdInput, validateStrongPassword(pwdInput.value), gsap, reduceMotion) && ok;
             }
             if (confirmInput && pwdInput) {
                 const matchErr =
                     confirmInput.value === pwdInput.value
                         ? ""
                         : "Las contraseñas ingresadas no coinciden.";
-                ok = setFieldState(confirmInput, matchErr) && ok;
+                ok = setFieldState(confirmInput, matchErr, gsap, reduceMotion) && ok;
             }
             if (!ok) {
                 event.preventDefault();
@@ -554,13 +654,14 @@
         });
     }
 
-    function initOtpForm() {
+    function initOtpForm(gsap, reduceMotion) {
         const form = document.querySelector("form.grx-otp-form");
         if (!form) return;
 
         const digits = Array.from(form.querySelectorAll(".grx-otp-digit"));
         const hiddenInput = form.querySelector("#georutex_otp_hidden");
         const errorBox = form.querySelector("#grxOtpInlineError");
+        let wasComplete = false;
 
         function syncHidden() {
             const combined = digits
@@ -576,6 +677,15 @@
                 errorBox.classList.remove("is-visible");
                 errorBox.textContent = "";
             }
+            const isComplete = combined.length === digits.length;
+            if (isComplete && !wasComplete && gsap && !reduceMotion) {
+                gsap.fromTo(
+                    digits,
+                    { scale: 0.95 },
+                    { scale: 1, duration: 0.22, stagger: 0.025, ease: "back.out(2)", clearProps: "transform" }
+                );
+            }
+            wasComplete = isComplete;
         }
 
         digits.forEach(function (input, idx) {
@@ -589,6 +699,9 @@
                     if (target) target.focus();
                 } else {
                     input.value = cleaned;
+                    if (cleaned && gsap && !reduceMotion) {
+                        gsap.fromTo(input, { scale: 0.94 }, { scale: 1, duration: 0.18, clearProps: "transform" });
+                    }
                     if (cleaned && digits[idx + 1]) digits[idx + 1].focus();
                 }
                 syncHidden();
@@ -668,27 +781,57 @@
                     renderCooldown();
                     if (remaining <= 0) window.clearInterval(timer);
                 }, 1000);
+                registerCleanup(() => window.clearInterval(timer));
             }
         }
     }
 
     // =========================================================================
-    // 4. LEFT EDITORIAL 3-SCENE CAROUSEL & GSAP CHOREOGRAPHY
+    // 4. DYNAMIC COLORIMETRY & COORDINATED 3-SCENE CAROUSEL
     // =========================================================================
-    function initVisualCarousel(gsap, Flip, DrawSVGPlugin, MotionPathPlugin, reduceMotion) {
+    function readSavedSceneIdx() {
+        try {
+            const raw = window.sessionStorage.getItem(SCENE_STORAGE_KEY);
+            const idx = parseInt(raw || "0", 10);
+            return idx >= 0 && idx < SCENE_THEMES.length ? idx : 0;
+        } catch (_err) {
+            return 0;
+        }
+    }
+
+    function saveSceneIdx(idx) {
+        try {
+            window.sessionStorage.setItem(SCENE_STORAGE_KEY, String(idx));
+        } catch (_err) {
+            // Ignore restricted storage environments
+        }
+    }
+
+    function initVisualCarousel(gsap, SplitText, Flip, DrawSVGPlugin, MotionPathPlugin, reduceMotion, isFirstVisit) {
+        const visualPanel = document.querySelector(".grx-auth-visual");
         const stage = document.getElementById("grxSceneStage");
         const slides = Array.from(document.querySelectorAll(".grx-scene-slide"));
         const tabs = Array.from(document.querySelectorAll(".grx-carousel-tab"));
         const toggleBtn = document.getElementById("grxCarouselToggle");
-        if (!stage || slides.length < 2) return;
+        if (!visualPanel || !stage || slides.length < 2) return null;
 
-        const NODE_PROGRESS = [0.14, 0.52, 0.88];
-        const INTERVAL_MS = 6400;
-        let currentIdx = 0;
+        const SCENE_DURATION_SEC = 6.4;
+        let currentIdx = readSavedSceneIdx();
         let manualPaused = Boolean(reduceMotion);
         let inputFocused = false;
         let hovered = false;
-        let timerId = null;
+        let tabHidden = Boolean(document.hidden);
+        let progressTween = null;
+        let transitionTl = null;
+        const splitMap = new Map();
+
+        const shouldAutoplayRun = () =>
+            !manualPaused &&
+            !inputFocused &&
+            !hovered &&
+            !tabHidden &&
+            !reduceMotion &&
+            window.getComputedStyle(stage).display !== "none";
 
         const updateToggleUI = () => {
             if (!toggleBtn) return;
@@ -702,22 +845,111 @@
                 : '<i class="fa fa-pause" aria-hidden="true"></i>';
         };
 
+        const applyThemeColors = (idx, instant) => {
+            const theme = SCENE_THEMES[idx] || SCENE_THEMES[0];
+            const dur = instant || reduceMotion ? 0 : 0.72;
+            const cssVars = {
+                "--grx-scene-bg": theme.bg,
+                "--grx-scene-accent": theme.accent,
+                "--grx-scene-accent-soft": theme.accentSoft,
+                "--grx-scene-dot": theme.dot,
+                "--grx-scene-scrim-bot": theme.scrimBot,
+                "--grx-scene-border": theme.border,
+            };
+            if (gsap && dur > 0) {
+                gsap.to(visualPanel, { ...cssVars, duration: dur, ease: "power2.inOut", overwrite: "auto" });
+                const stop1 = document.getElementById("grxArcStop1");
+                const stop2 = document.getElementById("grxArcStop2");
+                const stop3 = document.getElementById("grxArcStop3");
+                const halo = document.getElementById("grxBeaconHalo");
+                const core = document.getElementById("grxBeaconCore");
+                if (stop1) gsap.to(stop1, { attr: { "stop-color": theme.arc1 }, duration: dur });
+                if (stop2) gsap.to(stop2, { attr: { "stop-color": theme.arc2 }, duration: dur });
+                if (stop3) gsap.to(stop3, { attr: { "stop-color": theme.arc3 }, duration: dur });
+                if (halo) gsap.to(halo, { attr: { fill: theme.beaconHalo }, duration: dur });
+                if (core) gsap.to(core, { attr: { stroke: theme.beaconStroke }, duration: dur });
+            } else {
+                Object.keys(cssVars).forEach((k) => visualPanel.style.setProperty(k, cssVars[k]));
+                const stop1 = document.getElementById("grxArcStop1");
+                const stop2 = document.getElementById("grxArcStop2");
+                const stop3 = document.getElementById("grxArcStop3");
+                const halo = document.getElementById("grxBeaconHalo");
+                const core = document.getElementById("grxBeaconCore");
+                if (stop1) stop1.setAttribute("stop-color", theme.arc1);
+                if (stop2) stop2.setAttribute("stop-color", theme.arc2);
+                if (stop3) stop3.setAttribute("stop-color", theme.arc3);
+                if (halo) halo.setAttribute("fill", theme.beaconHalo);
+                if (core) core.setAttribute("stroke", theme.beaconStroke);
+            }
+        };
+
         const moveBeaconTo = (idx, instant) => {
             if (!gsap || !MotionPathPlugin) return;
             const beacon = document.getElementById("grxAuthBeacon");
             const path = document.getElementById("grxAuthRoutePath");
             if (!beacon || !path) return;
-            const endPos = NODE_PROGRESS[idx] || 0.14;
+            const theme = SCENE_THEMES[idx] || SCENE_THEMES[0];
             gsap.to(beacon, {
-                duration: instant || reduceMotion ? 0 : 0.75,
+                duration: instant || reduceMotion ? 0 : 0.78,
                 ease: "power2.inOut",
                 motionPath: {
                     path: "#grxAuthRoutePath",
                     align: "#grxAuthRoutePath",
                     alignOrigin: [0.5, 0.5],
-                    end: endPos,
+                    end: theme.nodeProgress,
                 },
             });
+            document.querySelectorAll(".grx-route-node").forEach((n, i) => {
+                gsap.to(n, {
+                    attr: { r: i === idx ? 5.2 : 3.8 },
+                    duration: instant || reduceMotion ? 0 : 0.35,
+                    ease: "power2.out",
+                });
+            });
+        };
+
+        // Real continuous progress fill that pauses/resumes without resetting!
+        const startProgressFor = (idx) => {
+            if (progressTween) {
+                progressTween.kill();
+                progressTween = null;
+            }
+            tabs.forEach((tab, i) => {
+                const fill = tab.querySelector(".grx-tab-fill");
+                tab.classList.toggle("is-done", i < idx);
+                if (!fill) return;
+                if (gsap) gsap.killTweensOf(fill);
+                if (i < idx) {
+                    fill.style.transform = "scaleX(1)";
+                } else if (i === idx && reduceMotion) {
+                    fill.style.transform = "scaleX(1)";
+                } else {
+                    fill.style.transform = "scaleX(0)";
+                }
+            });
+
+            const activeFill = tabs[idx] ? tabs[idx].querySelector(".grx-tab-fill") : null;
+            if (!activeFill || !gsap || reduceMotion) return;
+
+            progressTween = gsap.fromTo(
+                activeFill,
+                { scaleX: 0 },
+                {
+                    scaleX: 1,
+                    duration: SCENE_DURATION_SEC,
+                    ease: "none",
+                    paused: !shouldAutoplayRun(),
+                    onComplete: () => {
+                        activateScene((currentIdx + 1) % slides.length, false);
+                    },
+                }
+            );
+        };
+
+        const syncPlayback = () => {
+            if (!progressTween) return;
+            if (shouldAutoplayRun()) progressTween.play();
+            else progressTween.pause();
         };
 
         const activateScene = (nextIdx, instant) => {
@@ -726,15 +958,21 @@
             const nextSlide = slides[nextIdx];
             if (!nextSlide) return;
 
+            const direction = nextIdx > currentIdx || (currentIdx === slides.length - 1 && nextIdx === 0) ? 1 : -1;
             const flipState = Flip && !reduceMotion && !instant ? Flip.getState(tabs) : null;
+
             tabs.forEach((tab, i) => {
                 const active = i === nextIdx;
                 tab.classList.toggle("is-active", active);
                 tab.setAttribute("aria-selected", active ? "true" : "false");
             });
+
             if (Flip && flipState) {
-                Flip.from(flipState, { duration: 0.34, ease: "power2.out", simple: true });
+                Flip.from(flipState, { duration: 0.3, ease: "power2.out", simple: true });
             }
+
+            applyThemeColors(nextIdx, instant);
+            saveSceneIdx(nextIdx);
 
             if (!gsap || reduceMotion || instant) {
                 slides.forEach((s, i) => {
@@ -745,75 +983,120 @@
                 });
                 currentIdx = nextIdx;
                 moveBeaconTo(nextIdx, true);
+                startProgressFor(nextIdx);
                 return;
             }
 
-            const img = nextSlide.querySelector("img");
-            const captionItems = nextSlide.querySelectorAll(".grx-scene-eyebrow, .grx-scene-title, .grx-scene-desc");
+            if (transitionTl) transitionTl.kill();
+
+            const prevImg = prevSlide ? prevSlide.querySelector("img") : null;
+            const prevCap = prevSlide ? prevSlide.querySelector(".grx-scene-caption") : null;
+            const nextImg = nextSlide.querySelector("img");
+            const nextEyebrow = nextSlide.querySelector(".grx-scene-eyebrow");
+            const nextTitle = nextSlide.querySelector(".grx-scene-title");
+            const nextDesc = nextSlide.querySelector(".grx-scene-desc");
 
             slides.forEach((s) => s.classList.remove("is-leaving", "is-active"));
             if (prevSlide && prevSlide !== nextSlide) prevSlide.classList.add("is-leaving");
             nextSlide.classList.add("is-active");
 
-            const tl = gsap.timeline({
+            const startInset =
+                direction >= 0
+                    ? "inset(0% 0% 0% 100% round 20px)"
+                    : "inset(0% 100% 0% 0% round 20px)";
+
+            transitionTl = gsap.timeline({
                 defaults: { ease: "power3.out" },
                 onComplete: () => {
-                    slides.forEach((s) => s.classList.remove("is-leaving"));
-                    gsap.set(nextSlide, { clearProps: "clipPath,opacity" });
+                    slides.forEach((s) => {
+                        s.classList.remove("is-leaving");
+                        gsap.set(s, { clearProps: "clipPath,opacity" });
+                    });
+                    if (prevCap) gsap.set(prevCap, { clearProps: "transform,opacity" });
+                    if (prevImg) gsap.set(prevImg, { clearProps: "transform" });
                 },
             });
 
-            tl.fromTo(
-                nextSlide,
-                { opacity: 0.25, clipPath: "inset(0% 0% 0% 8% round 20px)" },
-                { opacity: 1, clipPath: "inset(0% 0% 0% 0% round 20px)", duration: 0.72 },
-                0
-            );
-            if (img) {
-                tl.fromTo(img, { scale: 1.06 }, { scale: 1, duration: 0.9, clearProps: "transform" }, 0);
+            // 1. Outgoing exit motion
+            if (prevCap) {
+                transitionTl.to(prevCap, { y: -10, opacity: 0, duration: 0.28, ease: "power2.in" }, 0);
             }
-            if (captionItems.length) {
-                tl.fromTo(
-                    captionItems,
+            if (prevImg) {
+                transitionTl.to(prevImg, { scale: 1.04, xPercent: direction * -2, duration: 0.64, ease: "power2.inOut" }, 0);
+            }
+
+            // 2. Incoming clip-path mask reveal + moderate parallax
+            transitionTl.fromTo(
+                nextSlide,
+                { clipPath: startInset, opacity: 0.85 },
+                { clipPath: "inset(0% 0% 0% 0% round 20px)", opacity: 1, duration: 0.76, ease: "power3.inOut" },
+                0.04
+            );
+            if (nextImg) {
+                transitionTl.fromTo(
+                    nextImg,
+                    { scale: 1.07, xPercent: direction * 3 },
+                    { scale: 1, xPercent: 0, duration: 0.92, ease: "power3.out", clearProps: "transform" },
+                    0.04
+                );
+            }
+
+            // 3. Coordinated SplitText title + eyebrow & description entrance
+            if (nextEyebrow) {
+                transitionTl.fromTo(
+                    nextEyebrow,
+                    { y: 10, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.38, clearProps: "transform,opacity" },
+                    0.26
+                );
+            }
+            if (nextTitle && SplitText) {
+                let sp = splitMap.get(nextTitle);
+                if (!sp) {
+                    sp = SplitText.create(nextTitle, { type: "words" });
+                    splitMap.set(nextTitle, sp);
+                }
+                transitionTl.fromTo(
+                    sp.words,
+                    { y: 14, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.44, stagger: 0.032, clearProps: "transform,opacity" },
+                    0.3
+                );
+            } else if (nextTitle) {
+                transitionTl.fromTo(
+                    nextTitle,
                     { y: 12, opacity: 0 },
-                    { y: 0, opacity: 1, duration: 0.48, stagger: 0.06, clearProps: "transform,opacity" },
-                    0.16
+                    { y: 0, opacity: 1, duration: 0.42, clearProps: "transform,opacity" },
+                    0.3
+                );
+            }
+            if (nextDesc) {
+                transitionTl.fromTo(
+                    nextDesc,
+                    { y: 10, opacity: 0 },
+                    { y: 0, opacity: 1, duration: 0.42, clearProps: "transform,opacity" },
+                    0.38
                 );
             }
 
             currentIdx = nextIdx;
             moveBeaconTo(nextIdx, false);
-        };
-
-        const scheduleNext = () => {
-            if (timerId) window.clearTimeout(timerId);
-            if (manualPaused || inputFocused || hovered || reduceMotion) return;
-            // Skip autoplay when the left panel is hidden on mobile/tablet
-            if (window.getComputedStyle(stage).display === "none") return;
-            timerId = window.setTimeout(() => {
-                activateScene((currentIdx + 1) % slides.length, false);
-                scheduleNext();
-            }, INTERVAL_MS);
+            startProgressFor(nextIdx);
         };
 
         tabs.forEach((tab, idx) => {
-            tab.addEventListener("click", () => {
-                activateScene(idx, false);
-                scheduleNext();
-            });
+            tab.addEventListener("click", () => activateScene(idx, false));
             tab.addEventListener("keydown", (ev) => {
                 if (ev.key === "ArrowRight") {
                     ev.preventDefault();
                     const n = (idx + 1) % tabs.length;
                     tabs[n].focus();
                     activateScene(n, false);
-                    scheduleNext();
                 } else if (ev.key === "ArrowLeft") {
                     ev.preventDefault();
                     const p = (idx - 1 + tabs.length) % tabs.length;
                     tabs[p].focus();
                     activateScene(p, false);
-                    scheduleNext();
                 }
             });
         });
@@ -822,61 +1105,125 @@
             toggleBtn.addEventListener("click", () => {
                 manualPaused = !manualPaused;
                 updateToggleUI();
-                if (manualPaused && timerId) window.clearTimeout(timerId);
-                else scheduleNext();
+                syncPlayback();
             });
         }
 
-        stage.addEventListener("mouseenter", () => {
+        const onMouseEnter = () => {
             hovered = true;
-            if (timerId) window.clearTimeout(timerId);
-        });
-        stage.addEventListener("mouseleave", () => {
+            syncPlayback();
+        };
+        const onMouseLeave = () => {
             hovered = false;
-            scheduleNext();
-        });
+            syncPlayback();
+        };
+        stage.addEventListener("mouseenter", onMouseEnter);
+        stage.addEventListener("mouseleave", onMouseLeave);
 
-        // Calm UX: automatically pause carousel while user types credentials
+        // Pause cleanly when page is hidden; resume seamlessly without reset!
+        const onVisChange = () => {
+            tabHidden = Boolean(document.hidden);
+            syncPlayback();
+        };
+        document.addEventListener("visibilitychange", onVisChange);
+
+        // Calm UX: auto-pause while user focuses any form input (resumes without reset on blur)
         document.querySelectorAll(".grx-auth-card input, .grx-auth-card textarea").forEach((inp) => {
             inp.addEventListener("focus", () => {
                 inputFocused = true;
-                if (timerId) window.clearTimeout(timerId);
+                syncPlayback();
             });
             inp.addEventListener("blur", () => {
                 window.setTimeout(() => {
                     const active = document.activeElement;
-                    inputFocused = Boolean(active && active.closest && active.closest(".grx-auth-card") && active.tagName === "INPUT");
-                    if (!inputFocused) scheduleNext();
+                    inputFocused = Boolean(
+                        active && active.closest && active.closest(".grx-auth-card") && active.tagName === "INPUT"
+                    );
+                    syncPlayback();
                 }, 120);
             });
         });
 
-        // Initial DrawSVG route entrance & beacon placement
-        if (gsap && DrawSVGPlugin && !reduceMotion && document.getElementById("grxAuthRoutePath")) {
+        registerCleanup(() => {
+            if (progressTween) progressTween.kill();
+            if (transitionTl) transitionTl.kill();
+            stage.removeEventListener("mouseenter", onMouseEnter);
+            stage.removeEventListener("mouseleave", onMouseLeave);
+            document.removeEventListener("visibilitychange", onVisChange);
+        });
+
+        // Apply saved initial scene immediately (zero flicker across auth routes)
+        activateScene(currentIdx, true);
+        updateToggleUI();
+
+        if (gsap && DrawSVGPlugin && !reduceMotion && isFirstVisit && document.getElementById("grxAuthRoutePath")) {
             gsap.fromTo(
                 "#grxAuthRoutePath",
                 { drawSVG: "0%" },
-                { drawSVG: "100%", duration: 1.05, ease: "power2.out", delay: 0.2 }
+                { drawSVG: "100%", duration: 0.95, ease: "power2.out", delay: 0.16 }
             );
         }
-        moveBeaconTo(0, true);
-        updateToggleUI();
-        scheduleNext();
+
+        return { syncPlayback };
     }
 
-    function initEntranceMotion(gsap, SplitText, reduceMotion) {
+    // =========================================================================
+    // 5. FIRST-VISIT 6-STEP ENTRANCE VS. LIGHTWEIGHT SUBSEQUENT TRANSITIONS
+    // =========================================================================
+    function initEntranceMotion(gsap, SplitText, reduceMotion, isFirstVisit) {
         if (!gsap || reduceMotion) return;
 
         const runEntrance = () => {
             const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
             const visualStage = document.getElementById("grxSceneStage");
-            if (visualStage && window.getComputedStyle(visualStage).display !== "none") {
+            const visualVisible = visualStage && window.getComputedStyle(visualStage).display !== "none";
+
+            if (isFirstVisit && visualVisible) {
+                // Full 6-step initial choreography (fast, non-blocking ~0.62s)
+                tl.fromTo(
+                    ".grx-auth-visual .grx-auth-brand-link",
+                    { y: -8, opacity: 0.4 },
+                    { y: 0, opacity: 1, duration: 0.34, clearProps: "transform,opacity" },
+                    0
+                );
                 tl.fromTo(
                     visualStage,
-                    { clipPath: "inset(3% 2% 3% 2% round 20px)", opacity: 0.75 },
-                    { clipPath: "inset(0% 0% 0% 0% round 20px)", opacity: 1, duration: 0.62, clearProps: "clipPath,opacity" },
+                    { clipPath: "inset(4% 2% 4% 2% round 20px)", opacity: 0.72 },
+                    { clipPath: "inset(0% 0% 0% 0% round 20px)", opacity: 1, duration: 0.56, clearProps: "clipPath,opacity" },
+                    0.04
+                );
+                tl.fromTo(
+                    ".grx-scene-slide.is-active .grx-scene-caption > *",
+                    { y: 10, opacity: 0.4 },
+                    { y: 0, opacity: 1, duration: 0.38, stagger: 0.05, clearProps: "transform,opacity" },
+                    0.16
+                );
+                tl.fromTo(
+                    ".grx-carousel-bar",
+                    { y: 6, opacity: 0.4 },
+                    { y: 0, opacity: 1, duration: 0.32, clearProps: "transform,opacity" },
+                    0.26
+                );
+            }
+
+            // Right card subtle entrance (always crisp & fast on route navigation)
+            const card = document.querySelector(".grx-auth-card");
+            if (card && !isFirstVisit) {
+                tl.fromTo(
+                    card,
+                    { y: 8, opacity: 0.72 },
+                    { y: 0, opacity: 1, duration: 0.28, clearProps: "transform,opacity" },
                     0
+                );
+            }
+
+            const stateIcon = document.querySelector(".grx-state-icon");
+            if (stateIcon) {
+                tl.fromTo(
+                    stateIcon,
+                    { scale: 0.72, opacity: 0.4 },
+                    { scale: 1, opacity: 1, duration: 0.36, ease: "back.out(2)", clearProps: "transform,opacity" },
+                    0.04
                 );
             }
 
@@ -885,8 +1232,8 @@
                 const split = SplitText.create(heading, { type: "words" });
                 tl.fromTo(
                     split.words,
-                    { y: 10, opacity: 0.45 },
-                    { y: 0, opacity: 1, duration: 0.4, stagger: 0.026, clearProps: "transform,opacity" },
+                    { y: 9, opacity: 0.5 },
+                    { y: 0, opacity: 1, duration: 0.36, stagger: 0.022, clearProps: "transform,opacity" },
                     0.04
                 );
             }
@@ -897,17 +1244,33 @@
             if (formItems.length) {
                 tl.fromTo(
                     formItems,
-                    { y: 10, opacity: 0.55 },
-                    { y: 0, opacity: 1, duration: 0.36, stagger: 0.04, clearProps: "transform,opacity" },
-                    0.08
+                    { y: 8, opacity: 0.6 },
+                    { y: 0, opacity: 1, duration: 0.32, stagger: 0.032, clearProps: "transform,opacity" },
+                    0.06
                 );
+            }
+
+            // Discreet error alert attention pulse when returned from server
+            const serverErr = document.querySelector(".grx-auth-card .alert-danger, .grx-auth-card .grx-alert--danger");
+            if (serverErr) {
+                gsap.fromTo(
+                    serverErr,
+                    { x: -5 },
+                    { x: 0, duration: 0.32, ease: "elastic.out(1.2, 0.45)", clearProps: "transform" }
+                );
+            }
+
+            try {
+                window.sessionStorage.setItem(INTRO_SEEN_KEY, "1");
+            } catch (_err) {
+                // Ignore restricted storage
             }
         };
 
         if (document.fonts && document.fonts.ready) {
             Promise.race([
                 document.fonts.ready,
-                new Promise((resolve) => window.setTimeout(resolve, 160)),
+                new Promise((resolve) => window.setTimeout(resolve, 150)),
             ]).then(runEntrance);
         } else {
             runEntrance();
@@ -915,7 +1278,7 @@
     }
 
     // =========================================================================
-    // 5. BOOTSTRAP
+    // 6. BOOTSTRAP & CLEANUP
     // =========================================================================
     function boot() {
         if (window.__grxAuthBooted) return;
@@ -936,12 +1299,25 @@
             window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
         );
 
-        initLoginForm();
+        let isFirstVisit = true;
+        try {
+            isFirstVisit = window.sessionStorage.getItem(INTRO_SEEN_KEY) !== "1";
+        } catch (_err) {
+            isFirstVisit = true;
+        }
+
+        initLoginForm(gsap, reduceMotion);
         initSignupForm(gsap, reduceMotion);
         initResetForm(gsap, reduceMotion);
-        initOtpForm();
-        initVisualCarousel(gsap, Flip, DrawSVGPlugin, MotionPathPlugin, reduceMotion);
-        initEntranceMotion(gsap, SplitText, reduceMotion);
+        initOtpForm(gsap, reduceMotion);
+        initVisualCarousel(gsap, SplitText, Flip, DrawSVGPlugin, MotionPathPlugin, reduceMotion, isFirstVisit);
+        initEntranceMotion(gsap, SplitText, reduceMotion, isFirstVisit);
+
+        window.addEventListener("pagehide", () => {
+            cleanupHandlers.forEach((fn) => {
+                try { fn(); } catch (_err) {}
+            });
+        });
     }
 
     if (document.readyState === "loading") {

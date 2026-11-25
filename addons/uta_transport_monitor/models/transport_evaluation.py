@@ -92,7 +92,7 @@ class TransportTripEvaluation(models.Model):
         ],
         string="Estado de Integridad",
         required=True,
-        default="completed",
+        default="insufficient_data",
         index=True,
     )
     is_compliant_gross = fields.Boolean(

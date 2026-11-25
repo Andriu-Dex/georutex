@@ -69,35 +69,17 @@
                             class="btn-secondary"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
                             attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
-                    <field name="state" widget="statusbar" statusbar_visible="pending,justified,rejected,confirmed"/>
+                    <field name="state"
+                           widget="badge"
+                           class="ms-auto"
+                           decoration-info="state == 'pending'"
+                           decoration-success="state == 'justified'"
+                           decoration-danger="state == 'rejected'"
+                           decoration-warning="state == 'confirmed'"/>
                 </header>
 
-                <!-- Panel contextual izquierdo (escritorio) que enmarca la tarjeta derecha editable -->
-                <div class="o_georutex_incident_context_col">
-                    <span class="o_georutex_ctx_badge">
-                        <i class="fa fa-exclamation-triangle" aria-hidden="true"/> Reporte Operacional UTA
-                    </span>
-                    <h3>Gestión de Incidencias del Recorrido</h3>
-                    <p>
-                        Registra o actualiza cualquier novedad presentada en tu ruta. Todos los campos del reporte manual son editables en la tarjeta de la derecha.
-                    </p>
-                    <ul class="o_georutex_ctx_list">
-                        <li>
-                            <i class="fa fa-bus" aria-hidden="true"/>
-                            <span>Selecciona el <strong>recorrido asignado</strong> para asociar automáticamente tu vehículo, ruta y conductor.</span>
-                        </li>
-                        <li>
-                            <i class="fa fa-map-marker" aria-hidden="true"/>
-                            <span>Indica el <strong>tipo de novedad</strong>, severidad, parada afectada y coordenadas si las conoces.</span>
-                        </li>
-                        <li>
-                            <i class="fa fa-file-text-o" aria-hidden="true"/>
-                            <span>Detalla la <strong>descripción y descargo</strong> para que el analista o administrador revise tu justificación.</span>
-                        </li>
-                    </ul>
-                </div>
-
                 <sheet>
+                    <field name="source" invisible="1"/>
                     <div class="o_georutex_incident_card_header">
                         <div class="oe_title mb-0">
                             <label for="name" string="Código de Incidencia"/>
@@ -105,58 +87,68 @@
                                 <field name="name"/>
                             </h1>
                             <p class="o_georutex_incident_card_subtitle">
-                                Formulario editable de incidencia operacional de transporte
+                                Registra lo ocurrido; el equipo de operación revisará tu reporte.
                             </p>
                         </div>
-                        <span class="badge rounded-pill text-bg-primary px-3 py-2">
-                            <i class="fa fa-pencil me-1" aria-hidden="true"/> Edición Habilitada
-                        </span>
                     </div>
 
                     <group>
-                        <group string="Detalles del Recorrido">
-                            <field name="trip_id" string="Recorrido Asociado" options="{'no_create': True}" placeholder="Seleccione su recorrido..."/>
+                        <group string="Recorrido">
+                            <field name="trip_id" string="Recorrido asociado" options="{'no_create': True}" placeholder="Selecciona tu recorrido..."/>
                             <field name="vehicle_id" string="Vehículo"/>
                             <field name="route_id" string="Ruta"/>
                             <field name="driver_id" string="Conductor"/>
                         </group>
-                        <group string="Clasificación de la Incidencia">
-                            <field name="incident_type" string="Tipo de Incidencia"/>
-                            <field name="source" string="Origen" attrs="{'readonly': [('source', '=', 'automatic')]}"/>
-                            <field name="severity" string="Severidad"/>
-                            <field name="timestamp_utc" string="Fecha y Hora del Evento"/>
+                        <group string="¿Qué ocurrió?">
+                            <field name="incident_type" string="Tipo de incidencia"/>
+                            <field name="severity" string="Prioridad"/>
+                            <field name="timestamp_utc" string="Fecha y hora"/>
+                            <field name="source" string="Origen"
+                                   groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
+                                   attrs="{'readonly': [('source', '=', 'automatic')]}"/>
                         </group>
                     </group>
 
-                    <group string="Ubicación y Referencia Normativa">
+                    <group string="Ubicación">
                         <group>
-                            <field name="stop_id" string="Parada Afectada" options="{'no_create': True}" placeholder="Opcional: seleccione la parada..."/>
-                            <field name="rule_applied" string="Referencia / Regla Aplicada" attrs="{'readonly': [('source', '=', 'automatic')]}" placeholder="Ej. Novedad en vía / RF-28"/>
+                            <field name="stop_id" string="Parada afectada" options="{'no_create': True}" placeholder="Opcional: selecciona una parada..."/>
+                            <field name="rule_applied" string="Regla evaluada"
+                                   groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
+                                   attrs="{'readonly': [('source', '=', 'automatic')]}"
+                                   placeholder="Referencia automática o nota operativa"/>
                         </group>
                         <group>
-                            <field name="latitude" string="Latitud del Evento"/>
-                            <field name="longitude" string="Longitud del Evento"/>
+                            <field name="latitude" string="Latitud"
+                                   attrs="{'invisible': [('latitude', '=', 0), ('longitude', '=', 0)]}"/>
+                            <field name="longitude" string="Longitud"
+                                   attrs="{'invisible': [('latitude', '=', 0), ('longitude', '=', 0)]}"/>
+                            <div class="text-muted small py-1" colspan="2"
+                                 attrs="{'invisible': ['|', ('latitude', '!=', 0), ('longitude', '!=', 0)]}">
+                                Sin coordenadas GPS registradas manualmente; se vinculan automáticamente desde el recorrido cuando hay telemetría disponible.
+                            </div>
                         </group>
                     </group>
 
                     <notebook>
-                        <page string="Descripción y Evidencia" name="incident_description_page">
+                        <page string="Evidencia y detalles" name="incident_description_page">
                             <group>
-                                <field name="description" string="Descripción del Incidente" placeholder="Describa detalladamente lo ocurrido durante el recorrido..."/>
-                                <field name="evidence_data" string="Evidencia / Observaciones Adicionales" attrs="{'readonly': [('source', '=', 'automatic')]}" placeholder="Ingrese observaciones, referencias de horario, sector o detalles de respaldo..."/>
+                                <field name="description" string="Descripción" placeholder="Describe brevemente lo ocurrido durante el recorrido..."/>
+                                <field name="evidence_data" string="Observaciones de respaldo"
+                                       attrs="{'readonly': [('source', '=', 'automatic')]}"
+                                       placeholder="Referencias de sector, hora o respaldo operativo..."/>
                             </group>
                         </page>
-                        <page string="Descargo / Justificación" name="incident_justification_page">
-                            <group string="Descargo del Conductor / Operador">
-                                <field name="justification_notes" string="Motivo de Justificación" placeholder="Ingrese el motivo que justifica la novedad o retraso..."/>
-                                <field name="justification_submitted_by" string="Enviado Por"/>
-                                <field name="justification_submitted_at" string="Fecha de Envío"/>
+                        <page string="Justificación" name="incident_justification_page">
+                            <group string="Justificación del conductor">
+                                <field name="justification_notes" string="Motivo" placeholder="Explica el motivo que justifica la novedad o retraso..."/>
+                                <field name="justification_submitted_by" string="Reportado por"/>
+                                <field name="justification_submitted_at" string="Fecha de envío"/>
                             </group>
-                            <group string="Resolución de Revisión">
-                                <field name="review_notes" string="Observaciones del Revisor" placeholder="Observaciones de la aprobación o rechazo..."
+                            <group string="Revisión operativa">
+                                <field name="review_notes" string="Observaciones del revisor" placeholder="Observaciones de la aprobación o rechazo..."
                                        groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"/>
-                                <field name="reviewed_by" string="Revisado Por"/>
-                                <field name="reviewed_at" string="Fecha de Revisión"/>
+                                <field name="reviewed_by" string="Revisado por"/>
+                                <field name="reviewed_at" string="Fecha de revisión"/>
                             </group>
                         </page>
                     </notebook>
@@ -194,19 +186,18 @@
         </field>
     </record>
 
-    <!-- Acción Principal: Incidencias Operacionales -->
+    <!-- Acción Principal: Incidencias -->
     <record id="action_transport_incident" model="ir.actions.act_window">
-        <field name="name">Incidencias Operacionales</field>
+        <field name="name">Incidencias</field>
         <field name="res_model">transport.incident</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_incident_search"/>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No tienes incidencias operacionales registradas
-            </p>
-            <p>
-                Haz clic en <strong>Nuevo</strong> para abrir la tarjeta lateral derecha y reportar una incidencia de tu recorrido.
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-incident"/>
+                <h3>Sin incidencias registradas</h3>
+                <p>Las novedades reportadas por conductores o detectadas durante la operación aparecerán aquí para su seguimiento.</p>
+            </div>
         </field>
     </record>
 

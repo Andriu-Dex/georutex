@@ -70,9 +70,16 @@ body.grx-auth-body {
     }
 
     // =========================================================================
-    // 2. LEFT EDITORIAL VISUAL PANEL (3-SCENE CAROUSEL)
+    // 2. LEFT EDITORIAL VISUAL PANEL (DYNAMIC GSAP COLORIMETRY + 3 SCENES)
     // =========================================================================
     .grx-auth-visual {
+        --grx-scene-bg: #e5eef8;
+        --grx-scene-accent: #1a56db;
+        --grx-scene-accent-soft: rgba(26, 86, 219, 0.14);
+        --grx-scene-dot: #0bbcd7;
+        --grx-scene-scrim-bot: rgba(15, 29, 54, 0.88);
+        --grx-scene-border: rgba(26, 86, 219, 0.14);
+
         position: sticky;
         top: 0;
         height: 100vh;
@@ -81,9 +88,27 @@ body.grx-auth-body {
         justify-content: space-between;
         gap: clamp(1rem, 2vh, 1.5rem);
         padding: clamp(1.5rem, 2.8vw, 2.5rem) clamp(1.5rem, 3.2vw, 3rem);
-        background: var(--grx-surface-stone, #f1efe9);
-        border-right: 1px solid var(--grx-border, rgba(17, 24, 39, 0.09));
+        background: var(--grx-scene-bg);
+        border-right: 1px solid var(--grx-scene-border);
         overflow: hidden;
+
+        &::before {
+            content: "";
+            position: absolute;
+            width: 360px;
+            height: 360px;
+            right: -110px;
+            top: -110px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--grx-scene-accent-soft) 0%, transparent 72%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        > * {
+            position: relative;
+            z-index: 1;
+        }
     }
 
     .grx-auth-brand-link {
@@ -199,7 +224,7 @@ body.grx-auth-body {
         z-index: 2;
         pointer-events: none;
         background:
-            linear-gradient(180deg, rgba(17, 24, 39, 0.28) 0%, rgba(17, 24, 39, 0.04) 28%, rgba(17, 24, 39, 0.42) 60%, rgba(17, 24, 39, 0.88) 100%);
+            linear-gradient(180deg, rgba(17, 24, 39, 0.24) 0%, rgba(17, 24, 39, 0.04) 30%, rgba(17, 24, 39, 0.42) 62%, var(--grx-scene-scrim-bot, rgba(15, 29, 54, 0.88)) 100%);
     }
 
     // Subtle geospatial route overlay inside stage
@@ -325,9 +350,10 @@ body.grx-auth-body {
             width: 100%;
             height: 100%;
             border-radius: 999px;
-            background: var(--grx-brand-primary, #1a56db);
+            background: var(--grx-scene-accent, #1a56db);
             transform: scaleX(0);
             transform-origin: left center;
+            will-change: transform;
         }
 
         .grx-tab-label {
@@ -341,10 +367,11 @@ body.grx-auth-body {
 
         &.is-active {
             color: var(--grx-ink-primary, #111827);
+        }
 
-            .grx-tab-fill {
-                transform: scaleX(1);
-            }
+        &.is-done .grx-tab-fill {
+            transform: scaleX(1);
+            opacity: 0.45;
         }
     }
 
@@ -878,20 +905,7 @@ body.grx-auth-body {
         height: 100%;
         width: 0%;
         border-radius: 999px;
-        background: var(--grx-signal-danger, #dc2626);
-        transition: width 0.26s ease, background-color 0.26s ease;
-
-        &.is-medium {
-            background: var(--grx-signal-amber-dot, #f59e0b);
-        }
-
-        &.is-good {
-            background: var(--grx-brand-turquoise, #0bbcd7);
-        }
-
-        &.is-strong {
-            background: var(--grx-signal-live, #15803d);
-        }
+        background-color: #94a3b8;
     }
 
     .grx-pwd-rules {

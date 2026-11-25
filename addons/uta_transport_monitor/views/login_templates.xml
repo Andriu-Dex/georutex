@@ -18,27 +18,27 @@
             </a>
 
             <div class="grx-scene-stage" id="grxSceneStage" aria-roledescription="carrusel" aria-label="Capacidades de GeoRutex">
-                <!-- Subtle geospatial vector route signature -->
+                <!-- Subtle geospatial vector route signature synced with scene colorimetry -->
                 <svg class="grx-scene-route-svg" viewBox="0 0 460 54" preserveAspectRatio="none" aria-hidden="true">
                     <defs>
                         <linearGradient id="grxAuthArcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stop-color="rgba(11,188,215,0.2)"/>
-                            <stop offset="30%" stop-color="rgba(11,188,215,0.88)"/>
-                            <stop offset="72%" stop-color="rgba(26,86,219,0.92)"/>
-                            <stop offset="100%" stop-color="rgba(252,1,84,0.85)"/>
+                            <stop id="grxArcStop1" offset="0%" stop-color="#0bbcd7" stop-opacity="0.25"/>
+                            <stop id="grxArcStop2" offset="42%" stop-color="#0bbcd7" stop-opacity="0.92"/>
+                            <stop id="grxArcStop3" offset="78%" stop-color="#1a56db" stop-opacity="0.95"/>
+                            <stop id="grxArcStop4" offset="100%" stop-color="#fc0154" stop-opacity="0.88"/>
                         </linearGradient>
                     </defs>
                     <path d="M 16 36 C 118 10, 210 46, 316 20 S 410 26, 444 18"
-                          fill="none" stroke="rgba(255,255,255,0.24)" stroke-width="2" stroke-dasharray="4 6"/>
+                          fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="2" stroke-dasharray="4 6"/>
                     <path id="grxAuthRoutePath"
                           d="M 16 36 C 118 10, 210 46, 316 20 S 410 26, 444 18"
                           fill="none" stroke="url(#grxAuthArcGrad)" stroke-width="2.6" stroke-linecap="round"/>
-                    <circle cx="72" cy="24" r="4" fill="#ffffff" stroke="#0bbcd7" stroke-width="2"/>
-                    <circle cx="240" cy="30" r="4" fill="#ffffff" stroke="#1a56db" stroke-width="2"/>
-                    <circle cx="394" cy="20" r="4.2" fill="#fc0154" stroke="#ffffff" stroke-width="2"/>
+                    <circle class="grx-route-node" data-node="0" cx="72" cy="24" r="4.2" fill="#ffffff" stroke="#0bbcd7" stroke-width="2"/>
+                    <circle class="grx-route-node" data-node="1" cx="240" cy="30" r="4.2" fill="#ffffff" stroke="#1a56db" stroke-width="2"/>
+                    <circle class="grx-route-node" data-node="2" cx="394" cy="20" r="4.5" fill="#fc0154" stroke="#ffffff" stroke-width="2"/>
                     <g id="grxAuthBeacon">
-                        <circle r="9" fill="rgba(11,188,215,0.34)"/>
-                        <circle r="4.2" fill="#ffffff" stroke="#1a56db" stroke-width="2"/>
+                        <circle id="grxBeaconHalo" r="10" fill="rgba(11,188,215,0.34)"/>
+                        <circle id="grxBeaconCore" r="4.4" fill="#ffffff" stroke="#1a56db" stroke-width="2.2"/>
                     </g>
                 </svg>
 
@@ -145,9 +145,9 @@
         <div class="grx-password-meter" aria-live="polite">
             <div class="grx-meter-top">
                 <span>Requisitos de contraseña</span>
-                <span class="grx-meter-label">Sin ingresar</span>
+                <span class="grx-meter-label">0 de 5 requisitos</span>
             </div>
-            <div class="grx-meter-track" aria-hidden="true">
+            <div class="grx-meter-track" role="progressbar" aria-label="Cumplimiento de requisitos de contraseña" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0">
                 <div class="grx-meter-fill"/>
             </div>
             <ul class="grx-pwd-rules">

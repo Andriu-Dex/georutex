@@ -45,7 +45,7 @@
             <xpath expr="//div[hasclass('oe_title')]/label[@for='model_id']" position="before">
                 <label for="operational_name" class="oe_edit_only"/>
                 <h1>
-                    <field name="operational_name" placeholder="e.g. Bus 01 - UTA / Unidad 14"/>
+                    <field name="operational_name" placeholder="Ej. Unidad 01 - Ruta Norte"/>
                 </h1>
             </xpath>
 
@@ -165,12 +165,11 @@
         <field name="view_mode">kanban,tree,form,activity</field>
         <field name="context">{'search_default_filter_gps_monitored': 1}</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">
-                No hay vehículos monitoreados registrados en GeoRutex.
-            </p>
-            <p>
-                Configure el rastreo GPS y vincule identificadores Traccar para comenzar el monitoreo.
-            </p>
+            <div class="grx-nocontent">
+                <div class="grx-nocontent-icon grx-nc-bus"/>
+                <h3>Sin vehículos monitoreados</h3>
+                <p>Activa el seguimiento GPS en un vehículo de tu flota y vincula su dispositivo para verlo en GeoRutex.</p>
+            </div>
         </field>
     </record>
 </odoo>

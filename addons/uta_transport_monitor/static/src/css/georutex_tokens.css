@@ -4,14 +4,14 @@
  */
 :root {
     /* 1. Brand Identity Colors */
-    --grx-brand-primary: #1a56db;
+    --grx-brand-primary: #1854e6;
     --grx-brand-deep: #1341ad;
     --grx-brand-tint: #ebf2ff;
-    --grx-brand-turquoise: #0bbcd7;
-    --grx-brand-turquoise-soft: rgba(11, 188, 215, 0.14);
-    --grx-brand-magenta: #fc0154;
+    --grx-brand-turquoise: #06b6d4;
+    --grx-brand-turquoise-soft: rgba(6, 182, 212, 0.14);
+    --grx-brand-magenta: #ff005c;
     --grx-brand-magenta-ink: #c80b49;
-    --grx-brand-magenta-soft: rgba(252, 1, 84, 0.11);
+    --grx-brand-magenta-soft: rgba(255, 0, 92, 0.11);
 
     /* 2. Surface Hierarchy */
     --grx-surface-canvas: #f9f8f4;
@@ -84,4 +84,23 @@
     --grx-dur-scene: 780ms;
     --grx-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     --grx-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+
+    /* 9. Internal Operational Platform Tokens */
+    --grx-ops-bg: #f7f6f2;
+    --grx-ops-surface: #ffffff;
+    --grx-ops-surface-soft: #f5f4ef;
+    --grx-ops-border: #e6e4dc;
+    --grx-ops-border-strong: #d3d0c6;
+    --grx-ops-hover: #f1f0ea;
+    --grx-ops-topbar-h: 60px;
+    --grx-ops-sidebar-w: 248px;
+    --grx-ops-sidebar-rail: 68px;
+    --grx-ops-radius-xs: 6px;
+    --grx-ops-radius-sm: 10px;
+    --grx-ops-radius-md: 14px;
+    --grx-ops-radius-lg: 18px;
+    --grx-ops-shadow-xs: 0 1px 2px rgba(17, 24, 39, 0.04);
+    --grx-ops-shadow-sm: 0 4px 12px rgba(17, 24, 39, 0.05);
+    --grx-ops-shadow-md: 0 12px 28px rgba(17, 24, 39, 0.08);
+    --grx-ops-focus-ring: 0 0 0 3px rgba(26, 86, 219, 0.16);
 }

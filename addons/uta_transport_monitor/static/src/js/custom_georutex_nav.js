@@ -1,13 +1,41 @@
 /** @odoo-module **/
 
-import { _t } from "@web/core/l10n/translation";
+import { patch } from "@web/core/utils/patch";
+import { NavBar } from "@web/webclient/navbar/navbar";
 import { session } from "@web/session";
+import { _t } from "@web/core/l10n/translation";
+import { onMounted, onWillUnmount, useState } from "@odoo/owl";
+import { animateGeorutexEmptyStates, animateGeorutexPopover } from "./georutex_motion";
 
-const openMenuKey = "georutex.openMenuXmlid";
-const selectedMenuKey = "georutex.selectedMenuXmlid";
-const sidebarHiddenKey = "georutex.sidebarHidden";
-let reopeningMenuXmlid = null;
-let syncScheduled = false;
+const GEORUTEX_ROOT_XMLID = "uta_transport_monitor.menu_georutex_root";
+const SIDEBAR_COLLAPSED_KEY = "grx.sidebar.collapsed";
+const CLOSED_GROUPS_KEY = "grx.sidebar.closedGroups";
+const SELECTED_XMLID_KEY = "georutex.selectedMenuXmlid";
+
+const MENU_ICONS = {
+    "uta_transport_monitor.menu_georutex_admin_home": "fa-th-large",
+    "uta_transport_monitor.menu_georutex_driver_home": "fa-home",
+    "uta_transport_monitor.menu_georutex_dashboard_main": "fa-bar-chart",
+    "uta_transport_monitor.menu_georutex_my_trips": "fa-road",
+    "uta_transport_monitor.menu_georutex_live_fleet_map": "fa-map-marker",
+    "uta_transport_monitor.menu_georutex_trips": "fa-road",
+    "uta_transport_monitor.menu_georutex_incidents": "fa-exclamation-triangle",
+    "uta_transport_monitor.menu_georutex_evaluations": "fa-check-square-o",
+    "uta_transport_monitor.menu_georutex_routes": "fa-map-signs",
+    "uta_transport_monitor.menu_georutex_route_versions": "fa-code-fork",
+    "uta_transport_monitor.menu_georutex_fleet": "fa-bus",
+    "uta_transport_monitor.menu_georutex_positions": "fa-crosshairs",
+    "uta_transport_monitor.menu_georutex_operations": "fa-sliders",
+    "uta_transport_monitor.menu_georutex_routes_cat": "fa-map-o",
+    "uta_transport_monitor.menu_georutex_monitoring": "fa-signal",
+};
+
+const DRIVER_MENU_LABELS = {
+    "uta_transport_monitor.menu_georutex_driver_home": "Mi jornada",
+    "uta_transport_monitor.menu_georutex_my_trips": "Mis recorridos",
+    "uta_transport_monitor.menu_georutex_live_fleet_map": "Mi mapa",
+    "uta_transport_monitor.menu_georutex_incidents": "Mis incidencias",
+};
 
 const MENU_XMLID_TO_CLEAN_PATH = {
     "uta_transport_monitor.menu_georutex_admin_home": "/georutex/centro-control",
@@ -24,23 +52,65 @@ const MENU_XMLID_TO_CLEAN_PATH = {
     "uta_transport_monitor.menu_georutex_positions": "/georutex/telemetria",
 };
 
-function syncCleanBrowserUrl() {
-    if (!window.history || !window.history.replaceState) return;
+function readClosedGroups() {
+    try {
+        const raw = window.localStorage.getItem(CLOSED_GROUPS_KEY);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (_err) {
+        return [];
+    }
+}
+
+function writeClosedGroups(list) {
+    try {
+        window.localStorage.setItem(CLOSED_GROUPS_KEY, JSON.stringify(list));
+    } catch (_err) {
+        // Ignore storage quota errors
+    }
+}
+
+function isMobileViewport() {
+    return window.innerWidth < 992;
+}
+
+function applyShellClasses(collapsed, mobileOpen, isGeoRutexApp) {
+    const webClient = document.querySelector(".o_web_client");
+    if (!webClient) return;
+
+    const canManageApps = Boolean(session.georutex_can_manage_apps);
+    const isDriverOnly = Boolean(session.georutex_is_driver_only);
+    const isAnalystOnly = Boolean(session.georutex_is_analyst_only);
+
+    webClient.classList.toggle("o_georutex_no_apps_menu", !canManageApps);
+    webClient.classList.toggle("o_georutex_driver_mode", isDriverOnly);
+    webClient.classList.toggle("o_georutex_analyst_mode", isAnalystOnly);
+    webClient.classList.toggle("grx-app-active", Boolean(isGeoRutexApp));
+    webClient.classList.toggle(
+        "grx-sb-collapsed",
+        Boolean(isGeoRutexApp) && Boolean(collapsed) && !isMobileViewport()
+    );
+    webClient.classList.toggle(
+        "grx-sb-mobile-open",
+        Boolean(isGeoRutexApp) && Boolean(mobileOpen) && isMobileViewport()
+    );
+}
+
+function syncCleanBrowserUrl(activeXmlid, isGeoRutexApp) {
+    if (!isGeoRutexApp || !window.history || !window.history.replaceState) return;
     const currentPath = window.location.pathname || "";
     if (!currentPath.startsWith("/web") && !currentPath.startsWith("/georutex/")) {
         return;
     }
-    const selectedXmlid = window.sessionStorage.getItem(selectedMenuKey);
-    let cleanPath =
-        (selectedXmlid && MENU_XMLID_TO_CLEAN_PATH[selectedXmlid]) || null;
+    let cleanPath = (activeXmlid && MENU_XMLID_TO_CLEAN_PATH[activeXmlid]) || null;
     if (!cleanPath) {
         if (document.querySelector(".grx-driver-home")) {
             cleanPath = "/georutex/inicio-conductor";
         } else if (document.querySelector(".grx-admin-home")) {
             cleanPath = "/georutex/centro-control";
-        } else if (document.querySelector(".georutex-dashboard-container")) {
+        } else if (document.querySelector(".grx-analytics-page")) {
             cleanPath = "/georutex/dashboard";
-        } else if (document.querySelector(".o_georutex_live_map")) {
+        } else if (document.querySelector(".o_georutex_live_fleet_view")) {
             cleanPath = "/georutex/mapa-en-vivo";
         }
     }
@@ -53,169 +123,7 @@ function syncCleanBrowserUrl() {
     }
 }
 
-function getWebClient() {
-    return document.querySelector(".o_web_client");
-}
-
-function getMenuSections() {
-    return document.querySelector(".o_main_navbar .o_menu_sections");
-}
-
-function applySidebarVisibility() {
-    const webClient = getWebClient();
-    const toggle = document.querySelector(".o_georutex_sidebar_toggle");
-    if (!webClient || !toggle) return;
-
-    const isHidden = window.sessionStorage.getItem(sidebarHiddenKey) === "true";
-    webClient.classList.toggle("o_georutex_sidebar_hidden", isHidden);
-    toggle.setAttribute("aria-expanded", String(!isHidden));
-    toggle.setAttribute(
-        "aria-label",
-        isHidden ? "Mostrar menú lateral" : "Ocultar menú lateral"
-    );
-    toggle.setAttribute(
-        "title",
-        isHidden ? "Mostrar menú lateral" : "Ocultar menú lateral"
-    );
-}
-
-function ensureSidebarToggle() {
-    const navbar = document.querySelector(".o_main_navbar");
-    if (!navbar) return;
-
-    let toggle = navbar.querySelector(".o_georutex_sidebar_toggle");
-    if (!toggle) {
-        toggle = document.createElement("button");
-        toggle.type = "button";
-        toggle.className = "o_georutex_sidebar_toggle";
-
-        const icon = document.createElement("i");
-        icon.className = "fa fa-bars";
-        icon.setAttribute("aria-hidden", "true");
-        toggle.appendChild(icon);
-
-        const brand = navbar.querySelector(".o_menu_brand");
-        if (brand && brand.parentElement === navbar) {
-            navbar.insertBefore(toggle, brand);
-        } else {
-            const appMenu = navbar.querySelector(".o_navbar_apps_menu");
-            if (appMenu && appMenu.parentElement === navbar) {
-                appMenu.insertAdjacentElement("afterend", toggle);
-            } else {
-                navbar.appendChild(toggle);
-            }
-        }
-    }
-
-    const menuSections = getMenuSections();
-    if (menuSections) {
-        menuSections.id = menuSections.id || "georutex-navigation";
-        toggle.setAttribute("aria-controls", menuSections.id);
-    }
-
-    applySidebarVisibility();
-}
-
-function localizeFormStatusButtons() {
-    const setAttributeIfChanged = (element, name, value) => {
-        if (element.getAttribute(name) !== value) {
-            element.setAttribute(name, value);
-        }
-    };
-    const setButtonLabel = (button, label) => {
-        let text = button.querySelector(".o_georutex_form_button_text");
-        if (!text) {
-            text = document.createElement("span");
-            text.className = "o_georutex_form_button_text";
-            button.appendChild(text);
-        }
-        if (text.textContent !== label) {
-            text.textContent = label;
-        }
-    };
-    document
-        .querySelectorAll(".o_form_status_indicator .o_form_button_save")
-        .forEach((button) => {
-            setAttributeIfChanged(button, "aria-label", _t("Save manually"));
-            setAttributeIfChanged(button, "title", _t("Save manually"));
-            setAttributeIfChanged(button, "data-tooltip", _t("Save manually"));
-            setButtonLabel(button, _t("Save"));
-        });
-    document
-        .querySelectorAll(".o_form_status_indicator .o_form_button_cancel")
-        .forEach((button) => {
-            setAttributeIfChanged(button, "aria-label", _t("Discard changes"));
-            setAttributeIfChanged(button, "title", _t("Discard changes"));
-            setAttributeIfChanged(button, "data-tooltip", _t("Discard changes"));
-            setButtonLabel(button, _t("Discard"));
-        });
-}
-
-function hideNewFormBreadcrumb() {
-    const formView = document.querySelector(".o_action_manager .o_form_view");
-    const activeBreadcrumb = document.querySelector(
-        ".o_control_panel .breadcrumb-item.active"
-    );
-    if (!activeBreadcrumb) return;
-
-    const isNewLabel =
-        formView && activeBreadcrumb.textContent.trim().toLowerCase() === "new";
-    activeBreadcrumb.classList.toggle(
-        "o_georutex_new_form_breadcrumb",
-        Boolean(isNewLabel)
-    );
-}
-
-function getDropdownToggle(dropdown) {
-    return dropdown && dropdown.querySelector(":scope > .dropdown-toggle");
-}
-
-function applySelectedMenu(menuSections) {
-    const selectedXmlid = window.sessionStorage.getItem(selectedMenuKey);
-    const entries = menuSections.querySelectorAll(".o_nav_entry, .dropdown-item");
-    entries.forEach((entry) => {
-        entry.classList.toggle(
-            "active",
-            Boolean(selectedXmlid) && entry.dataset.menuXmlid === selectedXmlid
-        );
-    });
-}
-
-function openRememberedMenu(menuSections) {
-    const openXmlid = window.sessionStorage.getItem(openMenuKey);
-    if (!openXmlid || reopeningMenuXmlid === openXmlid) return;
-
-    const dropdowns = menuSections.querySelectorAll(":scope > .o-dropdown");
-    const dropdown = Array.from(dropdowns).find((candidate) => {
-        const toggle = getDropdownToggle(candidate);
-        return toggle && toggle.dataset.menuXmlid === openXmlid;
-    });
-    if (!dropdown || dropdown.classList.contains("show")) return;
-
-    const toggle = getDropdownToggle(dropdown);
-    if (!toggle) return;
-
-    reopeningMenuXmlid = openXmlid;
-    toggle.click();
-    window.setTimeout(() => {
-        if (reopeningMenuXmlid === openXmlid) {
-            reopeningMenuXmlid = null;
-            scheduleMenuSync();
-        }
-    }, 180);
-}
-
-function applyRoleNavbarRestrictions() {
-    const webClient = getWebClient();
-    if (!webClient) return;
-
-    const canManageApps = Boolean(session.georutex_can_manage_apps);
-    const isDriverOnly = Boolean(session.georutex_is_driver_only);
-    webClient.classList.toggle("o_georutex_no_apps_menu", !canManageApps);
-    webClient.classList.toggle("o_georutex_driver_mode", isDriverOnly);
-}
-
-function localizeSpanishFallbackLabels() {
+function localizeFallbackUiButtons() {
     document
         .querySelectorAll(".o_list_button_add, .o-kanban-button-new")
         .forEach((button) => {
@@ -223,107 +131,400 @@ function localizeSpanishFallbackLabels() {
                 button.textContent = "Nuevo";
             }
         });
+    document
+        .querySelectorAll(".o_form_status_indicator .o_form_button_save")
+        .forEach((button) => {
+            if (!button.getAttribute("title")) {
+                button.setAttribute("title", _t("Guardar"));
+            }
+        });
 }
 
-function syncMenuState() {
-    applyRoleNavbarRestrictions();
-    ensureSidebarToggle();
-    localizeFormStatusButtons();
-    localizeSpanishFallbackLabels();
-    hideNewFormBreadcrumb();
-    const menuSections = getMenuSections();
-    if (!menuSections) return;
-
-    openRememberedMenu(menuSections);
-    applySelectedMenu(menuSections);
-    syncCleanBrowserUrl();
+function findMenuByIdOrXmlid(sections, menuId, xmlid) {
+    for (const sec of sections || []) {
+        if ((menuId && sec.id === menuId) || (xmlid && sec.xmlid === xmlid)) {
+            return sec;
+        }
+        if (sec.childrenTree && sec.childrenTree.length) {
+            const found = findMenuByIdOrXmlid(sec.childrenTree, menuId, xmlid);
+            if (found) return found;
+        }
+    }
+    return null;
 }
 
-function scheduleMenuSync() {
-    if (syncScheduled) return;
-    syncScheduled = true;
-    window.requestAnimationFrame(() => {
-        syncScheduled = false;
-        syncMenuState();
-    });
-}
+patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
+    setup() {
+        this._super(...arguments);
 
-document.addEventListener(
-    "click",
-    (event) => {
-        const sidebarToggle = event.target.closest(".o_georutex_sidebar_toggle");
-        if (sidebarToggle) {
-            event.preventDefault();
-            const webClient = getWebClient();
-            if (webClient) {
-                const isHidden = !webClient.classList.contains(
-                    "o_georutex_sidebar_hidden"
-                );
-                window.sessionStorage.setItem(
-                    sidebarHiddenKey,
-                    String(isHidden)
-                );
-                applySidebarVisibility();
-            }
-            return;
-        }
-
-        const menuSections = getMenuSections();
-        if (!menuSections || !menuSections.contains(event.target)) return;
-
-        const directEntry = event.target.closest(".o_nav_entry");
-        if (directEntry && menuSections.contains(directEntry)) {
-            window.sessionStorage.removeItem(openMenuKey);
-            if (directEntry.dataset.menuXmlid) {
-                window.sessionStorage.setItem(
-                    selectedMenuKey,
-                    directEntry.dataset.menuXmlid
-                );
-            }
-            scheduleMenuSync();
-            return;
-        }
-
-        const dropdown = event.target.closest(".o-dropdown");
-        if (!dropdown || !menuSections.contains(dropdown) || dropdown.classList.contains("o_menu_sections_more")) {
-            return;
-        }
-
-        const menuItem = event.target.closest(".dropdown-item");
-        if (menuItem && dropdown.contains(menuItem)) {
-            const toggle = getDropdownToggle(dropdown);
-            if (toggle && toggle.dataset.menuXmlid) {
-                window.sessionStorage.setItem(openMenuKey, toggle.dataset.menuXmlid);
-            }
-            if (menuItem.dataset.menuXmlid) {
-                window.sessionStorage.setItem(selectedMenuKey, menuItem.dataset.menuXmlid);
-            }
-            scheduleMenuSync();
-            return;
-        }
-
-        const toggle = event.target.closest(".dropdown-toggle");
-        if (toggle && dropdown.contains(toggle) && toggle.dataset.menuXmlid) {
-            if (reopeningMenuXmlid === toggle.dataset.menuXmlid) return;
-            if (dropdown.classList.contains("show")) {
-                window.sessionStorage.removeItem(openMenuKey);
+        let initialCollapsed = false;
+        try {
+            const saved = window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+            if (saved !== null) {
+                initialCollapsed = saved === "true";
             } else {
-                window.sessionStorage.setItem(openMenuKey, toggle.dataset.menuXmlid);
-                const selectedXmlid = window.sessionStorage.getItem(selectedMenuKey);
-                if (selectedXmlid !== toggle.dataset.menuXmlid) {
-                    window.sessionStorage.removeItem(selectedMenuKey);
+                initialCollapsed = window.innerWidth >= 992 && window.innerWidth < 1180;
+            }
+        } catch (_err) {
+            initialCollapsed = false;
+        }
+
+        const initialXmlid = window.sessionStorage.getItem(SELECTED_XMLID_KEY) || "";
+
+        this.grxNav = useState({
+            collapsed: initialCollapsed,
+            mobileOpen: false,
+            closedGroups: readClosedGroups(),
+            activeMenuId: null,
+            activeXmlid: initialXmlid,
+            roleLabel: session.georutex_role_label || "Operación",
+            openForeignDropdownId: null,
+        });
+
+        this._grxOnResize = () => {
+            if (!isMobileViewport() && this.grxNav.mobileOpen) {
+                this.grxNav.mobileOpen = false;
+            }
+            applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, this.isGeoRutexApp());
+        };
+
+        this._grxOnKeyDown = (ev) => {
+            if (ev.key === "Escape") {
+                if (this.grxNav.mobileOpen) {
+                    this.closeMobileSidebar();
+                }
+                if (this.grxNav.openForeignDropdownId !== null) {
+                    this.grxNav.openForeignDropdownId = null;
                 }
             }
-            scheduleMenuSync();
-            return;
+        };
+
+        this._grxOnDocumentClick = (ev) => {
+            if (
+                this.grxNav.openForeignDropdownId !== null &&
+                !ev.target.closest(".grx-foreign-dropdown")
+            ) {
+                this.grxNav.openForeignDropdownId = null;
+            }
+            // Subtle GSAP entrance on navbar dropdowns / systray popovers
+            const toggler = ev.target.closest(
+                ".o_main_navbar .o_navbar_apps_menu .dropdown-toggle, " +
+                ".o_main_navbar .o_menu_systray .o_MessagingMenu_toggler, " +
+                ".o_main_navbar .o_menu_systray .o_ActivityMenuView_dropdownToggle, " +
+                ".o_main_navbar .o_user_menu .dropdown-toggle"
+            );
+            if (toggler) {
+                window.requestAnimationFrame(() => {
+                    const menu = document.querySelector(
+                        ".o_main_navbar .dropdown-menu.show, " +
+                        ".o_main_navbar .o_MessagingMenu_dropdownMenu, " +
+                        ".o_main_navbar .o_ActivityMenuView_dropdownMenu"
+                    );
+                    if (menu) {
+                        animateGeorutexPopover(menu);
+                    }
+                });
+            }
+        };
+
+        this._grxSyncActiveFromHash = () => {
+            const isGrx = this.isGeoRutexApp();
+            if (isGrx) {
+                const hash = window.location.hash || "";
+                const m = hash.match(/menu_id=(\d+)/);
+                if (m) {
+                    const idNum = parseInt(m[1], 10);
+                    this.grxNav.activeMenuId = idNum;
+                    const matched = findMenuByIdOrXmlid(this.currentAppSections, idNum, null);
+                    if (matched && matched.xmlid) {
+                        this.grxNav.activeXmlid = matched.xmlid;
+                        window.sessionStorage.setItem(SELECTED_XMLID_KEY, matched.xmlid);
+                    }
+                } else {
+                    let inferredXmlid = "";
+                    if (document.querySelector(".grx-admin-home")) {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_admin_home";
+                    } else if (document.querySelector(".grx-driver-home")) {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_driver_home";
+                    } else if (document.querySelector(".grx-analytics-page")) {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_dashboard_main";
+                    } else if (document.querySelector(".o_georutex_live_fleet_view")) {
+                        inferredXmlid = "uta_transport_monitor.menu_georutex_live_fleet_map";
+                    }
+                    if (inferredXmlid) {
+                        this.grxNav.activeXmlid = inferredXmlid;
+                        const matched = findMenuByIdOrXmlid(
+                            this.currentAppSections,
+                            null,
+                            inferredXmlid
+                        );
+                        if (matched) this.grxNav.activeMenuId = matched.id;
+                    } else if (!this.grxNav.activeMenuId && this.currentAppSections.length) {
+                        const firstLeaf = this.currentAppSections[0];
+                        if (firstLeaf && !firstLeaf.childrenTree.length) {
+                            this.grxNav.activeMenuId = firstLeaf.id;
+                            if (firstLeaf.xmlid) {
+                                this.grxNav.activeXmlid = firstLeaf.xmlid;
+                            }
+                        }
+                    }
+                }
+            } else {
+                this.grxNav.mobileOpen = false;
+                this.grxNav.openForeignDropdownId = null;
+            }
+            applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, isGrx);
+            localizeFallbackUiButtons();
+            syncCleanBrowserUrl(this.grxNav.activeXmlid, isGrx);
+            window.requestAnimationFrame(() => animateGeorutexEmptyStates(document));
+        };
+
+        onMounted(() => {
+            applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, this.isGeoRutexApp());
+            this._grxSyncActiveFromHash();
+            window.addEventListener("resize", this._grxOnResize);
+            window.addEventListener("keydown", this._grxOnKeyDown);
+            window.addEventListener("hashchange", this._grxSyncActiveFromHash);
+            document.addEventListener("click", this._grxOnDocumentClick, true);
+            this.env.bus.on("ACTION_MANAGER:UI-UPDATED", this, this._grxSyncActiveFromHash);
+            this.env.bus.on("MENUS:APP-CHANGED", this, this._grxSyncActiveFromHash);
+        });
+
+        onWillUnmount(() => {
+            window.removeEventListener("resize", this._grxOnResize);
+            window.removeEventListener("keydown", this._grxOnKeyDown);
+            window.removeEventListener("hashchange", this._grxSyncActiveFromHash);
+            document.removeEventListener("click", this._grxOnDocumentClick, true);
+            this.env.bus.off("ACTION_MANAGER:UI-UPDATED", this, this._grxSyncActiveFromHash);
+            this.env.bus.off("MENUS:APP-CHANGED", this, this._grxSyncActiveFromHash);
+        });
+    },
+
+    isGeoRutexApp() {
+        const app = this.currentApp;
+        if (!app) return false;
+        return app.xmlid === GEORUTEX_ROOT_XMLID;
+    },
+
+    getGeoRutexRootApp() {
+        const apps = (this.menuService && this.menuService.getApps()) || [];
+        return apps.find((a) => a.xmlid === GEORUTEX_ROOT_XMLID) || null;
+    },
+
+    async adapt() {
+        // Both GeoRutex vertical sidebar and foreign horizontal sections render all items directly without "More" overflow
+        if (this.currentAppSectionsExtra && this.currentAppSectionsExtra.length) {
+            this.currentAppSectionsExtra = [];
+            this.render();
         }
     },
-    true
-);
 
-const menuObserver = new MutationObserver(scheduleMenuSync);
-if (document.body) {
-    menuObserver.observe(document.body, { childList: true, subtree: true });
-}
-window.addEventListener("hashchange", scheduleMenuSync);
-scheduleMenuSync();
+    getMenuDisplayName(menu) {
+        if (!menu) return "";
+        if (session.georutex_is_driver_only && menu.xmlid && DRIVER_MENU_LABELS[menu.xmlid]) {
+            return DRIVER_MENU_LABELS[menu.xmlid];
+        }
+        return menu.name || "";
+    },
+
+    getMenuIcon(menu) {
+        if (!menu) return "fa-circle-o";
+        if (menu.xmlid && MENU_ICONS[menu.xmlid]) {
+            return MENU_ICONS[menu.xmlid];
+        }
+        const name = (menu.name || "").toLowerCase();
+        if (name.includes("inicio") || name.includes("centro") || name.includes("jornada")) return "fa-th-large";
+        if (name.includes("análisis") || name.includes("dashboard") || name.includes("resumen")) return "fa-bar-chart";
+        if (name.includes("mapa")) return "fa-map-marker";
+        if (name.includes("recorrido") || name.includes("viaje")) return "fa-road";
+        if (name.includes("incidencia")) return "fa-exclamation-triangle";
+        if (name.includes("evaluaci")) return "fa-check-square-o";
+        if (name.includes("versi")) return "fa-code-fork";
+        if (name.includes("ruta")) return "fa-map-signs";
+        if (name.includes("vehículo") || name.includes("flota")) return "fa-bus";
+        if (name.includes("posici") || name.includes("telemetr") || name.includes("gps")) return "fa-crosshairs";
+        if (name.includes("usuario") || name.includes("empresa")) return "fa-users";
+        if (name.includes("ajuste") || name.includes("técnic") || name.includes("config")) return "fa-cog";
+        return "fa-angle-right";
+    },
+
+    isMenuActive(menu) {
+        if (!menu) return false;
+        if (this.grxNav.activeMenuId && menu.id === this.grxNav.activeMenuId) {
+            return true;
+        }
+        if (this.grxNav.activeXmlid && menu.xmlid === this.grxNav.activeXmlid) {
+            return true;
+        }
+        return false;
+    },
+
+    isGroupOpen(section) {
+        if (!section) return true;
+        const key = section.xmlid || String(section.id);
+        return !this.grxNav.closedGroups.includes(key);
+    },
+
+    toggleForeignDropdown(sectionId) {
+        this.grxNav.openForeignDropdownId =
+            this.grxNav.openForeignDropdownId === sectionId ? null : sectionId;
+    },
+
+    selectForeignMenu(menu) {
+        this.grxNav.openForeignDropdownId = null;
+        this.onNavBarDropdownItemSelection(menu);
+    },
+
+    returnToGeoRutex() {
+        const grxApp = this.getGeoRutexRootApp();
+        if (grxApp) {
+            this.onNavBarDropdownItemSelection(grxApp);
+        }
+    },
+
+    toggleGeoRutexGroup(section) {
+        if (!section) return;
+        const key = section.xmlid || String(section.id);
+        const list = [...this.grxNav.closedGroups];
+        const idx = list.indexOf(key);
+        const opening = idx >= 0;
+        if (opening) {
+            list.splice(idx, 1);
+        } else {
+            list.push(key);
+        }
+        this.grxNav.closedGroups = list;
+        writeClosedGroups(list);
+
+        if (
+            opening &&
+            window.gsap &&
+            !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+        ) {
+            window.requestAnimationFrame(() => {
+                const head = document.querySelector(
+                    `.grx-sb-group-head[data-menu-xmlid="${section.xmlid}"]`
+                );
+                const items =
+                    head && head.parentElement && head.parentElement.querySelectorAll(".grx-sb-item");
+                if (items && items.length) {
+                    window.gsap.fromTo(
+                        items,
+                        { y: -6, opacity: 0 },
+                        {
+                            y: 0,
+                            opacity: 1,
+                            duration: 0.2,
+                            stagger: 0.025,
+                            ease: "power2.out",
+                            clearProps: "transform,opacity",
+                        }
+                    );
+                }
+            });
+        }
+    },
+
+    toggleGeoRutexSidebar() {
+        if (!this.isGeoRutexApp()) return;
+        const reduced = Boolean(
+            window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        );
+        if (isMobileViewport()) {
+            this.grxNav.mobileOpen = !this.grxNav.mobileOpen;
+            applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, true);
+            if (this.grxNav.mobileOpen && window.gsap && !reduced) {
+                const sb = document.getElementById("grx-sidebar-nav");
+                if (sb) {
+                    window.gsap.fromTo(
+                        sb,
+                        { x: -26, opacity: 0.7 },
+                        {
+                            x: 0,
+                            opacity: 1,
+                            duration: 0.24,
+                            ease: "power2.out",
+                            clearProps: "transform,opacity",
+                        }
+                    );
+                }
+            }
+            return;
+        }
+
+        const icons = document.querySelectorAll("#grx-sidebar-nav .grx-sb-icon");
+        if (window.gsap && window.Flip && !reduced && !window._grxFlipRegistered) {
+            try {
+                window.gsap.registerPlugin(window.Flip);
+                window._grxFlipRegistered = true;
+            } catch (_err) {
+                // Ignore duplicate registration
+            }
+        }
+        const flipState =
+            window.Flip && icons.length && !reduced ? window.Flip.getState(icons) : null;
+
+        this.grxNav.collapsed = !this.grxNav.collapsed;
+        try {
+            window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(this.grxNav.collapsed));
+        } catch (_err) {
+            // Ignore storage errors
+        }
+        applyShellClasses(this.grxNav.collapsed, false, true);
+        if (flipState) {
+            window.requestAnimationFrame(() => {
+                try {
+                    window.Flip.from(flipState, {
+                        duration: 0.26,
+                        ease: "power2.out",
+                        simple: true,
+                    });
+                } catch (_err) {
+                    // Safe fallback
+                }
+            });
+        }
+        // Notify Leaflet maps and ECharts panels after sidebar transition finishes
+        window.setTimeout(() => {
+            window.dispatchEvent(new Event("resize"));
+        }, 280);
+    },
+
+    closeMobileSidebar() {
+        this.grxNav.mobileOpen = false;
+        applyShellClasses(this.grxNav.collapsed, false, this.isGeoRutexApp());
+    },
+
+    onGeoRutexBrandClick(app) {
+        if (!app) return;
+        if (this.isGeoRutexApp()) {
+            const firstSection = this.currentAppSections && this.currentAppSections[0];
+            if (firstSection && !firstSection.childrenTree.length) {
+                this.selectGeoRutexMenu(firstSection);
+                return;
+            }
+        }
+        this.onNavBarDropdownItemSelection(app);
+    },
+
+    selectGeoRutexMenu(menu, parentGroup = null) {
+        if (!menu) return;
+        this.grxNav.activeMenuId = menu.id;
+        if (menu.xmlid) {
+            this.grxNav.activeXmlid = menu.xmlid;
+            window.sessionStorage.setItem(SELECTED_XMLID_KEY, menu.xmlid);
+        }
+        if (parentGroup) {
+            const key = parentGroup.xmlid || String(parentGroup.id);
+            if (this.grxNav.closedGroups.includes(key)) {
+                this.grxNav.closedGroups = this.grxNav.closedGroups.filter((k) => k !== key);
+                writeClosedGroups(this.grxNav.closedGroups);
+            }
+        }
+        if (this.grxNav.mobileOpen) {
+            this.closeMobileSidebar();
+        }
+        this.onNavBarDropdownItemSelection(menu);
+        window.setTimeout(() => syncCleanBrowserUrl(this.grxNav.activeXmlid, this.isGeoRutexApp()), 80);
+    },
+});
