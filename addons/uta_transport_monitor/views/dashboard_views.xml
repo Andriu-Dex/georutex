@@ -18,13 +18,37 @@
         <field name="target">main</field>
     </record>
 
-    <!-- Load GeoRutex typography and favicon in Odoo backend without CSS @import -->
+    <!-- Replace Odoo favicon and initial tab title from first HTML byte -->
+    <template id="georutex_web_layout_brand" inherit_id="web.layout" name="GeoRutex Web Layout Brand">
+        <xpath expr="//head/title" position="replace">
+            <title t-esc="title or 'GeoRutex'"/>
+        </xpath>
+        <xpath expr="//head/link[@rel='shortcut icon']" position="replace">
+            <link type="image/png" rel="shortcut icon" href="/uta_transport_monitor/static/src/img/georutex_favicon.png"/>
+        </xpath>
+    </template>
+
+    <!-- Load GeoRutex typography, favicon and brief corporate boot transition in Odoo backend -->
     <template id="georutex_webclient_head" inherit_id="web.webclient_bootstrap" name="GeoRutex Webclient Head">
         <xpath expr="//t[@t-set='head_web']" position="inside">
             <link rel="shortcut icon" href="/uta_transport_monitor/static/src/img/georutex_favicon.png" type="image/png"/>
             <link rel="preconnect" href="https://fonts.googleapis.com"/>
             <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
             <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap"/>
+        </xpath>
+        <xpath expr="//t[@t-set='body_classname']" position="after">
+            <div id="grx-boot-splash" class="grx-boot-splash" role="status" aria-live="polite" aria-label="Cargando GeoRutex">
+                <div class="grx-boot-card">
+                    <img class="grx-boot-logo" src="/uta_transport_monitor/static/src/img/georutex_brand_mark.png" alt="GeoRutex" width="44" height="44"/>
+                    <svg class="grx-boot-track" width="120" height="26" viewBox="0 0 120 26" fill="none" aria-hidden="true">
+                        <path d="M10 18 C34 18, 42 6, 62 6 C82 6, 88 18, 110 18" stroke="#1854E6" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="130" stroke-dashoffset="0"/>
+                        <circle cx="10" cy="18" r="4" fill="#06B6D4"/>
+                        <circle cx="62" cy="6" r="3.5" fill="#1854E6"/>
+                        <circle cx="110" cy="18" r="4" fill="#FF005C"/>
+                    </svg>
+                    <span class="grx-boot-label">Cargando GeoRutex…</span>
+                </div>
+            </div>
         </xpath>
     </template>
 

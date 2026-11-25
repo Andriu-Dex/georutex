@@ -187,7 +187,8 @@
                     </div>
                     <div class="grx-ana-empty-banner-copy">
                         <strong>Sin recorridos evaluados para el corte seleccionado (n = 0)</strong>
-                        <span>Los indicadores muestran <strong>N/A</strong> por ausencia de muestra verificada. Amplía el período a <em>Histórico</em> o registra y evalúa recorridos para generar curvas reales.</span>
+                        <span t-if="state.activePreset !== 'all'">Los indicadores muestran <strong>N/A</strong> por ausencia de muestra en este rango. Puedes ampliar el período a <em>Histórico</em> o ajustar los filtros.</span>
+                        <span t-else="">Los indicadores muestran <strong>N/A</strong> porque aún no existen recorridos evaluados para la fuente seleccionada.</span>
                     </div>
                     <button t-if="state.activePreset !== 'all'"
                             type="button"

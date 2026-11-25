@@ -24,7 +24,7 @@ class TransportIncident(models.Model):
         copy=False,
         readonly=True,
         index=True,
-        default=lambda self: self._default_name(),
+        default="Nuevo",
     )
     trip_id = fields.Many2one(
         comodel_name="transport.trip",
@@ -180,11 +180,23 @@ class TransportIncident(models.Model):
     )
 
     @api.model
-    def _default_name(self):
+    def _next_incident_code(self):
         return (
             self.env["ir.sequence"].next_by_code("transport.incident")
             or "INC-NUEVO"
         )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Assign incident sequence only on persisted creation (avoids wasting codes on cancel)."""
+        for vals in vals_list:
+            if not vals.get("trip_id"):
+                raise UserError(
+                    "Debe seleccionar un recorrido asociado para registrar una incidencia."
+                )
+            if not vals.get("name") or vals.get("name") in ("Nuevo", "Borrador", "INC-NUEVO"):
+                vals["name"] = self._next_incident_code()
+        return super().create(vals_list)
 
     def action_open_justify_wizard(self):
         """Open quick modal wizard to submit justification."""

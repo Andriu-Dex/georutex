@@ -159,27 +159,33 @@ export function animateGeorutexPopover(el) {
 export function animateGeorutexEmptyStates(scope = document) {
     const gsap = window.gsap;
     if (!gsap || !scope || prefersReducedMotion()) return;
+    if (window.DrawSVGPlugin && !window._grxDrawSvgRegistered) {
+        try {
+            gsap.registerPlugin(window.DrawSVGPlugin);
+            window._grxDrawSvgRegistered = true;
+        } catch (_err) {
+            // Safe ignore
+        }
+    }
     const containers = scope.querySelectorAll(".grx-nocontent:not([data-grx-animated])");
     if (!containers.length) return;
     containers.forEach((box) => {
         box.setAttribute("data-grx-animated", "1");
-        gsap.fromTo(
+        const icon = box.querySelector(".grx-nocontent-icon");
+        const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
+        tl.fromTo(
             box,
             { y: 10, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.34, ease: "power2.out", clearProps: "transform,opacity" }
+            { y: 0, opacity: 1, duration: 0.3, clearProps: "transform,opacity" },
+            0
         );
-        const paths = box.querySelectorAll("svg .grx-svg-draw");
-        if (paths.length) {
-            paths.forEach((path) => {
-                if (typeof path.getTotalLength === "function") {
-                    const len = path.getTotalLength();
-                    gsap.fromTo(
-                        path,
-                        { strokeDasharray: len, strokeDashoffset: len },
-                        { strokeDashoffset: 0, duration: 0.55, ease: "power2.out", clearProps: "strokeDasharray,strokeDashoffset" }
-                    );
-                }
-            });
+        if (icon) {
+            tl.fromTo(
+                icon,
+                { scale: 0.9, opacity: 0 },
+                { scale: 1, opacity: 1, duration: 0.32, clearProps: "transform,opacity" },
+                0.06
+            );
         }
     });
 }

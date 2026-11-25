@@ -12,6 +12,7 @@ export class GeoRutexAdminHomeAction extends Component {
         this.orm = useService("orm");
         this.actionService = useService("action");
         this.notification = useService("notification");
+        this.drawer = useService("georutex_drawer");
 
         this.rootRef = useRef("adminHomeRoot");
         this.mapRef = useRef("adminMapCanvas");
@@ -185,6 +186,7 @@ export class GeoRutexAdminHomeAction extends Component {
         this._map = window.L.map(this.mapRef.el, {
             zoomControl: true,
             attributionControl: true,
+            scrollWheelZoom: false,
         }).setView([-1.249, -78.625], 13);
 
         window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -441,25 +443,33 @@ export class GeoRutexAdminHomeAction extends Component {
     }
 
     openNewTrip() {
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Nuevo Recorrido Operacional",
-            res_model: "transport.trip",
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.trip",
+            title: "Programar nuevo recorrido",
+            subtitle: "Asigna vehículo, conductor, ruta aprobada y horario previsto.",
+            eyebrow: "Programación operativa",
+            width: 600,
+            allowOpenFull: false,
+            saveNotice: "Recorrido programado correctamente.",
+            onRecordSaved: async () => {
+                await this.loadAdminHome(false);
+            },
         });
     }
 
     openNewIncident() {
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Registrar Incidencia Operacional",
-            res_model: "transport.incident",
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.incident",
+            title: "Registrar incidencia",
+            subtitle: "Documenta una novedad operacional asociada a un recorrido.",
+            eyebrow: "Incidencias",
             context: { default_source: "manual" },
+            width: 560,
+            allowOpenFull: false,
+            saveNotice: "Incidencia registrada correctamente.",
+            onRecordSaved: async () => {
+                await this.loadAdminHome(false);
+            },
         });
     }
 
@@ -504,26 +514,34 @@ export class GeoRutexAdminHomeAction extends Component {
     }
 
     openTripDetail(tripId) {
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Recorrido Operacional",
-            res_model: "transport.trip",
-            res_id: tripId,
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.trip",
+            resId: tripId,
+            title: "Vista rápida de recorrido",
+            subtitle: "Consulta estado, horarios o abre el detalle completo con mapa.",
+            eyebrow: "Recorridos",
+            width: 620,
+            allowOpenFull: true,
+            saveNotice: "Recorrido actualizado.",
+            onRecordSaved: async () => {
+                await this.loadAdminHome(false);
+            },
         });
     }
 
     openIncidentDetail(incidentId) {
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Incidencia Operacional",
-            res_model: "transport.incident",
-            res_id: incidentId,
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.incident",
+            resId: incidentId,
+            title: "Incidencia operacional",
+            subtitle: "Revisa la evidencia, justificación y resolución del evento.",
+            eyebrow: "Incidencias",
+            width: 580,
+            allowOpenFull: true,
+            saveNotice: "Incidencia actualizada.",
+            onRecordSaved: async () => {
+                await this.loadAdminHome(false);
+            },
         });
     }
 

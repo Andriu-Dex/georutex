@@ -7,10 +7,42 @@
 
 .o_web_client {
     --grx-font-ui: "Manrope", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --o-brand-odoo: var(--grx-brand-primary);
+    --o-brand-primary: var(--grx-brand-primary);
+    --o-component-active-bg: var(--grx-brand-tint);
+    --o-component-active-border: var(--grx-brand-primary);
     font-family: var(--grx-font-ui);
     font-size: 14px;
     color: var(--grx-ink-primary);
     background: var(--grx-ops-bg);
+}
+.o_web_client a,
+.o_web_client .o_external_button,
+.o_web_client .o_field_many2one_selection .o_external_button {
+    color: var(--grx-brand-primary) !important;
+}
+.o_web_client a:hover,
+.o_web_client .o_external_button:hover { color: var(--grx-brand-deep) !important; }
+.o_web_client .btn-link { color: var(--grx-brand-primary) !important; }
+.o_web_client .o_searchview .o_searchview_facet .o_searchview_facet_label {
+    background: var(--grx-brand-primary) !important; color: #fff !important;
+}
+
+/* Corporate Boot Splash (dismissed immediately on NavBar mount) */
+.grx-boot-splash {
+    position: fixed; inset: 0; z-index: 2000;
+    display: grid; place-items: center;
+    background: var(--grx-ops-bg);
+    pointer-events: none;
+    animation: grx-boot-failsafe 0.3s ease 4s forwards;
+}
+@keyframes grx-boot-failsafe { to { opacity: 0; visibility: hidden; } }
+.grx-boot-card { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.grx-boot-logo { width: 44px; height: 44px; object-fit: contain; }
+.grx-boot-label { font: 700 13.5px var(--grx-font-display); color: var(--grx-ink-secondary); }
+.o_web_client .o_cp_switch_buttons .btn.active,
+.o_web_client .o_cp_switch_buttons .btn:hover {
+    color: var(--grx-brand-primary) !important; background: var(--grx-brand-tint) !important;
 }
 
 /* ---------- 1. Topbar, Apps Switcher, Foreign Apps & Systray ---------- */
@@ -230,11 +262,12 @@
 .o_web_client.grx-sb-collapsed .grx-sb-group-head { min-height: 8px; padding: 0; border-top: 1px solid var(--grx-ops-border); margin: 6px 8px; width: auto; }
 .o_web_client.grx-sb-collapsed .grx-sb-group.is-closed .grx-sb-group-items { display: block; }
 
-/* Content offset (STRICTLY scoped to .grx-app-active!) */
+/* Content offset & vertical scroll (FIX: .o_action_manager is overflow:hidden in Odoo 16; .grx-ops-page owns scroll!) */
 .o_web_client > .o_action_manager {
     margin-left: 0;
+    flex: 1 1 auto;
+    min-height: 0;
     height: calc(100vh - var(--grx-ops-topbar-h));
-    overflow: auto;
     background: var(--grx-ops-bg);
     transition: margin-left var(--grx-dur-ui) var(--grx-ease-out);
 }
@@ -373,14 +406,140 @@
 .o_web_client .o_georutex_trip_form .o_georutex_trip_map_backdrop { position: relative; margin-bottom: 18px; }
 .o_web_client .o_georutex_trip_form .o_georutex_trip_drawer_handle { display: none; }
 
-/* ---------- 5. Incident form ---------- */
+/* ---------- 5. Incident form & Compact Header ---------- */
 .o_web_client .o_georutex_incident_form .o_georutex_incident_card_header {
     display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 14px;
 }
+.grx-incident-head-compact { display: flex; flex-direction: column; gap: 6px; }
+.grx-incident-code-badge {
+    display: inline-flex; align-items: center; align-self: flex-start;
+    padding: 3px 10px; border-radius: var(--grx-ops-radius-xs);
+    background: var(--grx-brand-tint); color: var(--grx-brand-primary);
+    font-family: var(--grx-font-mono); font-size: 12.5px; font-weight: 700;
+}
 .o_web_client .o_georutex_incident_card_subtitle { color: var(--grx-ink-subtle); margin: 0; font-size: 13px; }
 
+/* ---------- 5B. Reusable Right-Side Drawer (GeoRutexDrawerDialog) ---------- */
+.o_web_client .modal.grx-drawer-modal {
+    padding: 0 !important;
+    display: flex !important;
+    justify-content: flex-end;
+    align-items: stretch;
+    overflow: hidden;
+}
+.o_web_client .modal.grx-drawer-modal .modal-dialog {
+    margin: 0 !important;
+    width: min(var(--grx-drawer-w, 560px), 100vw) !important;
+    max-width: 100vw !important;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+.o_web_client .modal.grx-drawer-modal .grx-drawer-content {
+    height: 100vh;
+    max-height: 100vh;
+    border: 0 !important;
+    border-left: 1px solid var(--grx-ops-border) !important;
+    border-radius: 0 !important;
+    background: var(--grx-ops-surface);
+    box-shadow: -14px 0 40px rgba(17, 24, 39, 0.14);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.o_web_client .modal.grx-drawer-modal .modal-header,
+.o_web_client .modal.grx-drawer-modal.o_modal_full .modal-header {
+    padding: 16px 20px !important;
+    border-bottom: 1px solid var(--grx-ops-border) !important;
+    background: var(--grx-ops-surface) !important;
+    color: var(--grx-ink-primary) !important;
+    flex: 0 0 auto;
+}
+.grx-drawer-header {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; width: 100%;
+}
+.grx-drawer-header-text { min-width: 0; flex: 1 1 auto; }
+.grx-drawer-eyebrow {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11.5px; font-weight: 700; color: var(--grx-ink-subtle); margin-bottom: 2px;
+}
+.grx-drawer-title {
+    margin: 0; font-family: var(--grx-font-display); font-size: 17px; font-weight: 800;
+    color: var(--grx-ink-primary); line-height: 1.25;
+}
+.grx-drawer-subtitle { margin: 3px 0 0; font-size: 12.5px; color: var(--grx-ink-subtle); line-height: 1.4; }
+.grx-drawer-header-actions { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+.grx-drawer-close-btn {
+    width: 32px; height: 32px; display: inline-grid; place-items: center;
+    border: 1px solid var(--grx-ops-border); border-radius: var(--grx-ops-radius-sm);
+    background: var(--grx-ops-surface); color: var(--grx-ink-secondary); cursor: pointer;
+    transition: background var(--grx-dur-micro), color var(--grx-dur-micro);
+}
+.grx-drawer-close-btn:hover { background: var(--grx-ops-hover); color: var(--grx-ink-primary); }
+.grx-drawer-close-btn:focus-visible { outline: 0; box-shadow: var(--grx-ops-focus-ring); }
+
+.o_web_client .modal.grx-drawer-modal .grx-drawer-body {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 16px 20px 24px !important;
+    background: var(--grx-ops-surface);
+}
+.grx-drawer-form-host .o_form_view .o_form_sheet_bg { background: transparent !important; padding: 0 !important; }
+.grx-drawer-form-host .o_form_view .o_form_sheet {
+    padding: 0 !important; border: 0 !important; box-shadow: none !important; max-width: none !important;
+}
+.grx-drawer-form-host .o_form_view .o_form_statusbar {
+    margin: -16px -20px 14px; padding: 10px 20px; background: var(--grx-ops-surface-soft);
+}
+/* Clean single-column top-label form layout inside Drawer (zero duplicated headers or cut-off footers!) */
+.grx-drawer-form-host .o_georutex_incident_card_header { display: none !important; }
+.grx-drawer-form-host .o_form_view .o_group { display: block !important; width: 100% !important; }
+.grx-drawer-form-host .o_form_view .o_inner_group { width: 100% !important; margin-bottom: 12px; display: flex; flex-direction: column; gap: 10px; }
+.grx-drawer-form-host .o_form_view .o_wrap_field { display: flex !important; flex-direction: column !important; gap: 4px; margin-bottom: 4px; }
+.grx-drawer-form-host .o_form_view .o_wrap_label { width: 100% !important; max-width: 100% !important; padding: 0 !important; }
+.grx-drawer-form-host .o_form_view .o_wrap_label .o_form_label { font-size: 12.5px; font-weight: 700; color: var(--grx-ink-secondary); margin: 0; }
+.grx-drawer-form-host .o_form_view .o_cell { width: 100% !important; }
+.grx-drawer-form-host .o_form_view .o_field_widget input:not([type="checkbox"]):not([type="radio"]),
+.grx-drawer-form-host .o_form_view .o_field_widget select,
+.grx-drawer-form-host .o_form_view .o_field_widget textarea {
+    border: 1px solid var(--grx-ops-border-strong); border-radius: var(--grx-ops-radius-sm);
+    padding: 7px 10px; min-height: 40px; background: var(--grx-ops-surface); width: 100%;
+}
+.grx-drawer-form-host .o_form_view .o_field_widget.o_readonly_modifier {
+    background: var(--grx-ops-bg); border-radius: var(--grx-ops-radius-sm); padding: 6px 10px; font-size: 13px; color: var(--grx-ink-secondary);
+}
+.grx-drawer-form-host .o_form_view .o_field_email,
+.grx-drawer-form-host .o_form_view .o_field_email input {
+    overflow: visible; text-overflow: clip; white-space: normal; word-break: break-word;
+}
+.o_web_client .modal.grx-drawer-modal .modal-footer {
+    flex: 0 0 auto !important;
+    position: relative;
+    z-index: 3;
+    min-height: 60px;
+    justify-content: flex-end !important;
+    align-items: center;
+    background: var(--grx-ops-surface-soft);
+    border-top: 1px solid var(--grx-ops-border);
+    padding: 12px 20px !important;
+    gap: 8px;
+}
+@media (max-width: 767.98px) {
+    .o_web_client .modal.grx-drawer-modal .modal-dialog { width: 100vw !important; }
+}
+
 /* ---------- 6. Shared operational page primitives ---------- */
-.grx-ops-page { min-height: 100%; background: var(--grx-ops-bg); font-family: var(--grx-font-ui); color: var(--grx-ink-primary); }
+.grx-ops-page {
+    height: 100%;
+    max-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    background: var(--grx-ops-bg);
+    font-family: var(--grx-font-ui);
+    color: var(--grx-ink-primary);
+}
 .grx-ops-container { max-width: 1600px; margin: 0 auto; padding: 22px clamp(14px, 2.4vw, 32px) 40px; display: flex; flex-direction: column; gap: 18px; }
 
 .grx-page-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
@@ -587,13 +746,13 @@
 @keyframes grx-road-move { to { stroke-dashoffset: -24; } }
 
 /* ---------- 7. Admin home ---------- */
-.grx-kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.grx-kpi-card { padding: 14px 16px; background: var(--grx-ops-surface); border: 1px solid var(--grx-ops-border); border-radius: var(--grx-ops-radius-md); display: flex; flex-direction: column; gap: 6px; cursor: pointer; transition: border-color var(--grx-dur-micro), box-shadow var(--grx-dur-micro), transform var(--grx-dur-micro); }
+.grx-kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.grx-kpi-card { padding: 12px 14px; background: var(--grx-ops-surface); border: 1px solid var(--grx-ops-border); border-radius: var(--grx-ops-radius-md); display: flex; flex-direction: column; gap: 4px; cursor: pointer; transition: border-color var(--grx-dur-micro), box-shadow var(--grx-dur-micro), transform var(--grx-dur-micro); }
 .grx-kpi-card:hover { border-color: var(--grx-brand-primary); box-shadow: var(--grx-ops-shadow-sm); transform: translateY(-1px); }
 .grx-kpi-card:focus-visible { outline: 0; box-shadow: var(--grx-ops-focus-ring); }
-.grx-kpi-head { display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; font-weight: 700; color: var(--grx-ink-subtle); }
+.grx-kpi-head { display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 700; color: var(--grx-ink-subtle); }
 .grx-kpi-ico { color: #94a3b8; }
-.grx-kpi-val { font-family: var(--grx-font-display); font-size: 28px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.grx-kpi-val { font-family: var(--grx-font-display); font-size: 24px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .grx-kpi-denom { font-size: 16px; color: var(--grx-ink-subtle); font-weight: 700; }
 .grx-kpi-foot { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--grx-ink-subtle); }
 

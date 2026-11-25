@@ -26,7 +26,8 @@
         <field name="arch" type="xml">
             <form string="Ruta de Transporte">
                 <sheet>
-                    <div class="oe_button_box" name="button_box">
+                    <field name="id" invisible="1"/>
+                    <div class="oe_button_box" name="button_box" attrs="{'invisible': [('id', '=', False)]}">
                         <button name="action_view_versions" type="object" class="oe_stat_button" icon="fa-code-fork">
                             <field name="version_count" widget="statinfo" string="Versiones"/>
                         </button>
@@ -56,7 +57,7 @@
                         <page string="Descripción y Notas" name="description_page">
                             <field name="description" placeholder="Instrucciones operacionales, características de la vía o restricciones de horario..."/>
                         </page>
-                        <page string="Historial de Versiones" name="versions_page">
+                        <page string="Historial de Versiones" name="versions_page" attrs="{'invisible': [('id', '=', False)]}">
                             <field name="version_ids" readonly="1">
                                 <tree string="Versiones de Ruta">
                                     <field name="version_number"/>

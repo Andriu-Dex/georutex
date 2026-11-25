@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="uta_transport_monitor.GeoRutexDrawerDialog" owl="1">
+        <Dialog size="'lg'"
+                title="props.title"
+                modalRef="modalRef"
+                contentClass="'grx-drawer-content'"
+                bodyClass="'grx-drawer-body'"
+                withBodyPadding="false">
+            <t t-set-slot="header">
+                <div class="grx-drawer-header">
+                    <div class="grx-drawer-header-text">
+                        <div t-if="props.eyebrow" class="grx-drawer-eyebrow">
+                            <span class="grx-eyebrow-dot" aria-hidden="true"/>
+                            <span t-esc="props.eyebrow"/>
+                        </div>
+                        <h4 class="grx-drawer-title" t-esc="props.title"/>
+                        <p t-if="props.subtitle" class="grx-drawer-subtitle" t-esc="props.subtitle"/>
+                    </div>
+                    <div class="grx-drawer-header-actions">
+                        <button t-if="canOpenFullRecord"
+                                type="button"
+                                class="grx-btn grx-btn--sm"
+                                t-on-click="() => this.openFullRecord()"
+                                title="Abrir este registro en vista completa">
+                            <i class="fa fa-external-link" aria-hidden="true"/>
+                            <span>Vista completa</span>
+                        </button>
+                        <button type="button"
+                                class="grx-drawer-close-btn"
+                                t-on-click="() => this.animatedClose(false)"
+                                aria-label="Cerrar panel"
+                                title="Cerrar (Esc)">
+                            <i class="fa fa-times" aria-hidden="true"/>
+                        </button>
+                    </div>
+                </div>
+            </t>
+
+            <div class="grx-drawer-form-host" t-ref="drawerRoot">
+                <View t-props="viewProps"/>
+            </div>
+        </Dialog>
+    </t>
+
+</templates>

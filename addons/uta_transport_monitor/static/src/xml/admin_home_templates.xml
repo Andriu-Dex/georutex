@@ -58,16 +58,20 @@
                     <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openFleet()">
                         <div class="grx-kpi-head">
                             <span>Flota en línea</span>
-                            <span t-attf-class="grx-dot #{state.stats.vehicles_online ? 'is-green is-pulse' : 'is-amber'}"/>
+                            <span t-attf-class="grx-dot #{!state.stats.vehicles_total ? 'is-muted' : (state.stats.vehicles_online ? 'is-green is-pulse' : 'is-amber')}"/>
                         </div>
                         <div class="grx-kpi-val">
-                            <t t-esc="state.stats.vehicles_online"/> <span class="grx-kpi-denom">/ <t t-esc="state.stats.vehicles_tracked"/></span>
+                            <t t-if="state.stats.vehicles_tracked">
+                                <t t-esc="state.stats.vehicles_online"/> <span class="grx-kpi-denom">/ <t t-esc="state.stats.vehicles_tracked"/></span>
+                            </t>
+                            <t t-else="">N/A</t>
                         </div>
                         <div class="grx-kpi-foot">
-                            <span><t t-esc="state.stats.vehicles_total"/> unidades registradas</span>
-                            <strong class="grx-num"><t t-esc="this.fleetOnlinePct"/>%</strong>
+                            <span t-if="state.stats.vehicles_total"><t t-esc="state.stats.vehicles_total"/> unidades registradas</span>
+                            <span t-else="">Sin vehículos registrados</span>
+                            <strong t-if="state.stats.vehicles_tracked" class="grx-num"><t t-esc="this.fleetOnlinePct"/>%</strong>
                         </div>
-                        <div class="grx-progress-track"><div class="grx-progress-fill" t-attf-style="width: #{this.fleetOnlinePct}%;"/></div>
+                        <div t-if="state.stats.vehicles_tracked" class="grx-progress-track"><div class="grx-progress-fill" t-attf-style="width: #{this.fleetOnlinePct}%;"/></div>
                     </article>
 
                     <article class="grx-kpi-card" role="button" tabindex="0" t-on-click="() => this.openRoutes()">

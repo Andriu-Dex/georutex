@@ -13,6 +13,7 @@ export class GeoRutexDriverHomeAction extends Component {
         this.actionService = useService("action");
         this.notification = useService("notification");
         this.userService = useService("user");
+        this.drawer = useService("georutex_drawer");
 
         this.rootRef = useRef("driverHomeRoot");
         this.mapRef = useRef("driverMapCanvas");
@@ -149,6 +150,7 @@ export class GeoRutexDriverHomeAction extends Component {
             this._map = window.L.map(this.mapRef.el, {
                 zoomControl: true,
                 attributionControl: true,
+                scrollWheelZoom: false,
             }).setView([-1.249, -78.625], 13);
 
             window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -319,25 +321,34 @@ export class GeoRutexDriverHomeAction extends Component {
 
     async openProfile() {
         try {
-            const actionDescription = await this.orm.call("res.users", "action_get", []);
-            actionDescription.res_id = this.userService.userId;
-            this.actionService.doAction(actionDescription);
+            await this.drawer.openPreferences(this.userService.userId);
         } catch (err) {
             console.error("Error opening driver profile:", err);
         }
     }
 
     openNewIncident(tripId = false) {
+        if (!this.hasAnyTrips) {
+            this.notification.add(
+                "Necesitas al menos un recorrido asignado para reportar una incidencia.",
+                { type: "warning", sticky: false }
+            );
+            return;
+        }
         const context = { default_source: "manual" };
         if (tripId) context.default_trip_id = tripId;
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Reportar Incidencia Operacional",
-            res_model: "transport.incident",
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.incident",
+            title: "Reportar incidencia",
+            subtitle: "Registra la novedad de tu recorrido; el equipo de operación la revisará.",
+            eyebrow: "Operación en ruta",
             context,
+            width: 560,
+            allowOpenFull: false,
+            saveNotice: "Incidencia registrada correctamente.",
+            onRecordSaved: async () => {
+                await this.loadDriverHome(false);
+            },
         });
     }
 
@@ -346,14 +357,18 @@ export class GeoRutexDriverHomeAction extends Component {
     }
 
     openIncidentDetail(incidentId) {
-        this.actionService.doAction({
-            type: "ir.actions.act_window",
-            name: "Incidencia Operacional",
-            res_model: "transport.incident",
-            res_id: incidentId,
-            views: [[false, "form"]],
-            view_mode: "form",
-            target: "current",
+        this.drawer.openRecord({
+            resModel: "transport.incident",
+            resId: incidentId,
+            title: "Detalle de incidencia",
+            subtitle: "Consulta el estado, evidencia o envía una justificación.",
+            eyebrow: "Mis incidencias",
+            width: 560,
+            allowOpenFull: true,
+            saveNotice: "Incidencia actualizada.",
+            onRecordSaved: async () => {
+                await this.loadDriverHome(false);
+            },
         });
     }
 

@@ -39,7 +39,7 @@
         <field name="model">transport.incident</field>
         <field name="arch" type="xml">
             <form string="Incidencia Operacional" class="o_georutex_incident_form">
-                <header>
+                <header attrs="{'invisible': [('id', '=', False)]}">
                     <button name="action_open_justify_wizard"
                             string="Justificar Incidencia"
                             type="object"
@@ -81,13 +81,10 @@
                 <sheet>
                     <field name="source" invisible="1"/>
                     <div class="o_georutex_incident_card_header">
-                        <div class="oe_title mb-0">
-                            <label for="name" string="Código de Incidencia"/>
-                            <h1 class="mb-1">
-                                <field name="name"/>
-                            </h1>
+                        <div class="grx-incident-head-compact">
+                            <span class="grx-incident-code-badge"><field name="name" readonly="1"/></span>
                             <p class="o_georutex_incident_card_subtitle">
-                                Registra lo ocurrido; el equipo de operación revisará tu reporte.
+                                Registra la novedad del recorrido; el equipo de operación revisará tu reporte.
                             </p>
                         </div>
                     </div>

@@ -5,6 +5,7 @@ import { NavBar } from "@web/webclient/navbar/navbar";
 import { session } from "@web/session";
 import { _t } from "@web/core/l10n/translation";
 import { onMounted, onWillUnmount, useState } from "@odoo/owl";
+import { useService } from "@web/core/utils/hooks";
 import { animateGeorutexEmptyStates, animateGeorutexPopover } from "./georutex_motion";
 
 const GEORUTEX_ROOT_XMLID = "uta_transport_monitor.menu_georutex_root";
@@ -28,6 +29,22 @@ const MENU_ICONS = {
     "uta_transport_monitor.menu_georutex_operations": "fa-sliders",
     "uta_transport_monitor.menu_georutex_routes_cat": "fa-map-o",
     "uta_transport_monitor.menu_georutex_monitoring": "fa-signal",
+};
+
+const CLEAN_MENU_LABELS = {
+    "uta_transport_monitor.menu_georutex_admin_home": "Centro de operaciones",
+    "uta_transport_monitor.menu_georutex_dashboard_main": "Análisis del servicio",
+    "uta_transport_monitor.menu_georutex_live_fleet_map": "Mapa en vivo",
+    "uta_transport_monitor.menu_georutex_trips": "Recorridos",
+    "uta_transport_monitor.menu_georutex_incidents": "Incidencias",
+    "uta_transport_monitor.menu_georutex_evaluations": "Evaluaciones",
+    "uta_transport_monitor.menu_georutex_routes": "Rutas",
+    "uta_transport_monitor.menu_georutex_route_versions": "Versiones de ruta",
+    "uta_transport_monitor.menu_georutex_fleet": "Vehículos",
+    "uta_transport_monitor.menu_georutex_positions": "Historial GPS",
+    "uta_transport_monitor.menu_georutex_operations": "Operaciones",
+    "uta_transport_monitor.menu_georutex_routes_cat": "Rutas y flota",
+    "uta_transport_monitor.menu_georutex_monitoring": "Telemetría GPS",
 };
 
 const DRIVER_MENU_LABELS = {
@@ -156,6 +173,7 @@ function findMenuByIdOrXmlid(sections, menuId, xmlid) {
 patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
     setup() {
         this._super(...arguments);
+        this.titleService = useService("title");
 
         let initialCollapsed = false;
         try {
@@ -276,12 +294,14 @@ patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
             applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, isGrx);
             localizeFallbackUiButtons();
             syncCleanBrowserUrl(this.grxNav.activeXmlid, isGrx);
+            this._grxSyncBrowserTitle(isGrx);
             window.requestAnimationFrame(() => animateGeorutexEmptyStates(document));
         };
 
         onMounted(() => {
             applyShellClasses(this.grxNav.collapsed, this.grxNav.mobileOpen, this.isGeoRutexApp());
             this._grxSyncActiveFromHash();
+            this._grxDismissBootSplash();
             window.addEventListener("resize", this._grxOnResize);
             window.addEventListener("keydown", this._grxOnKeyDown);
             window.addEventListener("hashchange", this._grxSyncActiveFromHash);
@@ -298,6 +318,42 @@ patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
             this.env.bus.off("ACTION_MANAGER:UI-UPDATED", this, this._grxSyncActiveFromHash);
             this.env.bus.off("MENUS:APP-CHANGED", this, this._grxSyncActiveFromHash);
         });
+    },
+
+    _grxSyncBrowserTitle(isGrx) {
+        if (!this.titleService) return;
+        if (!isGrx) {
+            this.titleService.setParts({ zopenerp: "Odoo" });
+            return;
+        }
+        const activeXmlid = this.grxNav.activeXmlid;
+        const sectionTitle =
+            (session.georutex_is_driver_only && DRIVER_MENU_LABELS[activeXmlid]) ||
+            CLEAN_MENU_LABELS[activeXmlid] ||
+            "";
+        if (sectionTitle) {
+            this.titleService.setParts({ zopenerp: `GeoRutex · ${sectionTitle}`, action: null });
+        } else {
+            this.titleService.setParts({ zopenerp: "GeoRutex" });
+        }
+    },
+
+    _grxDismissBootSplash() {
+        const splash = document.getElementById("grx-boot-splash");
+        if (!splash) return;
+        const reduced = Boolean(
+            window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        );
+        if (window.gsap && !reduced) {
+            window.gsap.to(splash, {
+                opacity: 0,
+                duration: 0.24,
+                ease: "power2.out",
+                onComplete: () => splash.remove(),
+            });
+        } else {
+            splash.remove();
+        }
     },
 
     isGeoRutexApp() {
@@ -323,6 +379,9 @@ patch(NavBar.prototype, "uta_transport_monitor.georutexApplicationShell", {
         if (!menu) return "";
         if (session.georutex_is_driver_only && menu.xmlid && DRIVER_MENU_LABELS[menu.xmlid]) {
             return DRIVER_MENU_LABELS[menu.xmlid];
+        }
+        if (menu.xmlid && CLEAN_MENU_LABELS[menu.xmlid]) {
+            return CLEAN_MENU_LABELS[menu.xmlid];
         }
         return menu.name || "";
     },

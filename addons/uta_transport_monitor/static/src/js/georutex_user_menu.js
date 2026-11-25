@@ -27,6 +27,10 @@ userMenuRegistry.add(
             id: "georutex_profile",
             description: "Mi perfil y credenciales",
             callback: async () => {
+                if (env.services.georutex_drawer) {
+                    await env.services.georutex_drawer.openPreferences(env.services.user.userId);
+                    return;
+                }
                 const actionDescription = await env.services.orm.call(
                     "res.users",
                     "action_get"

@@ -15,7 +15,7 @@ Módulo Odoo 16 Community para:
 - Dashboard gerencial interactivo y cálculo de métricas MT-01..08 y MCS-01..04.
 - Pruebas integrales extremo a extremo y evaluación de calidad ISO/IEC 25010.
     """,
-    "version": "16.0.9.10.0",
+    "version": "16.0.9.12.0",
     "category": "Fleet/Transport",
     "author": "GeoRutex Team",
     "license": "LGPL-3",
@@ -80,15 +80,17 @@ Módulo Odoo 16 Community para:
             "uta_transport_monitor/static/lib/leaflet/leaflet.js",
             "uta_transport_monitor/static/lib/gsap/gsap.min.js",
             "uta_transport_monitor/static/lib/gsap/Flip.min.js",
+            "uta_transport_monitor/static/lib/gsap/DrawSVGPlugin.min.js",
             "uta_transport_monitor/static/lib/echarts/echarts.min.js",
             "uta_transport_monitor/static/src/css/transport_map.css",
             "uta_transport_monitor/static/src/css/georutex_tokens.css",
             "uta_transport_monitor/static/src/css/georutex_platform.css",
             "web/static/lib/Chart/Chart.js",
+            "uta_transport_monitor/static/src/js/georutex_motion.js",
+            "uta_transport_monitor/static/src/js/georutex_drawer.js",
             "uta_transport_monitor/static/src/js/custom_georutex_nav.js",
             "uta_transport_monitor/static/src/js/georutex_user_menu.js",
             "uta_transport_monitor/static/src/js/custom_georutex_forms.js",
-            "uta_transport_monitor/static/src/js/georutex_motion.js",
             "uta_transport_monitor/static/src/js/admin_home_action.js",
             "uta_transport_monitor/static/src/js/driver_home_action.js",
             "uta_transport_monitor/static/src/js/trip_map_widget.js",
@@ -98,6 +100,7 @@ Módulo Odoo 16 Community para:
                 "uta_transport_monitor/static/src/js/"
                 "transport_dashboard_action.js"
             ),
+            "uta_transport_monitor/static/src/xml/georutex_drawer_templates.xml",
             "uta_transport_monitor/static/src/xml/georutex_navbar_templates.xml",
             "uta_transport_monitor/static/src/xml/admin_home_templates.xml",
             "uta_transport_monitor/static/src/xml/driver_home_templates.xml",
