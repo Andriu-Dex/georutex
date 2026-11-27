@@ -6,6 +6,27 @@ import zoneinfo
 from odoo import api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
+from ..integrations.traccar_client import (
+    TraccarApiError,
+    TraccarAuthError,
+    TraccarConnectionError,
+)
+
+
+def gps_error_message(exc):
+    """Translate integration failures into Spanish text safe for end users."""
+    if isinstance(exc, TraccarAuthError):
+        return "Las credenciales del servidor GPS no son válidas."
+    if isinstance(exc, TraccarConnectionError):
+        return "No se pudo conectar con el servidor GPS. Verifique que esté en funcionamiento."
+    if isinstance(exc, TraccarApiError):
+        if exc.status_code == 404:
+            return "El dispositivo no existe en el servidor GPS."
+        return "El servidor GPS rechazó la solicitud."
+    if isinstance(exc, UserError):
+        return str(exc)
+    return "Ocurrió un error inesperado al comunicarse con el servidor GPS."
+
 
 class FleetVehicle(models.Model):
     """Extend fleet.vehicle with Traccar device bindings and telemetries."""
@@ -21,17 +42,17 @@ class FleetVehicle(models.Model):
              "(ej. 'Bus 01 - UTA', 'Unidad 14').",
     )
     traccar_device_id = fields.Integer(
-        string="ID Dispositivo Traccar",
+        string="ID interno en servidor GPS",
         index=True,
         help="ID numérico asignado al dispositivo en Traccar Server.",
     )
     traccar_unique_id = fields.Char(
-        string="Identificador Único (uniqueId)",
+        string="Identificador del dispositivo GPS",
         index=True,
         help="Código único o identificador de Traccar Client (OsmAnd / IMEI).",
     )
     gps_tracking_enabled = fields.Boolean(
-        string="Rastreo GPS Activo",
+        string="Rastreo GPS activo",
         default=True,
         help="Habilita sincronización programada de telemetría para el bus.",
     )
@@ -138,7 +159,7 @@ class FleetVehicle(models.Model):
                 if clashing:
                     raise ValidationError(
                         f"El ID Traccar {vehicle.traccar_device_id} ya está "
-                        f"asignado a '{clashing.name}' (RF-08)."
+                        f"asignado a '{clashing.name}'."
                     )
             if vehicle.traccar_unique_id:
                 clashing = self.search([
@@ -149,7 +170,7 @@ class FleetVehicle(models.Model):
                 if clashing:
                     raise ValidationError(
                         f"El identificador '{vehicle.traccar_unique_id}' "
-                        f"ya está asignado a '{clashing.name}' (RF-08)."
+                        f"ya está asignado a '{clashing.name}'."
                     )
 
     @api.depends("last_gps_fix_time", "traccar_device_id", "traccar_unique_id")
@@ -360,35 +381,40 @@ class FleetVehicle(models.Model):
                     device_msg = f" Dispositivo '{dev_name}' verificado."
                 except Exception as exc:
                     device_msg = (
-                        f" Alerta: Dispositivo {self.traccar_device_id} "
-                        f"no encontrado: {exc}"
+                        f" Alerta: dispositivo {self.traccar_device_id}: "
+                        f"{gps_error_message(exc)}"
                     )
 
             return {
                 "type": "ir.actions.client",
                 "tag": "display_notification",
                 "params": {
-                    "title": "Conexión Exitosa con Traccar",
+                    "title": "Conexión con el servidor GPS correcta",
                     "message": (
-                        f"Servidor Traccar v{version} responde.{device_msg}"
+                        f"El servidor GPS (Traccar {version}) responde.{device_msg}"
                     ),
                     "type": "success",
                     "sticky": False,
                 },
             }
         except Exception as exc:
-            raise UserError(f"Error de conexión con Traccar: {exc}")
+            raise UserError(gps_error_message(exc)) from exc
 
     def action_sync_gps_positions(self):
         """Trigger an on-demand GPS synchronization for this vehicle."""
         self.ensure_one()
         sync_service = self.env["transport.gps.sync.service"]
-        count = sync_service.sync_vehicle_positions(self)
+        try:
+            count = sync_service.sync_vehicle_positions(self)
+        except UserError:
+            raise
+        except Exception as exc:
+            raise UserError(gps_error_message(exc)) from exc
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
-                "title": "Sincronización GPS Completa",
+                "title": "Sincronización GPS completada",
                 "message": (
                     f"Se sincronizaron {count} nuevas posiciones para "
                     f"{self.name}."

@@ -55,7 +55,7 @@ class TransportTrip(models.Model):
         string="Versión de Ruta",
         required=True,
         domain="[('route_id', '=', route_id), ('state', '=', 'approved')]",
-        help="Versión aprobada y congelada con los parámetros a evaluar.",
+        help="Versión aprobada de la ruta cuyos parámetros se usarán para evaluar el recorrido.",
     )
     source_type = fields.Selection(
         selection=[
@@ -155,19 +155,19 @@ class TransportTrip(models.Model):
         help="Instante de finalización manual por operador o conductor.",
     )
     first_gps_fix_utc = fields.Datetime(
-        string="Primer Fix GPS",
+        string="Primera posición GPS",
         readonly=True,
         help="Primer registro de telemetría GPS asociado al recorrido.",
     )
     actual_start_utc = fields.Datetime(
         string="Salida Real Verificada",
         readonly=True,
-        help="Primer instante verificado de salida de origen (RF-20).",
+        help="Primer momento confirmado por GPS en que el vehículo salió del origen.",
     )
     actual_end_utc = fields.Datetime(
         string="Llegada Real Verificada",
         readonly=True,
-        help="Primer instante verificado de llegada a destino (RF-20).",
+        help="Primer momento confirmado por GPS en que el vehículo llegó al destino.",
     )
     actual_start_evidence = fields.Char(
         string="Evidencia Salida Real",
@@ -244,24 +244,24 @@ class TransportTrip(models.Model):
 
     # Frozen parameter snapshot (RF-14 & Section 7.1)
     parameter_snapshot_json = fields.Text(
-        string="Snapshot de Parámetros de Evaluación",
+        string="Parámetros de evaluación aplicados",
         readonly=True,
         help="Copia inmutable de parámetros canónicos al programar el viaje.",
     )
     stop_radius_m = fields.Float(
-        string="Radio Parada Congelado (m)",
+        string="Radio de parada aplicado (m)",
         readonly=True,
     )
     route_corridor_m = fields.Float(
-        string="Corredor Ruta Congelado (m)",
+        string="Ancho del corredor aplicado (m)",
         readonly=True,
     )
     lateness_tolerance_s = fields.Integer(
-        string="Tolerancia Retraso Congelada (s)",
+        string="Tolerancia de retraso aplicada (s)",
         readonly=True,
     )
     gps_gap_threshold_s = fields.Integer(
-        string="Umbral Gap GPS Congelado (s)",
+        string="Tiempo máximo sin señal GPS aplicado (s)",
         readonly=True,
     )
 
@@ -722,7 +722,7 @@ class TransportTrip(models.Model):
                 c_start = vehicle_conflict.scheduled_start_utc
                 c_end = vehicle_conflict.scheduled_end_utc
                 raise ValidationError(
-                    f"Conflicto (RF-12): El vehículo '{v_name}' ya tiene "
+                    f"Conflicto de horario: El vehículo '{v_name}' ya tiene "
                     f"el recorrido '{c_name}' en [{c_start} - {c_end}]."
                 )
 
@@ -741,7 +741,7 @@ class TransportTrip(models.Model):
                     c_start = driver_conflict.scheduled_start_utc
                     c_end = driver_conflict.scheduled_end_utc
                     raise ValidationError(
-                        f"Conflicto (RF-12): El conductor '{d_name}' ya tiene "
+                        f"Conflicto de horario: El conductor '{d_name}' ya tiene "
                         f"el recorrido '{c_name}' en [{c_start} - {c_end}]."
                     )
 
@@ -977,7 +977,7 @@ class TransportTrip(models.Model):
             f"Dictamen: {status_label}. "
             f"Paradas: {evaluation.stops_on_time}/{evaluation.stops_total}. "
             f"Desvíos: {evaluation.deviation_count}. "
-            f"Gaps GPS: {evaluation.gps_gap_count}."
+            f"Pérdidas de señal GPS: {evaluation.gps_gap_count}."
         )
         return {
             "type": "ir.actions.client",
@@ -1389,6 +1389,50 @@ class TransportTrip(models.Model):
         return {"ok": True, "state": trip.state}
 
     @api.model
+    def _get_setup_steps(self, vehicles, routes, position_count):
+        """Ordered onboarding checklist so new managers know what to configure first."""
+        approved_routes = self.env["transport.route.version"].search_count(
+            [("route_id", "in", routes.ids), ("state", "=", "approved")]
+        )
+        return [
+            {
+                "key": "vehicle",
+                "title": "Registrar un vehículo",
+                "hint": "Cree al menos una unidad de la flota.",
+                "action": "fleet",
+                "done": bool(vehicles),
+            },
+            {
+                "key": "device",
+                "title": "Vincular el GPS del vehículo",
+                "hint": "En el vehículo, genere el identificador y configúrelo en la app Traccar Client.",
+                "action": "fleet",
+                "done": bool(vehicles.filtered("traccar_unique_id")),
+            },
+            {
+                "key": "route",
+                "title": "Crear y aprobar una ruta",
+                "hint": "Defina origen, destino y al menos dos controles intermedios, luego apruébela.",
+                "action": "routes",
+                "done": bool(approved_routes),
+            },
+            {
+                "key": "trip",
+                "title": "Programar un recorrido",
+                "hint": "Asigne vehículo, conductor, ruta aprobada y horario.",
+                "action": "new_trip",
+                "done": bool(self.search_count([])),
+            },
+            {
+                "key": "gps",
+                "title": "Recibir posiciones GPS",
+                "hint": "Inicie el recorrido y pulse «Sincronizar GPS» para traer las posiciones.",
+                "action": "sync",
+                "done": bool(position_count),
+            },
+        ]
+
+    @api.model
     def get_admin_home_data(self):
         """Return real fleet, map, KPI, route, trip, incident, and Traccar data for Admin Ops Center."""
         user = self.env.user
@@ -1545,6 +1589,13 @@ class TransportTrip(models.Model):
                 },
             },
             "daily_trends": daily_trends,
+            "setup_steps": self._get_setup_steps(
+                all_vehicles, active_routes, total_positions
+            ),
+            "can_configure": bool(
+                user.has_group("base.group_system")
+                or user.has_group("uta_transport_monitor.group_transport_manager")
+            ),
             "live_vehicles": live_vehicles,
             "routes": routes_payload,
             "traccar": {
@@ -1615,7 +1666,7 @@ class TransportTrip(models.Model):
                 vehicle.action_sync_gps_positions()
                 synced += 1
             except Exception as exc:
-                errors.append(f"{vehicle.name}: {exc}")
+                errors.append(f"{vehicle.name}: {exc.args[0] if exc.args else exc}")
         return {
             "tracked_count": len(tracked),
             "synced_count": synced,

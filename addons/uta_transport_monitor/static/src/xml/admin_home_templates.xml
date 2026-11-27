@@ -52,6 +52,36 @@
                     <button type="button" class="grx-btn grx-btn--sm" t-on-click="() => this.loadAdminHome(false)">Reintentar</button>
                 </div>
 
+                <section t-if="showSetupGuide" class="grx-surface-panel grx-setup-guide" aria-labelledby="grx-setup-guide-title">
+                    <div class="grx-panel-head">
+                        <div class="grx-card-title-wrap">
+                            <h2 id="grx-setup-guide-title" class="grx-panel-title">Primeros pasos</h2>
+                            <span class="grx-pill is-blue grx-num"><t t-esc="setupDoneCount"/> de <t t-esc="state.setupSteps.length"/> completados</span>
+                        </div>
+                        <p class="grx-setup-guide-lead">Complete estos pasos en orden para empezar a monitorear recorridos.</p>
+                    </div>
+                    <ol class="grx-setup-steps">
+                        <li t-foreach="state.setupSteps" t-as="step" t-key="step.key"
+                            t-attf-class="grx-setup-step #{step.done ? 'is-done' : ''} #{step.key === nextSetupKey ? 'is-next' : ''}">
+                            <span class="grx-setup-step-mark" aria-hidden="true">
+                                <i t-if="step.done" class="fa fa-check"/>
+                                <t t-else="" t-esc="step_index + 1"/>
+                            </span>
+                            <div class="grx-setup-step-body">
+                                <strong><t t-esc="step.title"/></strong>
+                                <span t-if="!step.done"><t t-esc="step.hint"/></span>
+                                <span t-else="" class="visually-hidden">Completado</span>
+                            </div>
+                            <button t-if="!step.done" type="button"
+                                    t-attf-class="grx-btn grx-btn--sm #{step.key === nextSetupKey ? 'grx-btn--primary' : ''}"
+                                    t-on-click="() => this.runSetupStep(step)">
+                                <t t-if="step.key === nextSetupKey">Empezar</t>
+                                <t t-else="">Ir</t>
+                            </button>
+                        </li>
+                    </ol>
+                </section>
+
                 <!-- 2. PREMIUM LIGHT OPERATIONAL KPI BAND (5 operational indicators; MT-01/02 live in Performance section) -->
                 <section class="grx-ops-kpi-band grx-ops-kpi-band--five" aria-label="Indicadores operativos principales">
                     <button type="button" class="grx-band-cell grx-band-cell--anchor-light" t-on-click="() => this.openFleet()">

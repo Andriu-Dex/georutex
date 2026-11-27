@@ -34,33 +34,33 @@
         <field name="name">transport.incident.form</field>
         <field name="model">transport.incident</field>
         <field name="arch" type="xml">
-            <form string="Incidencia Operacional" class="o_georutex_incident_form">
+            <form string="Incidencia" class="o_georutex_incident_form">
                 <header attrs="{'invisible': [('id', '=', False)]}">
                     <button name="action_open_justify_wizard"
-                            string="Justificar Incidencia"
+                            string="Justificar incidencia"
                             type="object"
                             class="oe_highlight btn-info"
                             icon="fa-commenting-o"
                             attrs="{'invisible': ['|', ('id', '=', False), ('state', 'in', ('justified', 'rejected'))]}"/>
                     <button name="action_submit_justification"
-                            string="Enviar Justificación"
+                            string="Enviar justificación"
                             type="object"
                             class="btn-primary"
                             attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
                     <button name="action_approve_justification"
-                            string="Aprobar Justificación"
+                            string="Aprobar justificación"
                             type="object"
                             class="btn-success"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
                             attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
                     <button name="action_reject_justification"
-                            string="Rechazar Justificación"
+                            string="Rechazar justificación"
                             type="object"
                             class="btn-danger"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
                             attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
                     <button name="action_confirm_incident"
-                            string="Confirmar Sin Justificación"
+                            string="Confirmar sin justificación"
                             type="object"
                             class="btn-secondary"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"

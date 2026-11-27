@@ -2276,3 +2276,31 @@ button.grx-metric-card:hover { border-color: var(--grx-brand-primary); box-shado
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* Onboarding checklist on the operations center */
+.grx-setup-guide { margin-bottom: 1.25rem; }
+.grx-setup-guide-lead { margin: 0; color: var(--grx-ink-secondary); font-size: 0.9rem; }
+.grx-setup-steps {
+    list-style: none; margin: 0; padding: 0;
+    display: grid; gap: 0.6rem;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+.grx-setup-step {
+    display: flex; flex-direction: column; gap: 0.55rem;
+    padding: 0.9rem 1rem; border-radius: 14px;
+    border: 1px solid rgba(17, 24, 39, 0.1); background: var(--grx-surface-elevated);
+}
+.grx-setup-step.is-next { border-color: var(--grx-brand-primary); background: var(--grx-brand-tint); }
+.grx-setup-step.is-done { background: var(--grx-signal-live-soft); border-color: transparent; }
+.grx-setup-step-mark {
+    width: 1.75rem; height: 1.75rem; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem;
+    background: var(--grx-surface-stone); color: var(--grx-ink-primary);
+}
+.grx-setup-step.is-next .grx-setup-step-mark { background: var(--grx-brand-primary); color: #fff; }
+.grx-setup-step.is-done .grx-setup-step-mark { background: var(--grx-signal-live); color: #fff; }
+.grx-setup-step-body { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; }
+.grx-setup-step-body strong { color: var(--grx-ink-primary); font-size: 0.92rem; }
+.grx-setup-step-body span { color: var(--grx-ink-secondary); font-size: 0.82rem; line-height: 1.35; }
+.grx-setup-step .grx-btn { align-self: flex-start; }

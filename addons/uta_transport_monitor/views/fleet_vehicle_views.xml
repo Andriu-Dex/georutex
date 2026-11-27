@@ -9,7 +9,7 @@
             <xpath expr="//header" position="inside">
                 <button name="action_test_traccar_connection"
                         type="object"
-                        string="Probar Conexión Traccar"
+                        string="Probar conexión GPS"
                         class="btn-secondary"
                         groups="uta_transport_monitor.group_transport_manager"/>
                 <button name="action_sync_gps_positions"
@@ -19,10 +19,11 @@
                         groups="uta_transport_monitor.group_transport_manager"/>
                 <button name="action_generate_secure_unique_id"
                         type="object"
-                        string="Generar uniqueId Seguro"
+                        string="Generar identificador seguro"
                         class="btn-secondary"
                         groups="uta_transport_monitor.group_transport_manager"
-                        help="Genera un identificador con 128 bits de entropía para Traccar Client."/>
+                        attrs="{'invisible': [('traccar_unique_id', '!=', False)]}"
+                        help="Genera un identificador difícil de adivinar para configurar en la app Traccar Client del teléfono."/>
             </xpath>
 
             <!-- Restrict native Fleet maintenance/contract stat buttons to Fleet users (prevents AccessError on fleet.vehicle.log.services for Analysts/Drivers) -->
@@ -65,9 +66,9 @@
 
             <!-- Dedicated Notebook Page for Traccar Telemetry and Trips -->
             <xpath expr="//notebook" position="inside">
-                <page string="Telemetría GPS / Traccar" name="georutex_gps">
+                <page string="GPS" name="georutex_gps">
                     <group>
-                        <group string="Vinculación de Dispositivo">
+                        <group string="Dispositivo GPS">
                             <field name="traccar_device_id"/>
                             <field name="traccar_unique_id"/>
                             <field name="gps_tracking_enabled"/>
@@ -80,7 +81,7 @@
                                    decoration-warning="gps_connection_status == 'offline'"
                                    decoration-muted="gps_connection_status == 'unlinked'"/>
                         </group>
-                        <group string="Última Telemetría Recibida">
+                        <group string="Última posición recibida">
                             <field name="last_gps_fix_time"/>
                             <field name="last_gps_time_local"/>
                             <field name="gps_freshness_state"
@@ -95,10 +96,10 @@
                         </group>
                     </group>
                 </page>
-                <page string="Ubicación en Vivo" name="vehicle_live_map">
+                <page string="Ubicación en vivo" name="vehicle_live_map">
                     <field name="id" widget="vehicle_map_widget" nolabel="1"/>
                 </page>
-                <page string="Recorridos Asignados" name="georutex_trips">
+                <page string="Recorridos asignados" name="georutex_trips">
                     <field name="trip_ids" readonly="1">
                         <tree string="Recorridos">
                             <field name="name"/>
@@ -157,14 +158,14 @@
         <field name="inherit_id" ref="fleet.fleet_vehicle_view_search"/>
         <field name="arch" type="xml">
             <xpath expr="//filter[@name='alert_true']" position="before">
-                <field name="operational_name" string="Nombre Operativo / Unidad"/>
-                <filter string="Monitoreo GPS Activo"
+                <field name="operational_name" string="Unidad"/>
+                <filter string="Con rastreo GPS"
                         name="filter_gps_monitored"
                         domain="[('gps_tracking_enabled', '=', True)]"/>
-                <filter string="Dispositivos Vinculados"
+                <filter string="Con dispositivo vinculado"
                         name="filter_gps_linked"
                         domain="['|', ('traccar_device_id', '!=', False), ('traccar_unique_id', '!=', False)]"/>
-                <filter string="Solo Físicos Acreditados"
+                <filter string="Solo dispositivos físicos"
                         name="filter_physical_accredited"
                         domain="[('is_physical_accredited', '=', True)]"/>
                 <separator/>
@@ -204,9 +205,12 @@
         <field name="arch" type="xml">
             <form string="Vehículo monitoreado">
                 <header groups="uta_transport_monitor.group_transport_manager">
-                    <button name="action_sync_gps_positions" type="object" string="Sincronizar GPS" class="btn-primary"/>
-                    <button name="action_test_traccar_connection" type="object" string="Probar conexión GPS" class="btn-secondary"/>
-                    <button name="action_generate_secure_unique_id" type="object" string="Generar identificador seguro" class="btn-secondary"/>
+                    <button name="action_sync_gps_positions" type="object" string="Sincronizar GPS" class="btn-primary"
+                            attrs="{'invisible': [('traccar_unique_id', '=', False)]}"/>
+                    <button name="action_test_traccar_connection" type="object" string="Probar conexión GPS" class="btn-secondary"
+                            attrs="{'invisible': [('traccar_unique_id', '=', False)]}"/>
+                    <button name="action_generate_secure_unique_id" type="object" string="Generar identificador seguro" class="btn-secondary"
+                            attrs="{'invisible': [('traccar_unique_id', '!=', False)]}"/>
                 </header>
                 <sheet>
                     <field name="id" invisible="1"/>
@@ -223,6 +227,13 @@
                         <h1>
                             <field name="operational_name" placeholder="Ej. Unidad 01"/>
                         </h1>
+                    </div>
+                    <div class="alert alert-info mb-3" role="status"
+                         groups="uta_transport_monitor.group_transport_manager"
+                         attrs="{'invisible': [('traccar_unique_id', '!=', False)]}">
+                        <strong>Vincule el GPS de esta unidad:</strong>
+                        guarde el vehículo, pulse «Generar identificador seguro» e ingrese ese identificador
+                        en la app Traccar Client del teléfono que irá en el vehículo.
                     </div>
                     <group>
                         <group string="Datos del vehículo">
@@ -243,8 +254,8 @@
                             <group>
                                 <group string="Estado de señal">
                                     <field name="gps_connection_status" string="Conexión GPS" widget="badge"/>
-                                    <field name="gps_freshness_state" string="Frescura de señal" widget="badge"/>
-                                    <field name="last_gps_time_local" string="Último reporte (ECT)"/>
+                                    <field name="gps_freshness_state" string="Actualidad de la señal" widget="badge"/>
+                                    <field name="last_gps_time_local" string="Último reporte"/>
                                     <field name="last_gps_speed" string="Velocidad (km/h)"/>
                                 </group>
                                 <group string="Última ubicación">
@@ -268,7 +279,7 @@
                                     <field name="name" string="Código"/>
                                     <field name="route_id" string="Ruta"/>
                                     <field name="scheduled_start_utc" string="Inicio previsto"/>
-                                    <field name="source_type" string="Origen" widget="badge"/>
+                                    <field name="source_type" string="Fuente" widget="badge"/>
                                     <field name="state" string="Estado" widget="badge"/>
                                 </tree>
                             </field>
@@ -292,7 +303,7 @@
             <div class="grx-nocontent">
                 <div class="grx-nocontent-icon grx-nc-bus"/>
                 <h3>Sin vehículos monitoreados</h3>
-                <p>Activa el seguimiento GPS en un vehículo de tu flota y vincula su dispositivo para verlo en GeoRutex.</p>
+                <p>Pulse «Nuevo» para registrar una unidad. Luego vincule su GPS desde el mismo formulario.</p>
             </div>
         </field>
     </record>

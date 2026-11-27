@@ -78,6 +78,8 @@ export class GeoRutexAdminHomeAction extends Component {
             },
             recentTrips: [],
             recentIncidents: [],
+            setupSteps: [],
+            canConfigure: false,
         });
 
         onMounted(async () => {
@@ -384,6 +386,8 @@ export class GeoRutexAdminHomeAction extends Component {
             this.state.traccar = payload.traccar || this.state.traccar;
             this.state.recentTrips = payload.recent_trips || [];
             this.state.recentIncidents = payload.recent_incidents || [];
+            this.state.setupSteps = payload.setup_steps || [];
+            this.state.canConfigure = Boolean(payload.can_configure);
             this.state.error = "";
 
             this._renderMapMarkers();
@@ -439,6 +443,36 @@ export class GeoRutexAdminHomeAction extends Component {
             );
         } finally {
             this.state.isSyncing = false;
+        }
+    }
+
+    get setupDoneCount() {
+        return this.state.setupSteps.filter((step) => step.done).length;
+    }
+
+    get showSetupGuide() {
+        return (
+            this.state.canConfigure &&
+            this.state.setupSteps.length > 0 &&
+            this.setupDoneCount < this.state.setupSteps.length
+        );
+    }
+
+    get nextSetupKey() {
+        const next = this.state.setupSteps.find((step) => !step.done);
+        return next ? next.key : null;
+    }
+
+    runSetupStep(step) {
+        const handlers = {
+            fleet: () => this.openFleet(),
+            routes: () => this.openRoutes(),
+            new_trip: () => this.openNewTrip(),
+            sync: () => this.syncTraccarFleet(),
+        };
+        const handler = handlers[step.action];
+        if (handler) {
+            handler();
         }
     }
 

@@ -60,8 +60,8 @@ class TransportRouteVersion(models.Model):
         index=True,
     )
     reference_polyline = fields.Text(
-        string="Polilínea de Referencia (GeoJSON / Coordenadas)",
-        help="Cadena JSON de coordenadas [[lon, lat], ...] o LineString.",
+        string="Trazado de referencia",
+        help="Trazado de referencia de la ruta. Se genera con «Calcular trazado vial».",
     )
     estimated_distance_m = fields.Float(
         string="Distancia Programada (m)",
@@ -83,28 +83,28 @@ class TransportRouteVersion(models.Model):
 
     # Canonical evaluation parameters (docs/requirements.md Section 7.1)
     stop_radius_m = fields.Float(
-        string="Radio de Parada (m) [stop_radius_m]",
+        string="Radio de parada (m)",
         default=30.0,
         required=True,
         help="Radio de proximidad para puntos de control.",
     )
     route_corridor_m = fields.Float(
-        string="Ancho de Corredor (m) [route_corridor_m]",
+        string="Ancho del corredor permitido (m)",
         default=40.0,
         required=True,
         help="Semiancho máximo permitido alrededor de la polilínea.",
     )
     lateness_tolerance_s = fields.Integer(
-        string="Tolerancia Retraso (s) [lateness_tolerance_s]",
+        string="Tolerancia de retraso (s)",
         default=300,
         required=True,
         help="Segundos de tolerancia de puntualidad para paradas e inicio.",
     )
     gps_gap_threshold_s = fields.Integer(
-        string="Umbral Gap GPS (s) [gps_gap_threshold_s]",
+        string="Tiempo máximo sin señal GPS (s)",
         default=180,
         required=True,
-        help="Tiempo máximo admisible sin telemetría antes de registrar gap.",
+        help="Tiempo máximo sin recibir posiciones GPS antes de registrar una pérdida de señal.",
     )
     minimum_consecutive_deviation_points = fields.Integer(
         string="Puntos Desvío Consecutivos",
@@ -252,7 +252,7 @@ class TransportRouteVersion(models.Model):
                     fields_str = ", ".join(modified_critical)
                     raise UserError(
                         f"No es posible modificar los parámetros congelados "
-                        f"({fields_str}) de una versión aprobada (RF-14). "
+                        f"({fields_str}) de una versión aprobada. "
                         f"Cree una nueva versión para modificar el trazado o tolerancias."
                     )
         return super().write(vals)
@@ -271,7 +271,7 @@ class TransportRouteVersion(models.Model):
                 raise UserError(
                     f"No es posible eliminar la versión '{ver.name}' porque "
                     f"está aprobada o cuenta con {ver.trip_count} recorridos "
-                    f"asociados. Archívela en su lugar (RF-14)."
+                    f"asociados. Archívela en su lugar."
                 )
         return super().unlink()
 
@@ -418,7 +418,7 @@ class TransportRouteVersion(models.Model):
         # 1. Minimum 4 stops (RF-10)
         if len(stops) < 4:
             raise ValidationError(
-                f"Aprobar la ruta requiere al menos 4 puntos de control (RF-10). "
+                f"Aprobar la ruta requiere al menos 4 puntos de control. "
                 f"Actualmente cuenta con {len(stops)}."
             )
 
@@ -426,7 +426,7 @@ class TransportRouteVersion(models.Model):
         origin_stops = stops.filtered(lambda s: s.stop_type == "origin")
         if len(origin_stops) != 1:
             raise ValidationError(
-                f"La versión de ruta debe tener exactamente 1 punto de tipo 'Origen' (RF-10). "
+                f"La versión de ruta debe tener exactamente 1 punto de tipo 'Origen'. "
                 f"Actualmente cuenta con {len(origin_stops)}. "
                 f"Utilice 'Auto-clasificar Paradas' o ajuste el tipo en la lista."
             )
@@ -440,7 +440,7 @@ class TransportRouteVersion(models.Model):
         destination_stops = stops.filtered(lambda s: s.stop_type == "destination")
         if len(destination_stops) != 1:
             raise ValidationError(
-                f"La versión de ruta debe tener exactamente 1 punto de tipo 'Destino' (RF-10). "
+                f"La versión de ruta debe tener exactamente 1 punto de tipo 'Destino'. "
                 f"Actualmente cuenta con {len(destination_stops)}. "
                 f"Utilice 'Auto-clasificar Paradas' o ajuste el tipo en la lista."
             )
@@ -455,7 +455,7 @@ class TransportRouteVersion(models.Model):
         if len(intermediate_stops) < 2:
             raise ValidationError(
                 "La ruta debe contar con al menos 2 puntos de control intermedios entre "
-                "el origen y el destino (RF-10)."
+                "el origen y el destino."
             )
         non_checkpoints = intermediate_stops.filtered(lambda s: s.stop_type != "checkpoint")
         if non_checkpoints:

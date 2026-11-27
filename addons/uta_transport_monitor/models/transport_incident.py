@@ -146,7 +146,7 @@ class TransportIncident(models.Model):
     )
     rule_applied = fields.Char(
         string="Regla de Evaluación Aplicada",
-        help="Identificador de regla canónica evaluada (e.g. RF-24).",
+        help="Regla de control que originó la incidencia.",
     )
     evidence_data = fields.Text(
         string="Datos de Evidencia Técnica",
@@ -264,7 +264,7 @@ class TransportIncident(models.Model):
 
         if not (is_manager or is_analyst):
             raise AccessError(
-                "Segregación de funciones (RF-29): Los conductores no tienen "
+                "Los conductores no tienen "
                 "permiso para aprobar justificaciones. Se requiere rol de "
                 "Analista o Administrador."
             )
@@ -275,7 +275,7 @@ class TransportIncident(models.Model):
             and not is_manager
         ):
             raise AccessError(
-                "Segregación de funciones (RF-29): El usuario no puede "
+                "El usuario no puede "
                 "aprobar su propio descargo operacional."
             )
 
@@ -312,7 +312,7 @@ class TransportIncident(models.Model):
 
         if not (is_manager or is_analyst):
             raise AccessError(
-                "Segregación de funciones (RF-29): Se requiere rol de "
+                "Se requiere rol de "
                 "Analista o Administrador para rechazar justificaciones."
             )
 

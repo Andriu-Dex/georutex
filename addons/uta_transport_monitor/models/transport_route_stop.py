@@ -35,13 +35,13 @@ class TransportRouteStop(models.Model):
         string="Latitud",
         digits=(10, 6),
         required=True,
-        help="Latitud geográfica en formato WGS84 decimal [-90, 90].",
+        help="Latitud en grados decimales, entre -90 y 90.",
     )
     longitude = fields.Float(
         string="Longitud",
         digits=(10, 6),
         required=True,
-        help="Longitud geográfica en formato WGS84 decimal [-180, 180].",
+        help="Longitud en grados decimales, entre -180 y 180.",
     )
     radius_m = fields.Float(
         string="Radio de Proximidad (m)",
@@ -102,7 +102,7 @@ class TransportRouteStop(models.Model):
                 raise ValidationError(
                     f"Coordenadas inválidas para '{stop.name}': "
                     f"({stop.latitude}, {stop.longitude}). "
-                    f"Deben estar en WGS84: lat [-90, 90], lon [-180, 180]."
+                    f"La latitud debe estar entre -90 y 90 y la longitud entre -180 y 180."
                 )
 
     @api.constrains("radius_m", "planned_offset_seconds")
@@ -149,7 +149,7 @@ class TransportRouteStop(models.Model):
                 ):
                     raise UserError(
                         "No se pueden agregar paradas a una versión aprobada. "
-                        "Cree una nueva versión (RF-14)."
+                        "Cree una nueva versión."
                     )
                 if version.state == "draft":
                     versions_to_classify.add(version)
@@ -177,7 +177,7 @@ class TransportRouteStop(models.Model):
             ):
                 raise UserError(
                     "No se pueden modificar paradas de una versión aprobada. "
-                    "Cree una nueva versión (RF-14)."
+                    "Cree una nueva versión."
                 )
 
         res = super().write(vals)
@@ -207,7 +207,7 @@ class TransportRouteStop(models.Model):
             ):
                 raise UserError(
                     "No se pueden eliminar paradas de una versión aprobada. "
-                    "Cree una nueva versión (RF-14)."
+                    "Cree una nueva versión."
                 )
             if ver.state == "draft":
                 versions_to_classify.add(ver)

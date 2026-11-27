@@ -49,22 +49,25 @@
                         <group string="Información de evaluación">
                             <field name="evaluation_date"/>
                             <field name="evaluator_user_id"/>
-                            <field name="rules_version"/>
                             <field name="integrity_status" widget="badge"/>
                             <field name="is_compliant_gross"/>
                             <field name="is_compliant_adjusted"/>
                         </group>
                     </group>
+                    <div class="alert alert-light border mb-3" role="status">
+                        <strong>Resultado:</strong>
+                        <field name="evaluation_summary" readonly="1" nolabel="1"/>
+                    </div>
                     <notebook>
-                        <page string="Puntualidad y Paradas">
+                        <page string="Puntualidad y paradas">
                             <group>
-                                <group string="Puntualidad en Extremos">
+                                <group string="Salida y llegada">
                                     <field name="start_punctuality" widget="badge"/>
                                     <field name="start_delay_s"/>
                                     <field name="arrival_punctuality" widget="badge"/>
                                     <field name="arrival_delay_s"/>
                                 </group>
-                                <group string="Cumplimiento en Controles">
+                                <group string="Paradas">
                                     <field name="stops_total"/>
                                     <field name="stops_on_time"/>
                                     <field name="stops_late"/>
@@ -73,25 +76,20 @@
                                 </group>
                             </group>
                         </page>
-                        <page string="Desvíos y Telemetría">
+                        <page string="Desvíos y señal GPS">
                             <group>
-                                <group string="Desvíos de Ruta (RF-24)">
+                                <group string="Desvíos de ruta">
                                     <field name="deviation_count"/>
                                     <field name="deviation_duration_s"/>
                                     <field name="max_deviation_distance_m"/>
                                 </group>
-                                <group string="Pérdidas de Señal GPS (RF-25)">
+                                <group string="Pérdidas de señal GPS">
                                     <field name="gps_gap_count"/>
                                     <field name="gps_gap_duration_s"/>
                                 </group>
                             </group>
                         </page>
-                        <page string="Dictamen y Resumen">
-                            <group>
-                                <field name="evaluation_summary" readonly="1"/>
-                            </group>
-                        </page>
-                        <page string="Incidencias Asociadas">
+                        <page string="Incidencias">
                             <field name="incident_ids" readonly="1">
                                 <tree>
                                     <field name="name"/>
@@ -103,9 +101,10 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Parámetros de evaluación">
+                        <page string="Detalles técnicos">
                             <group>
-                                <field name="parameter_snapshot_json" readonly="1"/>
+                                <field name="rules_version"/>
+                                <field name="parameter_snapshot_json" readonly="1" widget="ace" options="{'mode': 'json'}"/>
                             </group>
                         </page>
                     </notebook>
@@ -128,7 +127,7 @@
                 <filter string="No Conformes" name="non_compliant" domain="[('is_compliant_adjusted', '=', False), ('integrity_status', '!=', 'insufficient_data')]"/>
                 <filter string="Datos Insuficientes" name="insufficient" domain="[('integrity_status', '=', 'insufficient_data')]"/>
                 <separator/>
-                <filter string="Conforme Bruto" name="gross_compliant" domain="[('is_compliant_gross', '=', True)]"/>
+                <filter string="Conforme bruto" name="gross_compliant" domain="[('is_compliant_gross', '=', True)]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
                     <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>

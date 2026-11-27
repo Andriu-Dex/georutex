@@ -201,3 +201,33 @@ class TestUsabilityEnhancements(TransactionCase):
         incident.with_user(self.user_manager).action_approve_justification()
         self.assertEqual(incident.state, "justified")
         self.assertEqual(incident.reviewed_by.id, self.user_manager.id)
+
+    def test_04_setup_steps_reflect_configuration(self):
+        """Onboarding checklist lists steps in order and tracks what is configured."""
+        Trip = self.env["transport.trip"]
+        steps = Trip._get_setup_steps(
+            self.env["fleet.vehicle"], self.env["transport.route"], 0
+        )
+        self.assertEqual(
+            [s["key"] for s in steps], ["vehicle", "device", "route", "trip", "gps"]
+        )
+        by_key = {s["key"]: s for s in steps}
+        self.assertFalse(by_key["vehicle"]["done"])
+        self.assertFalse(by_key["route"]["done"])
+        self.assertFalse(by_key["gps"]["done"])
+
+        steps = Trip._get_setup_steps(self.env["fleet.vehicle"], self.route, 0)
+        self.assertTrue({s["key"]: s for s in steps}["route"]["done"])
+
+        payload = Trip.get_admin_home_data()
+        self.assertTrue(payload["can_configure"])
+        self.assertEqual(len(payload["setup_steps"]), 5)
+
+    def test_05_route_edit_stops_reuses_or_creates_draft(self):
+        """Route shortcut opens the draft version, creating the next one when only approved exists."""
+        action = self.route.action_edit_stops()
+        new_version = self.env["transport.route.version"].browse(action["res_id"])
+        self.assertEqual(new_version.state, "draft")
+        self.assertEqual(new_version.version_number, self.version.version_number + 1)
+        again = self.route.action_edit_stops()
+        self.assertEqual(again["res_id"], new_version.id)

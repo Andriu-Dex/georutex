@@ -24,9 +24,17 @@
         <field name="name">transport.route.form</field>
         <field name="model">transport.route</field>
         <field name="arch" type="xml">
-            <form string="Ruta de Transporte">
+            <form string="Ruta">
+                <header attrs="{'invisible': [('id', '=', False)]}" groups="uta_transport_monitor.group_transport_manager">
+                    <button name="action_edit_stops" type="object" string="Definir paradas y trazado" class="oe_highlight" icon="fa-map-marker"/>
+                </header>
                 <sheet>
                     <field name="id" invisible="1"/>
+                    <div class="alert alert-info mb-3" role="status"
+                         attrs="{'invisible': [('current_version_id', '!=', False)]}">
+                        <strong>Esta ruta aún no se puede usar en recorridos.</strong>
+                        Guárdela y pulse «Definir paradas y trazado» para agregar el origen, el destino y al menos dos controles intermedios. Después apruebe la versión.
+                    </div>
                     <div class="oe_button_box" name="button_box" attrs="{'invisible': [('id', '=', False)]}">
                         <button name="action_view_versions" type="object" class="oe_stat_button" icon="fa-code-fork">
                             <field name="version_count" widget="statinfo" string="Versiones"/>
@@ -36,28 +44,28 @@
                         </button>
                     </div>
                     <div class="oe_title">
-                        <label for="name" class="oe_edit_only" string="Nombre de la Ruta"/>
+                        <label for="name" class="oe_edit_only" string="Nombre de la ruta"/>
                         <h1>
                             <field name="name" placeholder="Ej. Ruta 01 — Corredor Norte"/>
                         </h1>
                     </div>
                     <group>
-                        <group string="Identificación y Sentido">
+                        <group string="Identificación">
                             <field name="code" placeholder="Ej. RUT-01"/>
                             <field name="direction"/>
                             <field name="current_version_id" options="{'no_create': True}" attrs="{'invisible': [('id', '=', False)]}"/>
                             <field name="active" widget="boolean_toggle"/>
                         </group>
-                        <group string="Cabeceras Operacionales">
+                        <group string="Origen y destino">
                             <field name="origin_name" placeholder="Ej. Terminal Norte"/>
                             <field name="destination_name" placeholder="Ej. Estación Central"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Descripción y Notas" name="description_page">
+                        <page string="Descripción" name="description_page">
                             <field name="description" placeholder="Instrucciones operacionales, características de la vía o restricciones de horario..."/>
                         </page>
-                        <page string="Historial de Versiones" name="versions_page" attrs="{'invisible': [('id', '=', False)]}">
+                        <page string="Versiones" name="versions_page" attrs="{'invisible': [('id', '=', False)]}">
                             <field name="version_ids" readonly="1">
                                 <tree string="Versiones de Ruta">
                                     <field name="version_number"/>
@@ -100,7 +108,7 @@
 
     <!-- Action Window: Rutas -->
     <record id="action_transport_route" model="ir.actions.act_window">
-        <field name="name">Rutas de Transporte</field>
+        <field name="name">Rutas</field>
         <field name="res_model">transport.route</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_route_search"/>
@@ -108,7 +116,7 @@
             <div class="grx-nocontent">
                 <div class="grx-nocontent-icon grx-nc-route"/>
                 <h3>Sin rutas registradas</h3>
-                <p>Registra una ruta con origen, destino y sus puntos de control para planificar recorridos.</p>
+                <p>Pulse «Nuevo», indique el origen y el destino, y luego defina sus paradas para poder programar recorridos.</p>
             </div>
         </field>
     </record>

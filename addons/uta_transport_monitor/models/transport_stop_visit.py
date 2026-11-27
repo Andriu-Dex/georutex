@@ -84,7 +84,7 @@ class TransportStopVisit(models.Model):
     )
     delay_s = fields.Integer(
         string="Retraso Observado (s)",
-        help="Retraso observado en segundos: max(0, t_real - t_prog).",
+        help="Segundos de retraso respecto a la hora programada (0 si llegó a tiempo).",
     )
     min_distance_m = fields.Float(
         string="Distancia Mínima al Punto (m)",

@@ -55,7 +55,7 @@ class TransportVehiclePosition(models.Model):
         string="Fecha/Hora GPS",
         required=True,
         index=True,
-        help="Instante técnico UTC del fix (renderizado en hora local).",
+        help="Momento en que el GPS registró la posición (hora local).",
     )
     fix_time_utc = fields.Char(
         string="Hora GPS (UTC)",

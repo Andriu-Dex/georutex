@@ -124,13 +124,13 @@
         <field name="arch" type="xml">
             <form string="Recorrido Operacional" class="o_georutex_trip_form">
                 <header>
-                    <button name="action_schedule" string="Confirmar Programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}" groups="uta_transport_monitor.group_transport_manager"/>
-                    <button name="action_start" string="Iniciar Recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}" groups="uta_transport_monitor.group_transport_manager"/>
-                    <button name="action_complete" string="Finalizar Recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}" groups="uta_transport_monitor.group_transport_manager"/>
-                    <button name="action_evaluate_trip" string="Evaluar Recorrido" type="object" class="btn-primary" icon="fa-check-circle" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
-                    <button name="action_sync_trip_gps" string="Sincronizar GPS" type="object" class="btn-info" icon="fa-refresh" attrs="{'invisible': [('state', 'in', ('draft', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
-                    <button name="action_cancel" string="Cancelar" type="object" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
-                    <button name="action_set_to_draft" string="Revertir a Borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_schedule" string="Confirmar programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_start" string="Iniciar recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_complete" string="Finalizar recorrido" type="object" class="btn-success" attrs="{'invisible': [('state', '!=', 'in_progress')]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_evaluate_trip" string="Evaluar recorrido" type="object" class="btn-secondary" icon="fa-check-circle" attrs="{'invisible': [('state', '!=', 'completed')]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
+                    <button name="action_sync_trip_gps" string="Sincronizar GPS" type="object" class="btn-secondary" icon="fa-refresh" attrs="{'invisible': [('state', 'not in', ('in_progress', 'completed'))]}" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"/>
+                    <button name="action_cancel" string="Cancelar recorrido" type="object" confirm="¿Desea cancelar este recorrido?" attrs="{'invisible': [('state', 'in', ('completed', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
+                    <button name="action_set_to_draft" string="Volver a borrador" type="object" attrs="{'invisible': [('state', 'not in', ('scheduled', 'cancelled'))]}" groups="uta_transport_monitor.group_transport_manager"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,completed,cancelled"/>
                 </header>
                 <sheet>
@@ -141,7 +141,7 @@
                     <field name="is_schedule_overdue" invisible="1"/>
                     <div class="alert alert-warning mb-3" role="alert" attrs="{'invisible': [('is_schedule_overdue', '=', False)]}">
                         <i class="fa fa-exclamation-triangle me-2" title="Alerta"/>
-                        <strong>Atención Operacional:</strong> El horario programado para este recorrido ha concluido pero el viaje continúa <b>En Curso</b> a la espera de confirmación de llegada a destino o telemetría GPS suficiente.
+                        <strong>Horario vencido:</strong> la hora prevista de llegada ya pasó y el recorrido sigue <b>en curso</b>. Sincronice el GPS o finalice el recorrido cuando llegue al destino.
                     </div>
                     <widget name="web_ribbon" title="Simulado" bg_color="bg-warning" attrs="{'invisible': [('source_type', '!=', 'simulated')]}"/>
                     <div class="oe_button_box" name="button_box">
@@ -159,19 +159,19 @@
                         </button>
                     </div>
                     <div class="oe_title">
-                        <label for="name" class="oe_edit_only" string="Código de Recorrido"/>
+                        <label for="name" class="oe_edit_only" string="Código del recorrido"/>
                         <h1>
                             <field name="name"/>
                         </h1>
                     </div>
                     <group>
-                        <group string="Asignación Operacional">
+                        <group string="Asignación">
                             <field name="vehicle_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="driver_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="driver_user_id" options="{'no_create': True}" groups="uta_transport_monitor.group_transport_manager" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="source_type" widget="radio" options="{'horizontal': true}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                         </group>
-                        <group string="Ruta y Trazado">
+                        <group string="Ruta">
                             <field name="route_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="route_version_id" options="{'no_create': True}" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="scheduled_distance_m"/>
@@ -179,29 +179,23 @@
                         </group>
                     </group>
                     <group>
-                        <group string="Programación Horaria (Hora Local de Ecuador)">
-                            <field name="scheduled_start_utc" string="Inicio Programado" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
-                            <field name="scheduled_duration_display" string="Duración Programada de Ruta" readonly="1"/>
-                            <field name="road_estimated_duration_display" string="Estimación Red Vial" readonly="1"/>
-                            <field name="scheduled_end_utc" string="Fin Previsto / Llegada" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('is_manual_duration_override', '=', False)]}"/>
+                        <group string="Horario (hora de Ecuador)">
+                            <field name="scheduled_start_utc" string="Salida programada" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="scheduled_duration_display" string="Duración prevista" readonly="1"/>
+                            <field name="scheduled_end_utc" string="Llegada prevista" attrs="{'readonly': ['|', ('state', '!=', 'draft'), ('is_manual_duration_override', '=', False)]}"/>
                             <field name="is_manual_duration_override" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="manual_duration_override_reason" attrs="{'invisible': [('is_manual_duration_override', '=', False)], 'required': [('is_manual_duration_override', '=', True)], 'readonly': [('state', '!=', 'draft')]}"/>
                             <field name="manual_duration_override_user_id" attrs="{'invisible': [('is_manual_duration_override', '=', False)]}" readonly="1"/>
                         </group>
-                        <group string="Ejecución real y comparativa">
-                            <field name="actual_duration_display" string="Duración Real Observada" readonly="1"/>
-                            <field name="actual_start_utc" string="Salida Real"/>
-                            <field name="actual_start_evidence"/>
-                            <field name="actual_end_utc" string="Llegada Real"/>
-                            <field name="actual_end_evidence"/>
+                        <group string="Ejecución real" attrs="{'invisible': [('state', 'in', ('draft', 'scheduled'))]}">
+                            <field name="actual_start_utc" string="Salida real"/>
+                            <field name="actual_end_utc" string="Llegada real"/>
+                            <field name="actual_duration_display" string="Duración real" readonly="1"/>
                             <field name="actual_distance_m"/>
-                            <field name="first_gps_fix_utc" string="Primer Fix GPS"/>
-                            <field name="manual_start_utc" string="Inicio Manual" groups="uta_transport_monitor.group_transport_manager"/>
-                            <field name="manual_end_utc" string="Fin Manual" groups="uta_transport_monitor.group_transport_manager"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="Paradas y Controles Programados" name="stops_page">
+                        <page string="Paradas" name="stops_page">
                             <field name="stop_visit_ids" readonly="1">
                                 <tree string="Visitas a Puntos de Control">
                                     <field name="sequence"/>
@@ -209,13 +203,13 @@
                                     <field name="stop_type" widget="badge" decoration-info="stop_type == 'checkpoint'" decoration-primary="stop_type == 'origin'" decoration-success="stop_type == 'destination'"/>
                                     <field name="required" widget="boolean_toggle"/>
                                     <field name="scheduled_at_utc" string="Hora Prevista"/>
-                                    <field name="first_arrival_utc" string="Arribo Validado"/>
+                                    <field name="first_arrival_utc" string="Llegada registrada"/>
                                     <field name="delay_s"/>
                                     <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
                                 </tree>
                             </field>
                         </page>
-                        <page string="Evaluación de cumplimiento" name="evaluation_page">
+                        <page string="Evaluación" name="evaluation_page" attrs="{'invisible': [('evaluation_count', '=', 0)]}">
                             <field name="evaluation_ids" readonly="1">
                                 <tree string="Historial de Evaluaciones">
                                     <field name="name"/>
@@ -231,7 +225,7 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Incidencias Operacionales" name="incidents_page">
+                        <page string="Incidencias" name="incidents_page">
                             <field name="incident_ids">
                                 <tree string="Incidencias Registradas" decoration-danger="severity in ('critical', 'high')" decoration-warning="severity == 'medium'" decoration-success="state == 'justified'">
                                     <field name="name"/>
@@ -250,7 +244,24 @@
                                 </tree>
                             </field>
                         </page>
-                        <page string="Telemetrías GPS Asociadas" name="positions_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
+                        <page string="Detalles técnicos" name="technical_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
+                            <group>
+                                <group string="Evidencia de inicio y fin">
+                                    <field name="actual_start_evidence"/>
+                                    <field name="actual_end_evidence"/>
+                                    <field name="first_gps_fix_utc" string="Primera posición GPS"/>
+                                    <field name="manual_start_utc" string="Inicio manual" groups="uta_transport_monitor.group_transport_manager"/>
+                                    <field name="manual_end_utc" string="Fin manual" groups="uta_transport_monitor.group_transport_manager"/>
+                                    <field name="road_estimated_duration_display" string="Estimación por red vial" readonly="1"/>
+                                </group>
+                                <group string="Tolerancias aplicadas">
+                                    <field name="stop_radius_m"/>
+                                    <field name="route_corridor_m"/>
+                                    <field name="lateness_tolerance_s"/>
+                                    <field name="gps_gap_threshold_s"/>
+                                </group>
+                            </group>
+                            <separator string="Posiciones GPS del recorrido"/>
                             <field name="position_ids" readonly="1">
                                 <tree string="Posiciones GPS" limit="20">
                                     <field name="fix_time_utc"/>
@@ -263,22 +274,11 @@
                                     <field name="association_status" widget="badge" decoration-success="association_status == 'associated'" decoration-danger="association_status == 'ambiguous'"/>
                                 </tree>
                             </field>
+                            <separator string="Parámetros registrados (solo lectura)"/>
+                            <field name="parameter_snapshot_json" widget="ace" options="{'mode': 'json'}" readonly="1"/>
                         </page>
-                        <page string="Parámetros congelados" name="parameters_page" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst">
-                            <group>
-                                <group string="Tolerancias Congeladas">
-                                    <field name="stop_radius_m"/>
-                                    <field name="route_corridor_m"/>
-                                    <field name="lateness_tolerance_s"/>
-                                    <field name="gps_gap_threshold_s"/>
-                                </group>
-                                <group string="JSON Inmutable">
-                                    <field name="parameter_snapshot_json" widget="ace" options="{'mode': 'json'}"/>
-                                </group>
-                            </group>
-                        </page>
-                        <page string="Observaciones Operacionales" name="notes_page">
-                            <field name="notes" placeholder="Registro de novedades del conductor o despachador..."/>
+                        <page string="Observaciones" name="notes_page">
+                            <field name="notes" placeholder="Novedades del conductor o del despachador..."/>
                         </page>
                     </notebook>
                 </sheet>

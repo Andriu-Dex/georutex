@@ -53,7 +53,7 @@ class TransportRoute(models.Model):
     )
     current_version_id = fields.Many2one(
         comodel_name="transport.route.version",
-        string="Versión Vigente",
+        string="Versión vigente",
         domain="[('route_id', '=', id), ('state', '=', 'approved')]",
         help="Versión aprobada utilizada para programar nuevos recorridos.",
     )
@@ -113,6 +113,24 @@ class TransportRoute(models.Model):
         action["domain"] = [("route_id", "=", self.id)]
         action["context"] = {"default_route_id": self.id}
         return action
+
+    def action_edit_stops(self):
+        """Open the draft version for stop editing, creating the next one if none exists."""
+        self.ensure_one()
+        version = self.version_ids.filtered(lambda v: v.state == "draft")[:1]
+        if not version:
+            next_number = max(self.version_ids.mapped("version_number"), default=0) + 1
+            version = self.env["transport.route.version"].create(
+                {"route_id": self.id, "version_number": next_number}
+            )
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Paradas y trazado",
+            "res_model": "transport.route.version",
+            "res_id": version.id,
+            "view_mode": "form",
+            "target": "current",
+        }
 
     def action_view_trips(self):
         """View operational trips associated with this route."""

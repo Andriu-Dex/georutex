@@ -79,7 +79,7 @@ class TransportTripEvaluation(models.Model):
         readonly=True,
     )
     parameter_snapshot_json = fields.Text(
-        string="Snapshot de Parámetros Congelados",
+        string="Parámetros aplicados en la evaluación",
         readonly=True,
     )
 
@@ -96,7 +96,7 @@ class TransportTripEvaluation(models.Model):
         index=True,
     )
     is_compliant_gross = fields.Boolean(
-        string="Conforme Bruto (Sin Ajustes)",
+        string="Conforme bruto (sin justificaciones)",
         readonly=True,
         help="Evaluación matemática estricta antes de justificaciones.",
     )
@@ -151,8 +151,8 @@ class TransportTripEvaluation(models.Model):
         string="Distancia Máxima de Desvío (m)",
         digits=(8, 2),
     )
-    gps_gap_count = fields.Integer(string="Nº Pérdidas de Señal (Gaps)")
-    gps_gap_duration_s = fields.Integer(string="Duración Total Gaps GPS (s)")
+    gps_gap_count = fields.Integer(string="Pérdidas de señal GPS")
+    gps_gap_duration_s = fields.Integer(string="Tiempo total sin señal GPS (s)")
 
     evaluation_summary = fields.Text(
         string="Dictamen y Detalle de Evaluación",
