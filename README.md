@@ -97,8 +97,8 @@ Caddy obtiene los certificados de Let's Encrypt automáticamente.
 
 La pantalla de inicio muestra una lista de **Primeros pasos**:
 
-1. **Vehículos:** crear la unidad y pulsar «Generar identificador» (formato `GRX-…`).
-2. **Dispositivo:** registrar ese identificador en Traccar (si Traccar responde *Unknown device*, crear el dispositivo con el mismo identificador en la API/administración de Traccar).
+1. **Vehículos:** crear la unidad y pulsar «Generar identificador» (formato `GRX-…`). Odoo registra automáticamente el dispositivo en Traccar.
+2. **Dispositivo:** poner ese identificador en Traccar Client (si Traccar no estaba disponible al generarlo, volver a pulsar «Generar identificador»).
 3. **Rutas:** crear la ruta, abrir «Definir paradas y trazado», poner origen, destino y al menos 2 controles intermedios, «Calcular trazado vial» y «Aprobar versión».
 4. **Recorridos:** crear el recorrido (unidad, conductor, ruta, hora) y «Confirmar programación».
 5. **GPS:** al salir, «Iniciar recorrido»; al llegar, «Finalizar recorrido» y «Evaluar recorrido».
@@ -161,7 +161,7 @@ Restaurar: `pg_restore -U $POSTGRES_USER -d georutex --no-owner` dentro del cont
 |---|---|
 | `ports are not available` / `Only one usage of each socket address` (Windows) | Cerrar Docker Desktop, `wsl --shutdown`, reabrir Docker Desktop. |
 | `localhost:8069` no carga pero el contenedor está *healthy* (Windows) | Mismo procedimiento (relay de WSL bloqueado). |
-| Vehículo en «Esperando primera señal» | Revisar identificador y URL en Traccar Client; en los logs de Traccar (`docker logs georutex-traccar`) *Unknown device* significa que falta registrar el dispositivo. |
+| Vehículo en «Esperando primera señal» | Revisar identificador y URL en Traccar Client; en los logs de Traccar (`docker logs georutex-traccar`) *Unknown device* significa que el dispositivo no está registrado: volver a «Generar identificador» con Traccar en marcha. |
 | «Probar conexión GPS» falla | Revisar `TRACCAR_API_USERNAME/PASSWORD` en `.env` y reiniciar Odoo. |
 | Los correos no llegan | Revisar variables `SMTP_*` y que la clave sea de aplicación. |
 
