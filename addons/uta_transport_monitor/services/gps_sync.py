@@ -91,7 +91,30 @@ class TransportGpsSyncService(models.AbstractModel):
             )
             return 0
 
+        return self._ingest_positions(
+            vehicle, device_id, raw_positions, target_trip=target_trip
+        )
+
+    def _ingest_positions(
+        self,
+        vehicle,
+        device_id,
+        raw_positions,
+        target_trip=None,
+        update_vehicle_state=True,
+        force_target_trip=False,
+    ) -> int:
+        """Persist Traccar-shaped position payloads with dedup and trip association.
+
+        Shared by Traccar synchronization and the trip simulator so that both
+        data sources follow identical classification and association rules.
+        Simulated history must not overwrite the vehicle's live position, hence
+        ``update_vehicle_state``. ``force_target_trip`` attaches every payload to
+        ``target_trip`` even outside its scheduled window (late or early runs),
+        for callers that know the positions belong to that trip.
+        """
         position_model = self.env["transport.vehicle.position"].sudo()
+        trip_service = self.env["transport.trip.service"]
         new_count = 0
         latest_position = None
         affected_trips = self.env["transport.trip"]
@@ -157,22 +180,18 @@ class TransportGpsSyncService(models.AbstractModel):
             # Determine trip association and traceability
             matched_trip = None
             assoc_status = "unassigned"
-            if (
-                target_trip
-                and target_trip.scheduled_start_utc <= fix_time
-                <= target_trip.scheduled_end_utc
+            if target_trip and (
+                force_target_trip
+                or trip_service.trip_accepts_fix(target_trip, fix_time)
             ):
                 matched_trip = target_trip
                 assoc_status = "associated"
             else:
-                candidate_trips = self.env["transport.trip"].search([
-                    ("vehicle_id", "=", vehicle.id),
-                    ("state", "in", ["scheduled", "in_progress", "completed"]),
-                    ("scheduled_start_utc", "<=", fix_time),
-                    ("scheduled_end_utc", ">=", fix_time),
-                ])
+                candidate_trips = trip_service.find_trips_for_fix(
+                    vehicle.id, fix_time
+                )
                 if len(candidate_trips) == 1:
-                    matched_trip = candidate_trips[0]
+                    matched_trip = candidate_trips
                     assoc_status = "associated"
                 elif len(candidate_trips) > 1:
                     assoc_status = "ambiguous"
@@ -228,7 +247,7 @@ class TransportGpsSyncService(models.AbstractModel):
                     "speed": created.speed,
                 }
 
-        if latest_position:
+        if latest_position and update_vehicle_state:
             vehicle.sudo().write(
                 {
                     "last_gps_fix_time": latest_position["fix_time"],
