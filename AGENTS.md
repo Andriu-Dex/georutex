@@ -8,6 +8,7 @@
 - **GitHub repository/root:** `georutex/`.
 - **Odoo addon technical name:** `uta_transport_monitor` at `addons/uta_transport_monitor/`. Do not rename it without an explicit decision and migration plan.
 - **Required platforms:** Odoo **16 Community**, its **Fleet** addon, Traccar Server and Traccar Client. PostgreSQL is Odoo's database. **Docker Compose is the preferred deployment decision**, not an obligation expressly established by the teacher.
+- **Original brief:** `docs/original_requirements.pdf` is the highest-priority project source. `docs/requirements.md` is derived from it; when they conflict, the PDF wins and `docs/requirements.md` must be corrected.
 - **Documents:** `docs/requirements.md` (authoritative for RF/RNF/KPIs, acceptance criteria, rubric and academic scope); `docs/architecture.md` (authoritative for package ownership, integration contracts, deployment and test topology); this file (agent behavior). The original PDF and the meeting transcript, when available in `docs/fuentes/`, establish provenance and must not be silently overwritten by design assumptions.
 - Requirement classification in `docs/requirements.md`: `[OFICIAL]` written rubric/brief; `[REUNIÓN]` supported meeting clarification; `[DISEÑO]` implementation choice; `[OPCIONAL]` optional enhancement. Never present a design choice as a mandatory teacher instruction.
 - Preserve the IDs `RF-01` through `RF-41`, `RNF-01` through `RNF-22`, `MT-01` through `MT-08`, and `MCS-01` through `MCS-04`. Do not silently change a formula or its treatment of insufficient evidence.
