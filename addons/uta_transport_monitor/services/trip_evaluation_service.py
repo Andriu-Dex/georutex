@@ -286,6 +286,15 @@ class TransportTripEvaluationService(models.AbstractModel):
     ):
         """Idempotently create automatic incidents without duplicates."""
         incident_model = self.env["transport.incident"]
+        # Re-evaluation (e.g. after late GPS history arrives) must not keep
+        # findings of the previous run; untouched ones are regenerated below,
+        # while justified/reviewed incidents are preserved as the original event.
+        incident_model.search([
+            ("trip_id", "=", trip.id),
+            ("source", "=", "automatic"),
+            ("state", "=", "pending"),
+            ("justification_submitted_at", "=", False),
+        ]).unlink()
         existing_incidents = incident_model.search([
             ("trip_id", "=", trip.id),
             ("source", "=", "automatic"),

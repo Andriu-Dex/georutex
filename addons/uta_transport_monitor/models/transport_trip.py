@@ -953,6 +953,10 @@ class TransportTrip(models.Model):
                     f"(actual: {trip.state})."
                 )
             now = fields.Datetime.now()
+            if trip.source_type == "real":
+                # Pull the full Traccar history of the window; periodic syncs
+                # only fetch each device's latest position.
+                self.env["transport.trip.service"].sync_trip_gps_telemetry(trip)
             vals = {
                 "state": "completed",
                 "manual_end_utc": now,
@@ -972,6 +976,8 @@ class TransportTrip(models.Model):
     def action_evaluate_trip(self):
         """Trigger automated evaluation engine for this trip (Phase 4)."""
         self.ensure_one()
+        if self.source_type == "real":
+            self.env["transport.trip.service"].sync_trip_gps_telemetry(self)
         eval_service = self.env["transport.trip.evaluation.service"]
         evaluation = eval_service.evaluate_trip(self)
         status_label = (

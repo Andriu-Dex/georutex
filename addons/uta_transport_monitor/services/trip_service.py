@@ -49,9 +49,11 @@ class TransportTripService(models.AbstractModel):
 
         A late trip keeps receiving positions after its scheduled end while it
         is in progress, and a completed trip keeps those up to its actual end;
-        otherwise late arrivals could never be detected.
+        otherwise late arrivals could never be detected. A trip started early
+        accepts positions from its actual start.
         """
-        if not trip.scheduled_start_utc or fix_time < trip.scheduled_start_utc:
+        starts = [t for t in (trip.scheduled_start_utc, trip.actual_start_utc) if t]
+        if not starts or fix_time < min(starts):
             return False
         if trip.scheduled_end_utc and fix_time <= trip.scheduled_end_utc:
             return True
@@ -69,7 +71,9 @@ class TransportTripService(models.AbstractModel):
         candidates = self.env["transport.trip"].search([
             ("vehicle_id", "=", vehicle_id),
             ("state", "in", ["scheduled", "in_progress", "completed"]),
+            "|",
             ("scheduled_start_utc", "<=", fix_time),
+            ("actual_start_utc", "<=", fix_time),
         ]).filtered(lambda trip: self.trip_accepts_fix(trip, fix_time))
         if len(candidates) > 1:
             in_window = candidates.filtered(
@@ -123,6 +127,8 @@ class TransportTripService(models.AbstractModel):
         end_dt = trip.scheduled_end_utc
         if not start_dt or not end_dt:
             return 0
+        if trip.manual_start_utc:
+            start_dt = min(start_dt, trip.manual_start_utc)
         if trip.state == "in_progress":
             end_dt = max(end_dt, fields.Datetime.now())
         elif trip.actual_end_utc:

@@ -136,3 +136,53 @@ class TestTripSimulation(TransactionCase):
         self.assertFalse(
             trip_service.trip_accepts_fix(trip, late_fix + timedelta(minutes=5))
         )
+
+    def _real_trip(self):
+        trip = self.env["transport.trip"].create({
+            "vehicle_id": self.vehicle.id,
+            "route_id": self.version.route_id.id,
+            "route_version_id": self.version.id,
+            "scheduled_start_utc": "2026-01-05 13:00:00",
+        })
+        trip.action_schedule()
+        return trip
+
+    def test_06_early_started_trip_accepts_fixes_before_schedule(self):
+        """Regression: positions after an early start belong to the trip."""
+        from datetime import datetime
+
+        trip = self._real_trip()
+        trip.write({"state": "in_progress", "actual_start_utc": datetime(2026, 1, 5, 12, 55)})
+        early_fix = datetime(2026, 1, 5, 12, 57)
+        trip_service = self.env["transport.trip.service"]
+        self.assertTrue(trip_service.trip_accepts_fix(trip, early_fix))
+        self.assertFalse(trip_service.trip_accepts_fix(trip, datetime(2026, 1, 5, 12, 50)))
+        self.assertIn(trip, trip_service.find_trips_for_fix(self.vehicle.id, early_fix))
+
+    def test_07_complete_and_evaluate_pull_full_history_for_real_trips(self):
+        """Regression: periodic syncs only fetch the latest fix, so closing a real trip fetches its window."""
+        from unittest.mock import patch
+
+        trip = self._real_trip()
+        trip.action_start()
+        service_cls = type(self.env["transport.trip.service"])
+        with patch.object(service_cls, "sync_trip_gps_telemetry", return_value=0) as sync:
+            trip.action_complete()
+            trip.action_evaluate_trip()
+        self.assertEqual(sync.call_count, 2)
+
+    def test_08_reevaluation_replaces_stale_incidents_and_keeps_justified(self):
+        """Regression: re-evaluating drops pending automatic incidents but not justified ones."""
+        trip = self._run(1, mix={"late": 1.0})
+        automatic = trip.incident_ids.filtered(lambda i: i.source == "automatic")
+        self.assertTrue(automatic)
+        justified = automatic[0]
+        justified.justification_submitted_at = "2026-01-06 10:00:00"
+        stale = automatic - justified
+
+        trip.action_evaluate_trip()
+
+        self.assertTrue(justified.exists())
+        self.assertFalse(stale.exists())
+        regenerated = trip.incident_ids.filtered(lambda i: i.source == "automatic")
+        self.assertLessEqual(len(regenerated), len(automatic))
