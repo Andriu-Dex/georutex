@@ -1,6 +1,7 @@
 """Extension of Fleet vehicle model with GPS tracking capabilities."""
 
 from datetime import timedelta, timezone
+import logging
 import secrets
 import zoneinfo
 from odoo import api, fields, models
@@ -11,6 +12,8 @@ from ..integrations.traccar_client import (
     TraccarAuthError,
     TraccarConnectionError,
 )
+
+_logger = logging.getLogger(__name__)
 
 
 def gps_error_message(exc):
@@ -239,6 +242,32 @@ class FleetVehicle(models.Model):
         for vehicle in self:
             token = secrets.token_hex(16).upper()
             vehicle.traccar_unique_id = f"GRX-{token}"
+            vehicle._register_traccar_device()
+
+    def _register_traccar_device(self):
+        """Create or rebind the Traccar device for this vehicle's uniqueId.
+
+        Without a registered device Traccar rejects the phone's positions as
+        "Unknown device". A Traccar outage must not block identifier
+        generation, so failures are logged and the device can be created later.
+        """
+        self.ensure_one()
+        client = self.env["transport.gps.sync.service"]._get_traccar_client()
+        name = self.name or self.license_plate or self.traccar_unique_id
+        try:
+            if self.traccar_device_id:
+                client.update_device(
+                    self.traccar_device_id, name, self.traccar_unique_id
+                )
+            else:
+                device = client.create_device(name, self.traccar_unique_id)
+                self.traccar_device_id = device.get("id")
+        except (TraccarApiError, TraccarAuthError, TraccarConnectionError) as exc:
+            _logger.warning(
+                "Traccar device registration failed for vehicle %s: %s",
+                self.id,
+                exc,
+            )
 
     @api.model
     def get_live_fleet_positions(self):

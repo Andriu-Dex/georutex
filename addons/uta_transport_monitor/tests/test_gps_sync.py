@@ -3,6 +3,9 @@
 from unittest.mock import MagicMock, patch
 from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase, tagged
+from odoo.addons.uta_transport_monitor.integrations.traccar_client import (
+    TraccarConnectionError,
+)
 
 
 @tagged("post_install", "-at_install", "gps_sync")
@@ -192,11 +195,43 @@ class TestGpsSync(TransactionCase):
         self.vehicle._compute_gps_status()
         self.assertEqual(self.vehicle.gps_connection_status, "waiting")
 
+    def _generate_id(self, vehicle, mock_client):
+        with patch.object(
+            type(self.sync_service), "_get_traccar_client", return_value=mock_client
+        ):
+            vehicle.action_generate_secure_unique_id()
+
     def test_generate_secure_unique_id(self):
         """Test unique ID generation with 128 bits of entropy (RF-08)."""
-        self.vehicle.action_generate_secure_unique_id()
+        mock_client = MagicMock()
+        self._generate_id(self.vehicle, mock_client)
         self.assertTrue(self.vehicle.traccar_unique_id.startswith("GRX-"))
         self.assertEqual(len(self.vehicle.traccar_unique_id), 36)
+        # An already linked device is rebound to the new identifier.
+        mock_client.update_device.assert_called_once_with(
+            99, self.vehicle.name, self.vehicle.traccar_unique_id
+        )
+        mock_client.create_device.assert_not_called()
+
+    def test_generate_id_registers_new_traccar_device(self):
+        """Without a linked device, Traccar gets a new one so positions are accepted."""
+        self.vehicle.traccar_device_id = False
+        mock_client = MagicMock()
+        mock_client.create_device.return_value = {"id": 321}
+        self._generate_id(self.vehicle, mock_client)
+        mock_client.create_device.assert_called_once_with(
+            self.vehicle.name, self.vehicle.traccar_unique_id
+        )
+        self.assertEqual(self.vehicle.traccar_device_id, 321)
+
+    def test_generate_id_survives_traccar_outage(self):
+        """A Traccar outage must not block identifier generation."""
+        self.vehicle.traccar_device_id = False
+        mock_client = MagicMock()
+        mock_client.create_device.side_effect = TraccarConnectionError("down")
+        self._generate_id(self.vehicle, mock_client)
+        self.assertTrue(self.vehicle.traccar_unique_id.startswith("GRX-"))
+        self.assertFalse(self.vehicle.traccar_device_id)
 
     def test_traccar_device_uniqueness_constraint(self):
         """RF-08: No two active vehicles can share Traccar device bindings."""

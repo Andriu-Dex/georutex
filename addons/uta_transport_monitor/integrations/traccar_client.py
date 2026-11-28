@@ -16,6 +16,9 @@ from typing import Any, Dict, List, Optional
 _logger = logging.getLogger(__name__)
 
 
+DEVICES_ENDPOINT = "/api/devices"
+
+
 class TraccarError(Exception):
     """Base exception for Traccar integration errors."""
     pass
@@ -136,13 +139,13 @@ class TraccarClient:
 
     def get_devices(self) -> List[Dict[str, Any]]:
         """Retrieve all devices accessible to the authenticated account."""
-        devices = self._request("/api/devices")
+        devices = self._request(DEVICES_ENDPOINT)
         return devices if isinstance(devices, list) else []
 
     def get_device(self, device_id: int) -> Dict[str, Any]:
         """Retrieve a specific device by its numeric Traccar ID."""
         params = {"id": device_id}
-        devices = self._request("/api/devices", params=params)
+        devices = self._request(DEVICES_ENDPOINT, params=params)
         if isinstance(devices, list) and devices:
             return devices[0]
         raise TraccarApiError(f"Device with ID {device_id} not found.", 404)
@@ -152,10 +155,28 @@ class TraccarClient:
     ) -> Optional[Dict[str, Any]]:
         """Find a device by its client unique identifier."""
         params = {"uniqueId": unique_id}
-        devices = self._request("/api/devices", params=params)
+        devices = self._request(DEVICES_ENDPOINT, params=params)
         if isinstance(devices, list) and devices:
             return devices[0]
         return None
+
+    def create_device(self, name: str, unique_id: str) -> Dict[str, Any]:
+        """Register a device so Traccar accepts positions from ``unique_id``."""
+        return self._request(
+            DEVICES_ENDPOINT,
+            method="POST",
+            data={"name": name, "uniqueId": unique_id},
+        )
+
+    def update_device(
+        self, device_id: int, name: str, unique_id: str
+    ) -> Dict[str, Any]:
+        """Rebind an existing device to a new name and ``unique_id``."""
+        return self._request(
+            f"{DEVICES_ENDPOINT}/{int(device_id)}",
+            method="PUT",
+            data={"id": int(device_id), "name": name, "uniqueId": unique_id},
+        )
 
     def get_positions(
         self,
