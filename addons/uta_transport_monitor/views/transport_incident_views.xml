@@ -41,30 +41,26 @@
                             type="object"
                             class="oe_highlight btn-info"
                             icon="fa-commenting-o"
-                            attrs="{'invisible': ['|', ('id', '=', False), ('state', 'in', ('justified', 'rejected'))]}"/>
-                    <button name="action_submit_justification"
-                            string="Enviar justificación"
-                            type="object"
-                            class="btn-primary"
-                            attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
+                            attrs="{'invisible': ['|', ('state', '!=', 'pending'), ('justification_submitted_at', '!=', False)]}"/>
+                    <field name="justification_submitted_at" invisible="1"/>
                     <button name="action_approve_justification"
                             string="Aprobar justificación"
                             type="object"
                             class="btn-success"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
-                            attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
+                            attrs="{'invisible': ['|', ('state', '!=', 'pending'), ('justification_submitted_at', '=', False)]}"/>
                     <button name="action_reject_justification"
                             string="Rechazar justificación"
                             type="object"
                             class="btn-danger"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
-                            attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
+                            attrs="{'invisible': ['|', ('state', '!=', 'pending'), ('justification_submitted_at', '=', False)]}"/>
                     <button name="action_confirm_incident"
                             string="Confirmar sin justificación"
                             type="object"
                             class="btn-secondary"
                             groups="uta_transport_monitor.group_transport_analyst,uta_transport_monitor.group_transport_manager"
-                            attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'pending')]}"/>
+                            attrs="{'invisible': ['|', ('state', '!=', 'pending'), ('justification_submitted_at', '!=', False)]}"/>
                     <field name="state"
                            widget="badge"
                            class="ms-auto"
@@ -131,7 +127,7 @@
                             <group>
                                 <field name="description" string="Descripción" placeholder="Describe brevemente lo ocurrido durante el recorrido..."/>
                                 <field name="evidence_data" string="Observaciones de respaldo"
-                                       attrs="{'readonly': [('source', '=', 'automatic')]}"
+                                       attrs="{'invisible': [('source', '=', 'automatic')]}"
                                        placeholder="Referencias de sector, hora o respaldo operativo..."/>
                             </group>
                         </page>
@@ -159,7 +155,7 @@
         <field name="name">transport.incident.search</field>
         <field name="model">transport.incident</field>
         <field name="arch" type="xml">
-            <search string="Buscar Incidencias">
+            <search string="Buscar incidencias">
                 <field name="name" string="Código"/>
                 <field name="trip_id" string="Recorrido"/>
                 <field name="vehicle_id" string="Vehículo"/>
@@ -171,10 +167,10 @@
                 <filter string="Automáticas" name="automatic" domain="[('source', '=', 'automatic')]"/>
                 <filter string="Manuales" name="manual" domain="[('source', '=', 'manual')]"/>
                 <separator/>
-                <filter string="Alta Severidad / Crítica" name="high_severity" domain="[('severity', 'in', ('high', 'critical'))]"/>
+                <filter string="Alta severidad / crítica" name="high_severity" domain="[('severity', 'in', ('high', 'critical'))]"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Recorrido" name="group_trip" context="{'group_by': 'trip_id'}"/>
-                    <filter string="Tipo de Incidencia" name="group_type" context="{'group_by': 'incident_type'}"/>
+                    <filter string="Tipo de incidencia" name="group_type" context="{'group_by': 'incident_type'}"/>
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="Severidad" name="group_severity" context="{'group_by': 'severity'}"/>
                     <filter string="Origen" name="group_source" context="{'group_by': 'source'}"/>
@@ -203,27 +199,27 @@
         <field name="name">transport.incident.justify.wizard.form</field>
         <field name="model">transport.incident.justify.wizard</field>
         <field name="arch" type="xml">
-            <form string="Justificación de Incidencia Operacional">
+            <form string="Justificación de incidencia operacional">
                 <sheet>
                     <div class="alert alert-info" role="alert">
                         <strong>Descargo Operacional:</strong> Seleccione el motivo e ingrese los detalles que justifican el retraso, desvío u omisión ocurrida durante el recorrido.
                     </div>
                     <group>
-                        <group string="Datos del Evento">
+                        <group string="Datos del evento">
                             <field name="incident_id" string="Incidencia"/>
                             <field name="trip_id" string="Recorrido"/>
                             <field name="incident_type" string="Tipo"/>
                         </group>
-                        <group string="Motivo de Descargo">
+                        <group string="Motivo de descargo">
                             <field name="justification_category" string="Categoría" widget="radio"/>
                         </group>
                     </group>
-                    <group string="Explicación Detallada">
+                    <group string="Explicación detallada">
                         <field name="justification_notes" placeholder="Describa brevemente qué ocurrió (ej. Cierre vial por manifestación o desvío ordenado por agentes de tránsito)..." nolabel="1"/>
                     </group>
                 </sheet>
                 <footer>
-                    <button name="action_confirm_justification" string="Registrar y Enviar Descargo" type="object" class="btn-primary" icon="fa-paper-plane"/>
+                    <button name="action_confirm_justification" string="Registrar y enviar descargo" type="object" class="btn-primary" icon="fa-paper-plane"/>
                     <button string="Cancelar" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

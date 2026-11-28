@@ -118,14 +118,14 @@
         <field name="name">transport.trip.evaluation.search</field>
         <field name="model">transport.trip.evaluation</field>
         <field name="arch" type="xml">
-            <search string="Buscar Evaluaciones">
+            <search string="Buscar evaluaciones">
                 <field name="name"/>
                 <field name="trip_id"/>
                 <field name="vehicle_id"/>
                 <field name="route_id"/>
-                <filter string="Conformes (Ajustado)" name="compliant" domain="[('is_compliant_adjusted', '=', True)]"/>
-                <filter string="No Conformes" name="non_compliant" domain="[('is_compliant_adjusted', '=', False), ('integrity_status', '!=', 'insufficient_data')]"/>
-                <filter string="Datos Insuficientes" name="insufficient" domain="[('integrity_status', '=', 'insufficient_data')]"/>
+                <filter string="Conformes (ajustado)" name="compliant" domain="[('is_compliant_adjusted', '=', True)]"/>
+                <filter string="No conformes" name="non_compliant" domain="[('is_compliant_adjusted', '=', False), ('integrity_status', '!=', 'insufficient_data')]"/>
+                <filter string="Datos insuficientes" name="insufficient" domain="[('integrity_status', '=', 'insufficient_data')]"/>
                 <separator/>
                 <filter string="Conforme bruto" name="gross_compliant" domain="[('is_compliant_gross', '=', True)]"/>
                 <group expand="0" string="Agrupar por">

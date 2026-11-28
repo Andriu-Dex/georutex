@@ -12,27 +12,27 @@ class TransportRoute(models.Model):
     _order = "name asc, id desc"
 
     name = fields.Char(
-        string="Nombre de la Ruta",
+        string="Nombre de la ruta",
         required=True,
         index=True,
         help="Nombre descriptivo de la ruta (ej. 'Ruta 1: Huachi').",
     )
     code = fields.Char(
-        string="Código de Ruta",
+        string="Código de ruta",
         required=True,
         index=True,
         help="Código único de identificación operacional (ej. 'RUT-01-IDA').",
     )
     description = fields.Text(
-        string="Descripción Operacional",
+        string="Descripción operacional",
     )
     origin_name = fields.Char(
-        string="Punto de Origen",
+        string="Punto de origen",
         required=True,
         help="Nombre de la cabecera u origen (ej. 'Campus Huachi').",
     )
     destination_name = fields.Char(
-        string="Punto de Destino",
+        string="Punto de destino",
         required=True,
         help="Nombre del destino final (ej. 'Campus Ingahurco').",
     )
@@ -41,9 +41,9 @@ class TransportRoute(models.Model):
             ("outbound", "Ida"),
             ("inbound", "Vuelta"),
             ("circular", "Circular"),
-            ("other", "Especial / Otro"),
+            ("other", "Especial / otro"),
         ],
-        string="Sentido del Trayecto",
+        string="Sentido del trayecto",
         default="outbound",
         required=True,
     )
@@ -60,7 +60,7 @@ class TransportRoute(models.Model):
     version_ids = fields.One2many(
         comodel_name="transport.route.version",
         inverse_name="route_id",
-        string="Versiones de Ruta",
+        string="Versiones de ruta",
     )
     version_count = fields.Integer(
         string="Nº Versiones",

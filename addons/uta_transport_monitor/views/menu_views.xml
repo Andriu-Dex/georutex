@@ -38,7 +38,7 @@
 
     <!-- Client action for Live Fleet Map (RF-16) -->
     <record id="action_transport_live_fleet_map" model="ir.actions.client">
-        <field name="name">Mapa en Vivo de Flota</field>
+        <field name="name">Mapa en vivo</field>
         <field name="tag">uta_transport_live_fleet_map</field>
         <field name="target">main</field>
     </record>
@@ -89,11 +89,6 @@
               action="action_transport_route"
               sequence="10"/>
 
-    <menuitem id="menu_georutex_route_versions"
-              name="Versiones de ruta"
-              parent="menu_georutex_routes_cat"
-              action="action_transport_route_version"
-              sequence="20"/>
 
     <menuitem id="menu_georutex_fleet"
               name="Vehículos"

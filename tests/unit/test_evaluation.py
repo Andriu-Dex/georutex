@@ -519,7 +519,7 @@ def test_evaluate_trip_compliance_non_compliant_and_cancelled():
     assert res["is_compliant_gross"] is False
     assert res["stops_missed"] == 1
     assert res["deviation_count"] == 1
-    assert "No Conforme" in res["evaluation_summary"]
+    assert "No conforme" in res["evaluation_summary"]
 
     # Cancelled trip state
     trip_cancelled = dict(trip_info, state="cancelled")

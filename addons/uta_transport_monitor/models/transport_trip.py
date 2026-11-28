@@ -17,7 +17,7 @@ class TransportTrip(models.Model):
     _order = "scheduled_start_utc desc, id desc"
 
     name = fields.Char(
-        string="Código de Recorrido",
+        string="Código de recorrido",
         required=True,
         copy=False,
         readonly=True,
@@ -26,7 +26,7 @@ class TransportTrip(models.Model):
     )
     vehicle_id = fields.Many2one(
         comodel_name="fleet.vehicle",
-        string="Vehículo Asignado",
+        string="Vehículo asignado",
         required=True,
         index=True,
         domain="[('active', '=', True)]",
@@ -34,13 +34,13 @@ class TransportTrip(models.Model):
     )
     driver_id = fields.Many2one(
         comodel_name="res.partner",
-        string="Conductor (Contacto)",
+        string="Conductor (contacto)",
         domain="[('is_company', '=', False)]",
         help="Conductor asignado al recorrido.",
     )
     driver_user_id = fields.Many2one(
         comodel_name="res.users",
-        string="Usuario Conductor",
+        string="Usuario conductor",
         index=True,
         help="Usuario del sistema Odoo para control de permisos de conductor.",
     )
@@ -52,33 +52,40 @@ class TransportTrip(models.Model):
     )
     route_version_id = fields.Many2one(
         comodel_name="transport.route.version",
-        string="Versión de Ruta",
+        string="Versión de ruta",
         required=True,
         domain="[('route_id', '=', route_id), ('state', '=', 'approved')]",
         help="Versión aprobada de la ruta cuyos parámetros se usarán para evaluar el recorrido.",
     )
     source_type = fields.Selection(
         selection=[
-            ("real", "Datos Reales / GPS"),
+            ("real", "Datos reales / GPS"),
             ("simulated", "Simulado"),
         ],
-        string="Tipo de Datos",
+        string="Tipo de datos",
         default="real",
         required=True,
         index=True,
         help="Diferencia inequívocamente datos reales de simulados.",
     )
+    simulation_batch = fields.Char(
+        string="Lote de simulación",
+        readonly=True,
+        index=True,
+        copy=False,
+        help="Identificador del lote del simulador que generó este recorrido.",
+    )
     state = fields.Selection(
         selection=[
             ("draft", "Borrador"),
             ("scheduled", "Programado"),
-            ("in_progress", "En Curso"),
+            ("in_progress", "En curso"),
             ("completed", "Finalizado"),
             ("incomplete", "Incompleto"),
             ("cancelled", "Cancelado"),
-            ("insufficient_data", "Datos Insuficientes"),
+            ("insufficient_data", "Datos insuficientes"),
         ],
-        string="Estado del Recorrido",
+        string="Estado del recorrido",
         default="draft",
         required=True,
         index=True,
@@ -86,42 +93,42 @@ class TransportTrip(models.Model):
 
     # Scheduled timestamps and distance (stored in UTC, displayed in local time)
     scheduled_start_utc = fields.Datetime(
-        string="Inicio Programado",
+        string="Inicio programado",
         required=True,
         index=True,
         help="Fecha y hora planificada de salida del recorrido (almacenada en UTC, mostrada en hora local).",
     )
     scheduled_end_utc = fields.Datetime(
-        string="Fin Previsto / Llegada",
+        string="Fin previsto / llegada",
         required=True,
         index=True,
         help="Fecha y hora planificada de llegada calculada automáticamente según los tiempos de la ruta (almacenada en UTC, mostrada en hora local).",
     )
     scheduled_distance_m = fields.Float(
-        string="Distancia Programada (m)",
+        string="Distancia programada (m)",
         digits=(10, 2),
         help="Distancia geométrica planificada del recorrido en metros.",
     )
     scheduled_duration_s = fields.Integer(
-        string="Duración Programada (s)",
+        string="Duración programada (s)",
         compute="_compute_durations",
         store=True,
         help="Tiempo estimado de viaje según los puntos de control de la versión de ruta.",
     )
     scheduled_duration_display = fields.Char(
-        string="Duración Programada",
+        string="Duración programada",
         compute="_compute_durations",
         store=True,
         help="Tiempo programado de viaje en formato legible (ej. '30 min 00 s').",
     )
     road_estimated_duration_s = fields.Integer(
-        string="Estimación Red Vial (s)",
+        string="Estimación red vial (s)",
         compute="_compute_durations",
         store=True,
         help="Tiempo estimado por enrutamiento vial OSRM sin considerar congestión.",
     )
     road_estimated_duration_display = fields.Char(
-        string="Estimación Red Vial",
+        string="Estimación red vial",
         compute="_compute_durations",
         store=True,
         help="Estimación vial en formato legible (no es predicción de tráfico en vivo).",
@@ -129,28 +136,28 @@ class TransportTrip(models.Model):
 
     # Exceptional manual duration override (Section 4)
     is_manual_duration_override = fields.Boolean(
-        string="Ajuste Excepcional de Horario",
+        string="Ajuste excepcional de horario",
         default=False,
         help="Habilita a un gestor autorizado a modificar la hora final independientemente de la duración estándar de la ruta.",
     )
     manual_duration_override_reason = fields.Text(
-        string="Justificación del Ajuste Excepcional",
+        string="Justificación del ajuste excepcional",
         help="Justificación operativa obligatoria para el ajuste manual del horario.",
     )
     manual_duration_override_user_id = fields.Many2one(
         comodel_name="res.users",
-        string="Ajuste Autorizado Por",
+        string="Ajuste autorizado por",
         readonly=True,
     )
 
     # Actual observed timestamps and distance
     manual_start_utc = fields.Datetime(
-        string="Inicio Manual",
+        string="Inicio manual",
         readonly=True,
         help="Instante de inicio manual por operador o conductor.",
     )
     manual_end_utc = fields.Datetime(
-        string="Fin Manual",
+        string="Fin manual",
         readonly=True,
         help="Instante de finalización manual por operador o conductor.",
     )
@@ -160,44 +167,44 @@ class TransportTrip(models.Model):
         help="Primer registro de telemetría GPS asociado al recorrido.",
     )
     actual_start_utc = fields.Datetime(
-        string="Salida Real Verificada",
+        string="Salida real verificada",
         readonly=True,
         help="Primer momento confirmado por GPS en que el vehículo salió del origen.",
     )
     actual_end_utc = fields.Datetime(
-        string="Llegada Real Verificada",
+        string="Llegada real verificada",
         readonly=True,
         help="Primer momento confirmado por GPS en que el vehículo llegó al destino.",
     )
     actual_start_evidence = fields.Char(
-        string="Evidencia Salida Real",
+        string="Evidencia salida real",
         readonly=True,
         help="Criterio técnico de inferencia de salida de origen.",
     )
     actual_end_evidence = fields.Char(
-        string="Evidencia Llegada Real",
+        string="Evidencia llegada real",
         readonly=True,
         help="Criterio técnico de inferencia de llegada a destino.",
     )
     actual_distance_m = fields.Float(
-        string="Distancia Real Recorrida (m)",
+        string="Distancia real recorrida (m)",
         digits=(10, 2),
         readonly=True,
     )
     actual_duration_s = fields.Integer(
-        string="Duración Real Observada (s)",
+        string="Duración real observada (s)",
         compute="_compute_durations",
         store=True,
         help="Tiempo transcurrido observado entre la salida verificada y la llegada a destino.",
     )
     actual_duration_display = fields.Char(
-        string="Duración Real Observada",
+        string="Duración real observada",
         compute="_compute_durations",
         store=True,
         help="Duración real observada en formato legible.",
     )
     is_schedule_overdue = fields.Boolean(
-        string="Horario Programado Vencido",
+        string="Horario programado vencido",
         compute="_compute_schedule_overdue",
         help="Indica que la hora de fin expiró y el viaje sigue en curso.",
     )
@@ -206,7 +213,7 @@ class TransportTrip(models.Model):
     evaluation_ids = fields.One2many(
         comodel_name="transport.trip.evaluation",
         inverse_name="trip_id",
-        string="Historial de Evaluaciones",
+        string="Historial de evaluaciones",
     )
     evaluation_count = fields.Integer(
         string="Nº Evaluaciones",
@@ -215,18 +222,18 @@ class TransportTrip(models.Model):
     )
     last_evaluation_id = fields.Many2one(
         comodel_name="transport.trip.evaluation",
-        string="Última Evaluación",
+        string="Última evaluación",
         compute="_compute_evaluation_metrics",
         store=True,
     )
     evaluation_status = fields.Selection(
         selection=[
-            ("unevaluated", "Sin Evaluar"),
+            ("unevaluated", "Sin evaluar"),
             ("compliant", "Conforme"),
-            ("non_compliant", "No Conforme"),
-            ("indeterminate", "Indeterminado / Insuficiente"),
+            ("non_compliant", "No conforme"),
+            ("indeterminate", "Indeterminado / insuficiente"),
         ],
-        string="Estado de Evaluación",
+        string="Estado de evaluación",
         default="unevaluated",
         compute="_compute_evaluation_metrics",
         store=True,
@@ -235,7 +242,7 @@ class TransportTrip(models.Model):
     incident_ids = fields.One2many(
         comodel_name="transport.incident",
         inverse_name="trip_id",
-        string="Incidencias Registradas",
+        string="Incidencias registradas",
     )
     incident_count = fields.Integer(
         string="Nº Incidencias",
@@ -269,7 +276,7 @@ class TransportTrip(models.Model):
     position_ids = fields.One2many(
         comodel_name="transport.vehicle.position",
         inverse_name="trip_id",
-        string="Posiciones GPS Asociadas",
+        string="Posiciones GPS asociadas",
     )
     position_count = fields.Integer(
         string="Nº Posiciones GPS",
@@ -278,14 +285,14 @@ class TransportTrip(models.Model):
     stop_visit_ids = fields.One2many(
         comodel_name="transport.stop.visit",
         inverse_name="trip_id",
-        string="Visitas a Paradas Programadas",
+        string="Visitas a paradas programadas",
     )
     stop_visit_count = fields.Integer(
         string="Nº Paradas",
         compute="_compute_stop_visit_count",
     )
     notes = fields.Text(
-        string="Observaciones Operacionales",
+        string="Observaciones operacionales",
     )
 
     @api.model
@@ -970,7 +977,7 @@ class TransportTrip(models.Model):
         status_label = (
             "Conforme"
             if evaluation.is_compliant_adjusted
-            else "No Conforme"
+            else "No conforme"
         )
         msg_type = "info" if evaluation.is_compliant_adjusted else "warning"
         msg = (

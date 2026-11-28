@@ -35,11 +35,11 @@ class FleetVehicle(models.Model):
     _rec_names_search = ["name", "operational_name", "driver_id.name"]
 
     operational_name = fields.Char(
-        string="Nombre Operativo / Unidad",
+        string="Nombre operativo / unidad",
         index=True,
         tracking=True,
         help="Nombre de servicio, alias o número de unidad comercial "
-             "(ej. 'Bus 01 - UTA', 'Unidad 14').",
+             "(ej. 'Unidad 01', 'Unidad 14').",
     )
     traccar_device_id = fields.Integer(
         string="ID interno en servidor GPS",
@@ -57,12 +57,12 @@ class FleetVehicle(models.Model):
         help="Habilita sincronización programada de telemetría para el bus.",
     )
     is_simulated = fields.Boolean(
-        string="Vehículo de Simulación",
+        string="Vehículo de simulación",
         default=False,
         help="Si está activo, las telemetrías se marcan como simuladas.",
     )
     is_physical_accredited = fields.Boolean(
-        string="Origen Físico Acreditado",
+        string="Origen físico acreditado",
         default=False,
         help="Acredita formalmente que este vehículo cuenta con validación "
              "de hardware físico o transmisión móvil certificada.",
@@ -81,9 +81,10 @@ class FleetVehicle(models.Model):
             ("online", "En línea (< 5 min)"),
             ("recent", "Reciente (< 1 hora)"),
             ("offline", "Sin señal (> 1 hora)"),
-            ("unlinked", "No vinculado"),
+            ("waiting", "Esperando primera señal"),
+            ("unlinked", "Sin GPS vinculado"),
         ],
-        string="Estado de Conexión GPS",
+        string="Estado de conexión GPS",
         compute="_compute_gps_status",
         store=False,
     )
@@ -95,7 +96,7 @@ class FleetVehicle(models.Model):
             ("no_data", "Sin posiciones registradas"),
             ("unlinked", "No vinculado"),
         ],
-        string="Frescura de Señal GPS",
+        string="Frescura de señal GPS",
         compute="_compute_gps_status",
         store=False,
     )
@@ -104,32 +105,32 @@ class FleetVehicle(models.Model):
         compute="_compute_gps_status",
     )
     last_gps_time_local = fields.Char(
-        string="Última Hora GPS (Ecuador)",
+        string="Última hora GPS (Ecuador)",
         compute="_compute_last_gps_time_local",
     )
     last_gps_fix_time = fields.Datetime(
-        string="Última Posición GPS (UTC)",
+        string="Última posición GPS (UTC)",
         readonly=True,
     )
     last_gps_latitude = fields.Float(
-        string="Última Latitud",
+        string="Última latitud",
         digits=(10, 6),
         readonly=True,
     )
     last_gps_longitude = fields.Float(
-        string="Última Longitud",
+        string="Última longitud",
         digits=(10, 6),
         readonly=True,
     )
     last_gps_speed = fields.Float(
-        string="Última Velocidad (km/h)",
+        string="Última velocidad (km/h)",
         digits=(6, 2),
         readonly=True,
     )
     position_ids = fields.One2many(
         comodel_name="transport.vehicle.position",
         inverse_name="vehicle_id",
-        string="Historial de Posiciones",
+        string="Historial de posiciones",
     )
     position_count = fields.Integer(
         string="Nº de Posiciones",
@@ -182,7 +183,7 @@ class FleetVehicle(models.Model):
                 vehicle.gps_freshness_state = "unlinked"
                 vehicle.last_gps_age_seconds = 0
             elif not vehicle.last_gps_fix_time:
-                vehicle.gps_connection_status = "offline"
+                vehicle.gps_connection_status = "waiting"
                 vehicle.gps_freshness_state = "no_data"
                 vehicle.last_gps_age_seconds = 0
             else:
@@ -226,26 +227,18 @@ class FleetVehicle(models.Model):
         "operational_name",
     )
     def _compute_vehicle_name(self):
-        """Enrich vehicle display name with operational unit alias when set."""
+        """Use "<operational name> · <plate>" when an operational name is set."""
         super()._compute_vehicle_name()
         for record in self:
             if record.operational_name:
-                plate = record.license_plate or ""
-                model = record.model_id.name or ""
-                if plate and model:
-                    record.name = (
-                        f"[{record.operational_name}] {plate} ({model})"
-                    )
-                elif plate:
-                    record.name = f"[{record.operational_name}] {plate}"
-                else:
-                    record.name = f"[{record.operational_name}]"
+                parts = [record.operational_name, record.license_plate]
+                record.name = " · ".join(part for part in parts if part)
 
     def action_generate_secure_unique_id(self):
         """Generate non-predictable uniqueId with 128-bit entropy (RF-08)."""
         for vehicle in self:
             token = secrets.token_hex(16).upper()
-            vehicle.traccar_unique_id = f"UTA-BUS-{token}"
+            vehicle.traccar_unique_id = f"GRX-{token}"
 
     @api.model
     def get_live_fleet_positions(self):

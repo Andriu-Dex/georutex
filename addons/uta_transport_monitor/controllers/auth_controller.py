@@ -100,7 +100,7 @@ GEORUTEX_PROTECTED_SECTIONS = {
     ),
     "versiones-ruta": (
         "uta_transport_monitor.action_transport_route_version",
-        "uta_transport_monitor.menu_georutex_route_versions",
+        "uta_transport_monitor.menu_georutex_routes",
         (
             "uta_transport_monitor.group_transport_manager",
             "uta_transport_monitor.group_transport_analyst",
@@ -184,15 +184,15 @@ class GeoRutexAuthController(AuthSignupHome):
         params = request.env["ir.config_parameter"].sudo()
         org_name = (
             params.get_param("georutex.public.org_name")
-            or "Universidad Técnica de Ambato"
+            or "Su organización"
         ).strip()
         org_sector = (
             params.get_param("georutex.public.org_sector")
-            or "Movilidad institucional"
+            or "Monitoreo de flotas"
         ).strip()
         org_location = (
             params.get_param("georutex.public.org_location")
-            or "Ambato, Ecuador"
+            or "Ecuador"
         ).strip()
         try:
             map_lat = float(params.get_param("georutex.public.map_lat") or -1.2555)

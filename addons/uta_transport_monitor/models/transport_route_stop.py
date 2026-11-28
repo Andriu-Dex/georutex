@@ -15,7 +15,7 @@ class TransportRouteStop(models.Model):
 
     route_version_id = fields.Many2one(
         comodel_name="transport.route.version",
-        string="Versión de Ruta",
+        string="Versión de ruta",
         required=True,
         ondelete="cascade",
         index=True,
@@ -27,7 +27,7 @@ class TransportRouteStop(models.Model):
         help="Orden secuencial obligatorio de paso por este control.",
     )
     name = fields.Char(
-        string="Nombre del Control / Parada",
+        string="Nombre del control / parada",
         required=True,
         help="Nombre identificativo de la parada (ej. 'Parada 1').",
     )
@@ -44,7 +44,7 @@ class TransportRouteStop(models.Model):
         help="Longitud en grados decimales, entre -180 y 180.",
     )
     radius_m = fields.Float(
-        string="Radio de Proximidad (m)",
+        string="Radio de proximidad (m)",
         default=30.0,
         required=True,
         help="Radio de geocerca en metros para registrar presencia o visita.",
@@ -56,21 +56,21 @@ class TransportRouteStop(models.Model):
     )
     stop_type = fields.Selection(
         selection=[
-            ("origin", "Punto de Origen / Salida"),
-            ("checkpoint", "Control Intermedio"),
-            ("destination", "Punto de Destino / Llegada"),
+            ("origin", "Punto de origen / salida"),
+            ("checkpoint", "Control intermedio"),
+            ("destination", "Punto de destino / llegada"),
         ],
-        string="Tipo de Control",
+        string="Tipo de control",
         default="checkpoint",
         required=True,
     )
     planned_offset_seconds = fields.Integer(
-        string="Tiempo Programado de Arribo (s)",
+        string="Tiempo programado de arribo (s)",
         default=0,
         help="Segundos estimados desde la salida del viaje hasta este punto.",
     )
     planned_offset_minutes = fields.Float(
-        string="Tiempo Previsto (min)",
+        string="Tiempo previsto (min)",
         digits=(6, 2),
         compute="_compute_offset_minutes",
         inverse="_inverse_offset_minutes",
@@ -78,13 +78,13 @@ class TransportRouteStop(models.Model):
         help="Tiempo estimado desde la salida en minutos (se sincroniza bidireccionalmente con segundos).",
     )
     planned_offset_display = fields.Char(
-        string="Tiempo Previsto",
+        string="Tiempo previsto",
         compute="_compute_offset_display",
         store=True,
         help="Tiempo estimado de paso en formato legible (ej. '18 min', '24 min 30 s').",
     )
     notes = fields.Text(
-        string="Notas / Referencias",
+        string="Notas / referencias",
     )
 
     _sql_constraints = [

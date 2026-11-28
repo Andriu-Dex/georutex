@@ -305,7 +305,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                     "timestamp_utc": (
                         trip.actual_start_utc or trip.scheduled_start_utc
                     ),
-                    "rule_applied": "RF-20 / RF-21: Retraso en salida",
+                    "rule_applied": "Retraso en salida",
                     "description": (
                         f"Salida tardía de origen con retraso de "
                         f"{compliance.get('start_delay_s')}s."
@@ -326,7 +326,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                     "timestamp_utc": (
                         trip.actual_end_utc or trip.scheduled_end_utc
                     ),
-                    "rule_applied": "RF-20 / RF-21: Retraso en llegada",
+                    "rule_applied": "Retraso en llegada",
                     "description": (
                         f"Llegada tardía a destino con retraso de "
                         f"{compliance.get('arrival_delay_s')}s."
@@ -358,7 +358,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                         ),
                         "latitude": s.get("latitude", 0.0),
                         "longitude": s.get("longitude", 0.0),
-                        "rule_applied": "RF-22 / RF-23: Parada omitida",
+                        "rule_applied": "Parada omitida",
                         "description": (
                             f"Parada obligatoria '{s['stop_name']}' omitida. "
                             f"Distancia mín: {s.get('min_distance_m')}m."
@@ -385,7 +385,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                         ),
                         "latitude": s.get("latitude", 0.0),
                         "longitude": s.get("longitude", 0.0),
-                        "rule_applied": "RF-22: Retraso en control",
+                        "rule_applied": "Retraso en control",
                         "description": (
                             f"Retraso de {s['delay_s']}s en punto de control "
                             f"'{s['stop_name']}'."
@@ -416,7 +416,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                     "timestamp_utc": t_start,
                     "latitude": dev["start_latitude"],
                     "longitude": dev["start_longitude"],
-                    "rule_applied": "RF-24: Desvío del corredor de ruta",
+                    "rule_applied": "Desvío del corredor de ruta",
                     "description": (
                         f"Desvío de corredor por {dur}s ({pts} puntos). "
                         f"Distancia máxima observada: {max_d}m."
@@ -446,7 +446,7 @@ class TransportTripEvaluationService(models.AbstractModel):
                     "timestamp_utc": t_start,
                     "latitude": gap["gap_latitude"],
                     "longitude": gap["gap_longitude"],
-                    "rule_applied": "RF-25: Pérdida prolongada de señal GPS",
+                    "rule_applied": "Pérdida prolongada de señal GPS",
                     "description": (
                         f"Interrupción de telemetría por {gap['duration_s']}s "
                         f"(umbral permitido: {thresh}s)."

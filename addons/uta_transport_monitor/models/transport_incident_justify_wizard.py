@@ -23,25 +23,25 @@ class TransportIncidentJustifyWizard(models.TransientModel):
         readonly=True,
     )
     incident_type = fields.Selection(
-        string="Tipo de Incidencia",
+        string="Tipo de incidencia",
         related="incident_id.incident_type",
         readonly=True,
     )
     justification_category = fields.Selection(
         selection=[
-            ("congestion", "Congestión vehicular severa / Tráfico"),
+            ("congestion", "Congestión vehicular severa / tráfico"),
             ("road_block", "Cierre o bloqueo de vía por obras"),
             ("mechanical", "Avería o problema mecánico / eléctrico"),
             ("emergency", "Emergencia médica o asistencia a pasajero"),
             ("weather", "Condiciones climáticas adversas"),
             ("other", "Otra eventualidad justificada"),
         ],
-        string="Motivo Principal",
+        string="Motivo principal",
         required=True,
         default="congestion",
     )
     justification_notes = fields.Text(
-        string="Explicación / Detalle Operativo",
+        string="Explicación / detalle operativo",
         required=True,
         help="Detalle los hechos ocurridos para revisión del gestor de transporte.",
     )

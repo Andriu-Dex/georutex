@@ -355,7 +355,15 @@
 .o_web_client .o_user_menu img.o_avatar, .o_web_client .o_user_menu .oe_topbar_avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
 .o_web_client .o_field_image img, .o_web_client .o_field_image .o_form_image_controls { max-width: 100%; }
 .o_web_client .o_field_image { max-width: 128px; }
-.o_web_client .o_field_boolean_toggle .form-check-input { width: 2.25em; height: 1.2em; }
+/* Switches must out-rank the generic 16px checkbox sizing above, or they collapse into a circle. */
+.o_web_client .o_field_widget.o_field_boolean_toggle input.form-check-input,
+.o_web_client .o_boolean_toggle input.form-check-input {
+    width: 2.4em; height: 1.3em; border-radius: 2em; cursor: pointer;
+}
+.o_web_client .o_field_widget.o_field_boolean_toggle input.form-check-input:checked,
+.o_web_client .o_boolean_toggle input.form-check-input:checked {
+    background-color: var(--grx-brand-primary); border-color: var(--grx-brand-primary);
+}
 
 /* ---------- 4. Control panel, lists, kanban, forms ---------- */
 .o_web_client .o_control_panel {
@@ -2304,3 +2312,13 @@ button.grx-metric-card:hover { border-color: var(--grx-brand-primary); box-shado
 .grx-setup-step-body strong { color: var(--grx-ink-primary); font-size: 0.92rem; }
 .grx-setup-step-body span { color: var(--grx-ink-secondary); font-size: 0.82rem; line-height: 1.35; }
 .grx-setup-step .grx-btn { align-self: flex-start; }
+
+/* Phones: the navbar must fit the viewport; drop the brand wordmark and keep the logo. */
+@media (max-width: 575.98px) {
+    .o_web_client .o_main_navbar { max-width: 100vw; overflow: hidden; }
+    .o_web_client .o_main_navbar .grx-topbar-brand-text { display: none; }
+    .o_web_client .o_main_navbar .o_menu_systray { gap: 0; }
+    .o_web_client .o_main_navbar .o_menu_systray > div > .dropdown-toggle,
+    .o_web_client .o_main_navbar .o_menu_systray > div > button { padding-left: 6px; padding-right: 6px; }
+}
+

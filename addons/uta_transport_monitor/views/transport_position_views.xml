@@ -8,7 +8,7 @@
             <tree string="Posiciones GPS" create="false" edit="false">
                 <field name="fix_time_utc"/>
                 <field name="fix_time_local"/>
-                <field name="fix_time" string="Fecha/Hora Odoo" optional="hide"/>
+                <field name="fix_time" string="Fecha/hora Odoo" optional="hide"/>
                 <field name="vehicle_id"/>
                 <field name="trip_id"/>
                 <field name="latitude"/>
@@ -42,7 +42,7 @@
                         </h1>
                     </div>
                     <group>
-                        <group string="Datos del Vehículo y Recorrido">
+                        <group string="Datos del vehículo y recorrido">
                             <field name="vehicle_id"/>
                             <field name="trip_id"/>
                             <field name="association_status" widget="badge"/>
@@ -50,10 +50,10 @@
                             <field name="traccar_position_id"/>
                             <field name="source" widget="badge"/>
                         </group>
-                        <group string="Coordenadas y Tiempo">
+                        <group string="Coordenadas y tiempo">
                             <field name="fix_time_utc"/>
                             <field name="fix_time_local"/>
-                            <field name="fix_time" string="Fecha/Hora (Local Odoo)"/>
+                            <field name="fix_time" string="Fecha/hora (local Odoo)"/>
                             <field name="server_time"/>
                             <field name="latitude"/>
                             <field name="longitude"/>
@@ -75,23 +75,23 @@
         <field name="name">transport.vehicle.position.search</field>
         <field name="model">transport.vehicle.position</field>
         <field name="arch" type="xml">
-            <search string="Buscar Posiciones GPS">
+            <search string="Buscar posiciones GPS">
                 <field name="vehicle_id"/>
                 <field name="trip_id"/>
                 <field name="traccar_device_id"/>
-                <filter string="Datos Reales" name="filter_real" domain="[('source', '=', 'real')]"/>
+                <filter string="Datos reales" name="filter_real" domain="[('source', '=', 'real')]"/>
                 <filter string="Simulados" name="filter_simulated" domain="[('source', '=', 'simulated')]"/>
-                <filter string="No Verificados" name="filter_unverified" domain="[('source', '=', 'unverified')]"/>
+                <filter string="No verificados" name="filter_unverified" domain="[('source', '=', 'unverified')]"/>
                 <separator/>
-                <filter string="Asociados a Viaje" name="filter_associated" domain="[('association_status', '=', 'associated')]"/>
-                <filter string="Sin Asignar" name="filter_unassigned" domain="[('association_status', '=', 'unassigned')]"/>
-                <filter string="Ambiguos / Conflicto" name="filter_ambiguous" domain="[('association_status', '=', 'ambiguous')]"/>
+                <filter string="Asociados a viaje" name="filter_associated" domain="[('association_status', '=', 'associated')]"/>
+                <filter string="Sin asignar" name="filter_unassigned" domain="[('association_status', '=', 'unassigned')]"/>
+                <filter string="Ambiguos / conflicto" name="filter_ambiguous" domain="[('association_status', '=', 'ambiguous')]"/>
                 <separator/>
                 <filter string="Válidos" name="filter_valid" domain="[('is_valid', '=', True)]"/>
-                <group expand="0" string="Agrupar Por">
+                <group expand="0" string="Agrupar por">
                     <filter string="Vehículo" name="group_by_vehicle" context="{'group_by': 'vehicle_id'}"/>
                     <filter string="Recorrido" name="group_by_trip" context="{'group_by': 'trip_id'}"/>
-                    <filter string="Estado Asociación" name="group_by_association" context="{'group_by': 'association_status'}"/>
+                    <filter string="Estado asociación" name="group_by_association" context="{'group_by': 'association_status'}"/>
                     <filter string="Origen" name="group_by_source" context="{'group_by': 'source'}"/>
                     <filter string="Fecha" name="group_by_date" context="{'group_by': 'fix_time:day'}"/>
                 </group>
@@ -101,7 +101,7 @@
 
     <!-- Window Action -->
     <record id="action_transport_vehicle_position" model="ir.actions.act_window">
-        <field name="name">Historial de Posiciones GPS</field>
+        <field name="name">Historial GPS</field>
         <field name="res_model">transport.vehicle.position</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_vehicle_position_search"/>

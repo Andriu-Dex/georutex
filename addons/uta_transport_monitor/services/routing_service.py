@@ -15,7 +15,7 @@ _logger = logging.getLogger(__name__)
 
 DEFAULT_ROUTING_URL = "https://router.project-osrm.org"
 DEFAULT_TIMEOUT_SECONDS = 3.0
-DEFAULT_USER_AGENT = "GeoRutex-UTA-Fleet-Monitor/1.0"
+DEFAULT_USER_AGENT = "GeoRutex-Fleet-Monitor/1.0"
 
 
 class RoutingService:
