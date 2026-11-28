@@ -1,0 +1,6 @@
+# Tunnel overlay (Tailscale Funnel / Cloudflare Tunnel terminate HTTPS on this host):
+#   docker compose -f compose.yaml -f compose.tunnel.yaml up -d
+# Set ODOO_BIND_ADDRESS=127.0.0.1 in .env so only the tunnel reaches Odoo.
+services:
+  odoo:
+    command: ["odoo", "--db-filter=^georutex$$", "--proxy-mode", "--no-database-list"]
