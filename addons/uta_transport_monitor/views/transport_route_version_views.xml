@@ -5,7 +5,7 @@
         <field name="name">transport.route.version.tree</field>
         <field name="model">transport.route.version</field>
         <field name="arch" type="xml">
-            <tree string="Versiones de Ruta" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'archived'">
+            <tree string="Versiones de ruta" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'archived'">
                 <field name="route_id"/>
                 <field name="version_number"/>
                 <field name="name"/>
@@ -127,14 +127,14 @@
         <field name="name">transport.route.version.search</field>
         <field name="model">transport.route.version</field>
         <field name="arch" type="xml">
-            <search string="Buscar Versiones">
+            <search string="Buscar versiones">
                 <field name="route_id"/>
                 <field name="version_number"/>
                 <separator/>
                 <filter string="Borradores" name="filter_draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Aprobadas" name="filter_approved" domain="[('state', '=', 'approved')]"/>
                 <filter string="Archivadas" name="filter_archived" domain="[('state', '=', 'archived')]"/>
-                <group expand="0" string="Agrupar Por">
+                <group expand="0" string="Agrupar por">
                     <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
@@ -144,7 +144,7 @@
 
     <!-- Action Window: Versiones de Ruta -->
     <record id="action_transport_route_version" model="ir.actions.act_window">
-        <field name="name">Versiones de Ruta</field>
+        <field name="name">Paradas y trazado</field>
         <field name="res_model">transport.route.version</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_transport_route_version_search"/>

@@ -44,7 +44,7 @@ class TransportRouteVersion(models.Model):
         index=True,
     )
     version_number = fields.Integer(
-        string="Número de Versión",
+        string="Número de versión",
         default=1,
         required=True,
     )
@@ -64,18 +64,18 @@ class TransportRouteVersion(models.Model):
         help="Trazado de referencia de la ruta. Se genera con «Calcular trazado vial».",
     )
     estimated_distance_m = fields.Float(
-        string="Distancia Programada (m)",
+        string="Distancia programada (m)",
         digits=(10, 2),
         help="Distancia geométrica estimada del recorrido en metros.",
     )
     planned_duration_s = fields.Integer(
-        string="Duración Programada (s)",
+        string="Duración programada (s)",
         compute="_compute_planned_duration",
         store=True,
         help="Tiempo estimado de recorrido al punto de destino en segundos.",
     )
     planned_duration_display = fields.Char(
-        string="Duración Programada",
+        string="Duración programada",
         compute="_compute_planned_duration",
         store=True,
         help="Tiempo estimado de recorrido en formato legible (ej. '30 min 00 s').",
@@ -107,19 +107,19 @@ class TransportRouteVersion(models.Model):
         help="Tiempo máximo sin recibir posiciones GPS antes de registrar una pérdida de señal.",
     )
     minimum_consecutive_deviation_points = fields.Integer(
-        string="Puntos Desvío Consecutivos",
+        string="Puntos desvío consecutivos",
         default=2,
         required=True,
         help="Muestras consecutivas fuera de corredor para confirmar desvío.",
     )
     minimum_deviation_duration_s = fields.Integer(
-        string="Duración Mínima Desvío (s)",
+        string="Duración mínima desvío (s)",
         default=10,
         required=True,
         help="Duración mínima fuera del corredor para confirmar desvío.",
     )
     geo_accuracy_max_m = fields.Float(
-        string="Precisión Máxima GPS (m)",
+        string="Precisión máxima GPS (m)",
         default=100.0,
         required=True,
         help="Umbral de exactitud horizontal aceptable para desvíos.",
@@ -127,16 +127,16 @@ class TransportRouteVersion(models.Model):
 
     # Auditing and approvals
     approved_at = fields.Datetime(
-        string="Fecha de Aprobación",
+        string="Fecha de aprobación",
         readonly=True,
     )
     approved_by_id = fields.Many2one(
         comodel_name="res.users",
-        string="Aprobado Por",
+        string="Aprobado por",
         readonly=True,
     )
     active_for_new_trips = fields.Boolean(
-        string="Habilitada para Nuevos Recorridos",
+        string="Habilitada para nuevos recorridos",
         default=False,
     )
 
@@ -144,16 +144,16 @@ class TransportRouteVersion(models.Model):
     stop_ids = fields.One2many(
         comodel_name="transport.route.stop",
         inverse_name="route_version_id",
-        string="Puntos de Control / Paradas",
+        string="Puntos de control / paradas",
     )
     stop_count = fields.Integer(
-        string="Nº Puntos de Control",
+        string="Nº Puntos de control",
         compute="_compute_counts",
     )
     trip_ids = fields.One2many(
         comodel_name="transport.trip",
         inverse_name="route_version_id",
-        string="Recorridos Ejecutados / Programados",
+        string="Recorridos ejecutados / programados",
     )
     trip_count = fields.Integer(
         string="Nº Recorridos",

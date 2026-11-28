@@ -188,14 +188,15 @@ class TestGpsSync(TransactionCase):
         unlinked_vehicle._compute_gps_status()
         self.assertEqual(unlinked_vehicle.gps_connection_status, "unlinked")
 
+        # Linked but never reported: waiting for the first fix, not "offline".
         self.vehicle._compute_gps_status()
-        self.assertEqual(self.vehicle.gps_connection_status, "offline")
+        self.assertEqual(self.vehicle.gps_connection_status, "waiting")
 
     def test_generate_secure_unique_id(self):
         """Test unique ID generation with 128 bits of entropy (RF-08)."""
         self.vehicle.action_generate_secure_unique_id()
-        self.assertTrue(self.vehicle.traccar_unique_id.startswith("UTA-BUS-"))
-        self.assertEqual(len(self.vehicle.traccar_unique_id), 40)
+        self.assertTrue(self.vehicle.traccar_unique_id.startswith("GRX-"))
+        self.assertEqual(len(self.vehicle.traccar_unique_id), 36)
 
     def test_traccar_device_uniqueness_constraint(self):
         """RF-08: No two active vehicles can share Traccar device bindings."""

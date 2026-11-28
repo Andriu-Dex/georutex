@@ -18,7 +18,7 @@ class TransportTripEvaluation(models.Model):
     _order = "evaluation_date desc, id desc"
 
     name = fields.Char(
-        string="Código de Evaluación",
+        string="Código de evaluación",
         required=True,
         copy=False,
         readonly=True,
@@ -27,7 +27,7 @@ class TransportTripEvaluation(models.Model):
     )
     trip_id = fields.Many2one(
         comodel_name="transport.trip",
-        string="Recorrido Evaluado",
+        string="Recorrido evaluado",
         required=True,
         ondelete="cascade",
         index=True,
@@ -48,7 +48,7 @@ class TransportTripEvaluation(models.Model):
     )
     route_version_id = fields.Many2one(
         comodel_name="transport.route.version",
-        string="Versión de Ruta",
+        string="Versión de ruta",
         related="trip_id.route_version_id",
         store=True,
         readonly=True,
@@ -61,19 +61,19 @@ class TransportTripEvaluation(models.Model):
         readonly=True,
     )
     evaluation_date = fields.Datetime(
-        string="Fecha de Evaluación",
+        string="Fecha de evaluación",
         required=True,
         default=fields.Datetime.now,
         index=True,
     )
     evaluator_user_id = fields.Many2one(
         comodel_name="res.users",
-        string="Evaluador / Usuario",
+        string="Evaluador / usuario",
         default=lambda self: self.env.user,
         readonly=True,
     )
     rules_version = fields.Char(
-        string="Versión de Reglas",
+        string="Versión de reglas",
         default="v1.0.0-phase4",
         required=True,
         readonly=True,
@@ -88,9 +88,9 @@ class TransportTripEvaluation(models.Model):
         selection=[
             ("completed", "Completado"),
             ("incomplete", "Incompleto"),
-            ("insufficient_data", "Datos Insuficientes"),
+            ("insufficient_data", "Datos insuficientes"),
         ],
-        string="Estado de Integridad",
+        string="Estado de integridad",
         required=True,
         default="insufficient_data",
         index=True,
@@ -101,7 +101,7 @@ class TransportTripEvaluation(models.Model):
         help="Evaluación matemática estricta antes de justificaciones.",
     )
     is_compliant_adjusted = fields.Boolean(
-        string="Conforme Ajustado (Con Justificaciones)",
+        string="Conforme ajustado (con justificaciones)",
         readonly=True,
         help="Evaluación considerando justificaciones operacionales.",
     )
@@ -114,11 +114,11 @@ class TransportTripEvaluation(models.Model):
             ("late", "Tardío"),
             ("indeterminate", "Indeterminado"),
         ],
-        string="Puntualidad en Salida",
+        string="Puntualidad en salida",
         default="indeterminate",
     )
     start_delay_s = fields.Integer(
-        string="Diferencia Salida (s)",
+        string="Diferencia salida (s)",
         help="Diferencia en segundos respecto a la salida programada.",
     )
     arrival_punctuality = fields.Selection(
@@ -129,33 +129,33 @@ class TransportTripEvaluation(models.Model):
             ("incomplete", "Incompleto"),
             ("indeterminate", "Indeterminado"),
         ],
-        string="Puntualidad en Llegada",
+        string="Puntualidad en llegada",
         default="indeterminate",
     )
     arrival_delay_s = fields.Integer(
-        string="Diferencia Llegada (s)",
+        string="Diferencia llegada (s)",
         help="Diferencia en segundos respecto a la llegada programada.",
     )
 
     # Checkpoint counts
-    stops_total = fields.Integer(string="Total Paradas / Controles")
-    stops_on_time = fields.Integer(string="Paradas Puntuales")
-    stops_late = fields.Integer(string="Paradas con Retraso")
-    stops_missed = fields.Integer(string="Paradas Omitidas")
-    stops_indeterminate = fields.Integer(string="Paradas Indeterminadas")
+    stops_total = fields.Integer(string="Total paradas / controles")
+    stops_on_time = fields.Integer(string="Paradas puntuales")
+    stops_late = fields.Integer(string="Paradas con retraso")
+    stops_missed = fields.Integer(string="Paradas omitidas")
+    stops_indeterminate = fields.Integer(string="Paradas indeterminadas")
 
     # Spatial and telemetry counts
-    deviation_count = fields.Integer(string="Nº Desvíos Confirmados")
-    deviation_duration_s = fields.Integer(string="Duración Total Desvíos (s)")
+    deviation_count = fields.Integer(string="Nº Desvíos confirmados")
+    deviation_duration_s = fields.Integer(string="Duración total desvíos (s)")
     max_deviation_distance_m = fields.Float(
-        string="Distancia Máxima de Desvío (m)",
+        string="Distancia máxima de desvío (m)",
         digits=(8, 2),
     )
     gps_gap_count = fields.Integer(string="Pérdidas de señal GPS")
     gps_gap_duration_s = fields.Integer(string="Tiempo total sin señal GPS (s)")
 
     evaluation_summary = fields.Text(
-        string="Dictamen y Detalle de Evaluación",
+        string="Dictamen y detalle de evaluación",
     )
 
     # Incidents relation
@@ -164,7 +164,7 @@ class TransportTripEvaluation(models.Model):
         relation="transport_trip_evaluation_incident_rel",
         column1="evaluation_id",
         column2="incident_id",
-        string="Incidencias Asociadas",
+        string="Incidencias asociadas",
     )
 
     @api.model

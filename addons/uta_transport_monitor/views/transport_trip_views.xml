@@ -5,7 +5,7 @@
         <field name="name">transport.trip.tree</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <tree string="Recorridos Operacionales">
+            <tree string="Recorridos operacionales">
                 <field name="route_id" string="Ruta"/>
                 <field name="name" string="Código"/>
                 <field name="scheduled_start_utc" string="Inicio programado"/>
@@ -122,7 +122,7 @@
         <field name="name">transport.trip.form</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <form string="Recorrido Operacional" class="o_georutex_trip_form">
+            <form string="Recorrido operacional" class="o_georutex_trip_form">
                 <header>
                     <button name="action_schedule" string="Confirmar programación" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'draft')]}" groups="uta_transport_monitor.group_transport_manager"/>
                     <button name="action_start" string="Iniciar recorrido" type="object" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'scheduled')]}" groups="uta_transport_monitor.group_transport_manager"/>
@@ -143,7 +143,22 @@
                         <i class="fa fa-exclamation-triangle me-2" title="Alerta"/>
                         <strong>Horario vencido:</strong> la hora prevista de llegada ya pasó y el recorrido sigue <b>en curso</b>. Sincronice el GPS o finalice el recorrido cuando llegue al destino.
                     </div>
-                    <widget name="web_ribbon" title="Simulado" bg_color="bg-warning" attrs="{'invisible': [('source_type', '!=', 'simulated')]}"/>
+                    <div class="alert alert-info mb-3" role="status" groups="uta_transport_monitor.group_transport_manager"
+                         attrs="{'invisible': ['|', ('id', '=', False), ('state', '!=', 'draft')]}">
+                        <strong>Siguiente paso:</strong> revise la unidad, el conductor, la ruta y el horario, y pulse «Confirmar programación».
+                    </div>
+                    <div class="alert alert-info mb-3" role="status" groups="uta_transport_monitor.group_transport_manager"
+                         attrs="{'invisible': [('state', '!=', 'scheduled')]}">
+                        <strong>Siguiente paso:</strong> cuando el vehículo salga, verifique que Traccar Client esté activo en el teléfono y pulse «Iniciar recorrido».
+                    </div>
+                    <div class="alert alert-info mb-3" role="status" groups="uta_transport_monitor.group_transport_manager"
+                         attrs="{'invisible': ['|', ('state', '!=', 'in_progress'), ('is_schedule_overdue', '=', True)]}">
+                        <strong>Recorrido en curso.</strong> Las posiciones llegan solas; use «Sincronizar GPS» para traerlas ahora. Al llegar al destino, pulse «Finalizar recorrido».
+                    </div>
+                    <div class="alert alert-info mb-3" role="status" groups="uta_transport_monitor.group_transport_manager,uta_transport_monitor.group_transport_analyst"
+                         attrs="{'invisible': ['|', ('state', '!=', 'completed'), ('evaluation_count', '!=', 0)]}">
+                        <strong>Siguiente paso:</strong> pulse «Evaluar recorrido» para calcular puntualidad, paradas, desvíos e incidencias.
+                    </div>
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" icon="fa-map-marker">
                             <field name="stop_visit_count" widget="statinfo" string="Paradas"/>
@@ -197,12 +212,12 @@
                     <notebook>
                         <page string="Paradas" name="stops_page">
                             <field name="stop_visit_ids" readonly="1">
-                                <tree string="Visitas a Puntos de Control">
+                                <tree string="Visitas a puntos de control">
                                     <field name="sequence"/>
                                     <field name="stop_name"/>
                                     <field name="stop_type" widget="badge" decoration-info="stop_type == 'checkpoint'" decoration-primary="stop_type == 'origin'" decoration-success="stop_type == 'destination'"/>
                                     <field name="required" widget="boolean_toggle"/>
-                                    <field name="scheduled_at_utc" string="Hora Prevista"/>
+                                    <field name="scheduled_at_utc" string="Hora prevista"/>
                                     <field name="first_arrival_utc" string="Llegada registrada"/>
                                     <field name="delay_s"/>
                                     <field name="status" widget="badge" decoration-info="status == 'pending'" decoration-success="status == 'on_time'" decoration-warning="status == 'late'" decoration-danger="status == 'missed'"/>
@@ -211,7 +226,7 @@
                         </page>
                         <page string="Evaluación" name="evaluation_page" attrs="{'invisible': [('evaluation_count', '=', 0)]}">
                             <field name="evaluation_ids" readonly="1">
-                                <tree string="Historial de Evaluaciones">
+                                <tree string="Historial de evaluaciones">
                                     <field name="name"/>
                                     <field name="evaluation_date"/>
                                     <field name="integrity_status" widget="badge"/>
@@ -227,7 +242,7 @@
                         </page>
                         <page string="Incidencias" name="incidents_page">
                             <field name="incident_ids">
-                                <tree string="Incidencias Registradas" decoration-danger="severity in ('critical', 'high')" decoration-warning="severity == 'medium'" decoration-success="state == 'justified'">
+                                <tree string="Incidencias registradas" decoration-danger="severity in ('critical', 'high')" decoration-warning="severity == 'medium'" decoration-success="state == 'justified'">
                                     <field name="name"/>
                                     <field name="timestamp_utc"/>
                                     <field name="incident_type"/>
@@ -266,7 +281,7 @@
                                 <tree string="Posiciones GPS" limit="20">
                                     <field name="fix_time_utc"/>
                                     <field name="fix_time_local"/>
-                                    <field name="fix_time" string="Fecha/Hora Odoo" optional="hide"/>
+                                    <field name="fix_time" string="Fecha/hora Odoo" optional="hide"/>
                                     <field name="latitude"/>
                                     <field name="longitude"/>
                                     <field name="speed"/>
@@ -291,28 +306,28 @@
         <field name="name">transport.trip.search</field>
         <field name="model">transport.trip</field>
         <field name="arch" type="xml">
-            <search string="Buscar Recorridos">
+            <search string="Buscar recorridos">
                 <field name="name"/>
                 <field name="vehicle_id"/>
                 <field name="driver_id"/>
                 <field name="route_id"/>
                 <separator/>
-                <filter string="Mis Recorridos" name="filter_my_trips" domain="['|', ('driver_user_id', '=', uid), ('driver_id.user_ids', 'in', [uid])]"/>
+                <filter string="Mis recorridos" name="filter_my_trips" domain="['|', ('driver_user_id', '=', uid), ('driver_id.user_ids', 'in', [uid])]"/>
                 <separator/>
                 <filter string="Borradores" name="filter_draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="Programados" name="filter_scheduled" domain="[('state', '=', 'scheduled')]"/>
-                <filter string="En Curso" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="En curso" name="filter_in_progress" domain="[('state', '=', 'in_progress')]"/>
                 <filter string="Finalizados" name="filter_completed" domain="[('state', '=', 'completed')]"/>
                 <filter string="Cancelados" name="filter_cancelled" domain="[('state', '=', 'cancelled')]"/>
                 <separator/>
-                <filter string="Datos Reales" name="filter_real" domain="[('source_type', '=', 'real')]"/>
+                <filter string="Datos reales" name="filter_real" domain="[('source_type', '=', 'real')]"/>
                 <filter string="Simulados" name="filter_simulated" domain="[('source_type', '=', 'simulated')]"/>
-                <group expand="0" string="Agrupar Por">
+                <group expand="0" string="Agrupar por">
                     <filter string="Estado" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="Ruta" name="group_route" context="{'group_by': 'route_id'}"/>
                     <filter string="Vehículo" name="group_vehicle" context="{'group_by': 'vehicle_id'}"/>
                     <filter string="Conductor" name="group_driver" context="{'group_by': 'driver_id'}"/>
-                    <filter string="Tipo de Datos" name="group_source" context="{'group_by': 'source_type'}"/>
+                    <filter string="Tipo de datos" name="group_source" context="{'group_by': 'source_type'}"/>
                 </group>
             </search>
         </field>
@@ -320,7 +335,7 @@
 
     <!-- Action Window: Todos los Recorridos (Administrador / Analista) -->
     <record id="action_transport_trip" model="ir.actions.act_window">
-        <field name="name">Recorridos Operacionales</field>
+        <field name="name">Recorridos</field>
         <field name="res_model">transport.trip</field>
         <field name="view_mode">tree,kanban,form</field>
         <field name="search_view_id" ref="view_transport_trip_search"/>

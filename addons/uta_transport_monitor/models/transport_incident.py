@@ -25,7 +25,7 @@ class TransportIncident(models.Model):
     _order = "timestamp_utc desc, id desc"
 
     name = fields.Char(
-        string="Código de Incidencia",
+        string="Código de incidencia",
         required=True,
         copy=False,
         readonly=True,
@@ -34,7 +34,7 @@ class TransportIncident(models.Model):
     )
     trip_id = fields.Many2one(
         comodel_name="transport.trip",
-        string="Recorrido Asociado",
+        string="Recorrido asociado",
         required=True,
         ondelete="cascade",
         index=True,
@@ -62,7 +62,7 @@ class TransportIncident(models.Model):
     )
     driver_user_id = fields.Many2one(
         comodel_name=MODEL_USERS,
-        string="Usuario Conductor",
+        string="Usuario conductor",
         related="trip_id.driver_user_id",
         store=True,
         readonly=True,
@@ -71,29 +71,29 @@ class TransportIncident(models.Model):
     incident_type = fields.Selection(
         selection=[
             # Automatic types (RF-27)
-            ("delay_start", "Retraso en Salida"),
-            ("delay_arrival", "Retraso en Llegada"),
-            ("delay_checkpoint", "Retraso en Punto de Control"),
-            ("stop_missed", "Omisión de Parada Obligatoria"),
-            ("route_deviation", "Desvío del Corredor de Ruta"),
+            ("delay_start", "Retraso en salida"),
+            ("delay_arrival", "Retraso en llegada"),
+            ("delay_checkpoint", "Retraso en punto de control"),
+            ("stop_missed", "Omisión de parada obligatoria"),
+            ("route_deviation", "Desvío del corredor de ruta"),
             ("gps_loss", "Pérdida de señal GPS"),
             # Manual operational types (RF-28)
-            ("traffic_congestion", "Congestión Vehicular Severa"),
-            ("accident", "Accidente de Tránsito"),
-            ("road_block", "Cierre o Bloqueo de Vía"),
-            ("vehicle_breakdown", "Avería Mecánica"),
-            ("weather", "Condiciones Climáticas Adversas"),
-            ("other", "Otra Eventualidad"),
+            ("traffic_congestion", "Congestión vehicular severa"),
+            ("accident", "Accidente de tránsito"),
+            ("road_block", "Cierre o bloqueo de vía"),
+            ("vehicle_breakdown", "Avería mecánica"),
+            ("weather", "Condiciones climáticas adversas"),
+            ("other", "Otra eventualidad"),
         ],
-        string="Tipo de Incidencia",
+        string="Tipo de incidencia",
         required=True,
         index=True,
         default="other",
     )
     source = fields.Selection(
         selection=[
-            ("automatic", "Detección Automática (Motor de Reglas)"),
-            ("manual", "Reporte Manual (Operador / Conductor)"),
+            ("automatic", "Detección automática (motor de reglas)"),
+            ("manual", "Reporte manual (operador / conductor)"),
         ],
         string="Origen",
         required=True,
@@ -113,12 +113,12 @@ class TransportIncident(models.Model):
     )
     state = fields.Selection(
         selection=[
-            ("pending", "Pendiente / Registrada"),
-            ("justified", "Justificada (Aprobada)"),
-            ("rejected", "Justificación Rechazada"),
-            ("confirmed", "Confirmada / Sin Justificar"),
+            ("pending", "Pendiente / registrada"),
+            ("justified", "Justificada (aprobada)"),
+            ("rejected", "Justificación rechazada"),
+            ("confirmed", "Confirmada / sin justificar"),
         ],
-        string="Estado de Resolución",
+        string="Estado de resolución",
         required=True,
         default="pending",
         index=True,
@@ -126,62 +126,62 @@ class TransportIncident(models.Model):
 
     stop_id = fields.Many2one(
         comodel_name="transport.route.stop",
-        string="Parada Afectada",
+        string="Parada afectada",
         ondelete="set null",
         help="Parada o punto de control relacionado si aplica.",
     )
     timestamp_utc = fields.Datetime(
-        string="Fecha y Hora del Evento (UTC)",
+        string="Fecha y hora del evento (UTC)",
         required=True,
         default=fields.Datetime.now,
         index=True,
     )
     latitude = fields.Float(
-        string="Latitud del Evento",
+        string="Latitud del evento",
         digits=(10, 6),
     )
     longitude = fields.Float(
-        string="Longitud del Evento",
+        string="Longitud del evento",
         digits=(10, 6),
     )
     rule_applied = fields.Char(
-        string="Regla de Evaluación Aplicada",
+        string="Regla de evaluación aplicada",
         help="Regla de control que originó la incidencia.",
     )
     evidence_data = fields.Text(
-        string="Datos de Evidencia Técnica",
+        string="Datos de evidencia técnica",
         help="Detalles numéricos, métricas y coordenadas de la infracción.",
     )
     description = fields.Text(
-        string="Descripción del Incidente",
+        string="Descripción del incidente",
         help="Descripción operacional del evento.",
     )
 
     # Justification fields (RF-29)
     justification_notes = fields.Text(
-        string="Descargo / Justificación",
+        string="Descargo / justificación",
         help="Motivo alegado para justificar la incidencia.",
     )
     justification_submitted_by = fields.Many2one(
         comodel_name=MODEL_USERS,
-        string="Justificación Enviada Por",
+        string="Justificación enviada por",
         readonly=True,
     )
     justification_submitted_at = fields.Datetime(
-        string="Fecha de Justificación",
+        string="Fecha de justificación",
         readonly=True,
     )
     reviewed_by = fields.Many2one(
         comodel_name=MODEL_USERS,
-        string="Revisado Por",
+        string="Revisado por",
         readonly=True,
     )
     reviewed_at = fields.Datetime(
-        string="Fecha de Revisión",
+        string="Fecha de revisión",
         readonly=True,
     )
     review_notes = fields.Text(
-        string="Resolución de Revisión",
+        string="Resolución de revisión",
         help="Comentarios del revisor sobre la justificación.",
     )
 

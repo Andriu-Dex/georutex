@@ -5,7 +5,7 @@
         <field name="name">transport.route.tree</field>
         <field name="model">transport.route</field>
         <field name="arch" type="xml">
-            <tree string="Rutas de Transporte" decoration-muted="not active">
+            <tree string="Rutas de transporte" decoration-muted="not active">
                 <field name="code"/>
                 <field name="name"/>
                 <field name="origin_name"/>
@@ -67,7 +67,7 @@
                         </page>
                         <page string="Versiones" name="versions_page" attrs="{'invisible': [('id', '=', False)]}">
                             <field name="version_ids" readonly="1">
-                                <tree string="Versiones de Ruta">
+                                <tree string="Versiones de ruta">
                                     <field name="version_number"/>
                                     <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'approved'" decoration-muted="state == 'archived'"/>
                                     <field name="stop_count"/>
@@ -88,7 +88,7 @@
         <field name="name">transport.route.search</field>
         <field name="model">transport.route</field>
         <field name="arch" type="xml">
-            <search string="Buscar Rutas">
+            <search string="Buscar rutas">
                 <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
                 <field name="code"/>
                 <field name="origin_name"/>
@@ -99,7 +99,7 @@
                 <separator/>
                 <filter string="Ida" name="filter_outbound" domain="[('direction', '=', 'outbound')]"/>
                 <filter string="Vuelta" name="filter_inbound" domain="[('direction', '=', 'inbound')]"/>
-                <group expand="0" string="Agrupar Por">
+                <group expand="0" string="Agrupar por">
                     <filter string="Sentido" name="group_direction" context="{'group_by': 'direction'}"/>
                 </group>
             </search>

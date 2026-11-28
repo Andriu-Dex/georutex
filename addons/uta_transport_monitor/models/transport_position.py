@@ -26,18 +26,18 @@ class TransportVehiclePosition(models.Model):
     )
     trip_id = fields.Many2one(
         comodel_name="transport.trip",
-        string="Recorrido Asignado",
+        string="Recorrido asignado",
         ondelete="set null",
         index=True,
         help="Recorrido operacional al que se vincula esta posición.",
     )
     association_status = fields.Selection(
         selection=[
-            ("unassigned", "Sin Asignar"),
+            ("unassigned", "Sin asignar"),
             ("associated", "Asociado"),
-            ("ambiguous", "Ambiguo / En Conflicto"),
+            ("ambiguous", "Ambiguo / en conflicto"),
         ],
-        string="Estado de Asociación",
+        string="Estado de asociación",
         default="unassigned",
         required=True,
         index=True,
@@ -52,7 +52,7 @@ class TransportVehiclePosition(models.Model):
         index=True,
     )
     fix_time = fields.Datetime(
-        string="Fecha/Hora GPS",
+        string="Fecha/hora GPS",
         required=True,
         index=True,
         help="Momento en que el GPS registró la posición (hora local).",
@@ -64,13 +64,13 @@ class TransportVehiclePosition(models.Model):
         help="Representación textual UTC sin conversión de zona horaria.",
     )
     fix_time_local = fields.Char(
-        string="Hora Local (Ecuador)",
+        string="Hora local (Ecuador)",
         compute="_compute_fix_time_local",
         store=False,
         help="Representación horaria en América/Guayaquil (ECT, UTC-5).",
     )
     server_time = fields.Datetime(
-        string="Hora Servidor (UTC)",
+        string="Hora servidor (UTC)",
     )
     latitude = fields.Float(
         string="Latitud",
@@ -100,16 +100,16 @@ class TransportVehiclePosition(models.Model):
         digits=(5, 1),
     )
     is_valid = fields.Boolean(
-        string="Posición Válida",
+        string="Posición válida",
         default=True,
     )
     source = fields.Selection(
         selection=[
-            ("real", "Datos Reales / GPS"),
+            ("real", "Datos reales / GPS"),
             ("simulated", "Simulado"),
-            ("unverified", "No Verificado"),
+            ("unverified", "No verificado"),
         ],
-        string="Origen de Datos",
+        string="Origen de datos",
         default="unverified",
         required=True,
         index=True,

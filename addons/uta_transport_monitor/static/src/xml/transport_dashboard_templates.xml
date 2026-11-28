@@ -121,7 +121,7 @@
                             <t t-esc="state.kpis['MT-01'] ? state.kpis['MT-01'].display_value : 'N/A'"/>
                         </div>
                         <div class="grx-band-foot">
-                            <span>Bruto <strong class="grx-num"><t t-esc="state.summary.compliant_trips_gross || 0"/></strong> · Ajustado <strong class="grx-num"><t t-esc="state.summary.compliant_trips_adjusted || 0"/></strong></span>
+                            <span>Conformes: <strong class="grx-num"><t t-esc="state.summary.compliant_trips_gross || 0"/></strong> bruto · <strong class="grx-num"><t t-esc="state.summary.compliant_trips_adjusted || 0"/></strong> ajustado</span>
                         </div>
                     </button>
 

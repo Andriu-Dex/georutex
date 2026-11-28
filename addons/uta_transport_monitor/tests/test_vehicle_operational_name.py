@@ -23,21 +23,14 @@ class TestVehicleOperationalName(common.TransactionCase):
         })
 
     def test_01_operational_name_enriches_vehicle_name(self):
-        """Ensure vehicle name includes bracketed unit name when provided."""
+        """Ensure vehicle name leads with the operational unit name and plate."""
         vehicle = self.env["fleet.vehicle"].create({
             "model_id": self.model.id,
             "license_plate": "TBA-9001",
             "operational_name": "Bus 01 — UTA Huachi",
         })
 
-        expected_prefix = "[Bus 01 — UTA Huachi]"
-        self.assertIn(
-            expected_prefix,
-            vehicle.name,
-            "El nombre del vehículo debe contener el nombre operativo entre corchetes.",
-        )
-        self.assertIn("TBA-9001", vehicle.name)
-        self.assertIn("Sprinter Test", vehicle.name)
+        self.assertEqual(vehicle.name, "Bus 01 — UTA Huachi · TBA-9001")
 
     def test_02_clearing_operational_name_falls_back(self):
         """Ensure clearing operational_name restores default Odoo format."""
@@ -46,10 +39,10 @@ class TestVehicleOperationalName(common.TransactionCase):
             "license_plate": "TBA-9002",
             "operational_name": "Bus 02 — UTA Querochaca",
         })
-        self.assertIn("[Bus 02 — UTA Querochaca]", vehicle.name)
+        self.assertTrue(vehicle.name.startswith("Bus 02 — UTA Querochaca"))
 
         vehicle.write({"operational_name": False})
-        self.assertNotIn("[", vehicle.name)
+        self.assertNotIn("Querochaca", vehicle.name)
         self.assertIn("TBA-9002", vehicle.name)
         self.assertIn("Sprinter Test", vehicle.name)
 

@@ -8,7 +8,7 @@
 
     <!-- Rol: Consultor / Analista -->
     <record id="group_transport_analyst" model="res.groups">
-        <field name="name">Analista / Consultor</field>
+        <field name="name">Analista / consultor</field>
         <field name="category_id" ref="module_category_transport"/>
         <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
     </record>
@@ -22,7 +22,7 @@
 
     <!-- Rol: Administrador de Transporte -->
     <record id="group_transport_manager" model="res.groups">
-        <field name="name">Administrador de Transporte</field>
+        <field name="name">Administrador de transporte</field>
         <field name="category_id" ref="module_category_transport"/>
         <field name="implied_ids" eval="[(4, ref('group_transport_analyst')), (4, ref('fleet.fleet_group_manager'))]"/>
         <field name="users" eval="[(4, ref('base.user_root')), (4, ref('base.user_admin'))]"/>

@@ -28,12 +28,12 @@
                 </div>
                 <div class="d-flex align-items-center">
                     <button type="button" class="btn btn-sm btn-outline-secondary me-2" t-on-click="onFitBounds" title="Ajustar encuadre del mapa">
-                        <i class="fa fa-crosshairs me-1"/>Enfocar Ruta
+                        <i class="fa fa-crosshairs me-1"/>Enfocar ruta
                     </button>
-                    <button type="button" class="btn btn-sm" t-att-class="state.isLivePolling ? 'btn-success text-white' : 'btn-outline-primary'" t-on-click="toggleLivePolling" title="Auto-actualizar mapa en vivo cada 15 segundos">
+                    <button t-if="props.record and props.record.data.state === 'in_progress'" type="button" class="btn btn-sm" t-att-class="state.isLivePolling ? 'btn-success text-white' : 'btn-outline-primary'" t-on-click="toggleLivePolling" title="Auto-actualizar mapa en vivo cada 15 segundos">
                         <i class="fa fa-refresh me-1" t-att-class="state.isLivePolling ? 'fa-spin' : ''"/>
-                        <t t-if="state.isLivePolling">En Vivo (15s)</t>
-                        <t t-else="">Activar En Vivo</t>
+                        <t t-if="state.isLivePolling">En vivo (15 s)</t>
+                        <t t-else="">Activar en vivo</t>
                     </button>
                 </div>
             </div>

@@ -28,7 +28,7 @@ services:
       postgres:
         condition: service_healthy
     ports:
-      - "${ODOO_HTTP_PORT:-8069}:8069"
+      - "${ODOO_BIND_ADDRESS:-0.0.0.0}:${ODOO_HTTP_PORT:-8069}:8069"
     environment:
       HOST: postgres
       PORT: 5432
@@ -40,10 +40,13 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_ENCRYPTION: ${SMTP_ENCRYPTION:-starttls}
       SMTP_USER: ${SMTP_USER:-}
-      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-${SMTP_PASS:-}}
       SMTP_FROM: ${SMTP_FROM:-}
+      TRACCAR_API_BASE_URL: ${TRACCAR_API_BASE_URL:-http://traccar:8082}
+      TRACCAR_API_USERNAME: ${TRACCAR_API_USERNAME:-}
+      TRACCAR_API_PASSWORD: ${TRACCAR_API_PASSWORD:-}
     entrypoint: ["python3", "/usr/local/bin/georutex-entrypoint.py"]
-    command: ["odoo"]
+    command: ["odoo", "--db-filter=^georutex$$"]
     volumes:
       - ./addons:/mnt/extra-addons
       - ./infra/odoo/odoo.conf:/etc/odoo/odoo.conf

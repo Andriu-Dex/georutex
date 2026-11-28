@@ -1,0 +1,29 @@
+# Production overlay: docker compose -f compose.yaml -f compose.prod.yaml up -d
+# Requires ODOO_BIND_ADDRESS=127.0.0.1, GRX_DOMAIN and GPS_DOMAIN in .env.
+services:
+  odoo:
+    command: ["odoo", "--db-filter=^georutex$$", "--proxy-mode", "--no-database-list"]
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: georutex-caddy
+    restart: unless-stopped
+    depends_on:
+      - odoo
+      - traccar
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      GRX_DOMAIN: ${GRX_DOMAIN:?GRX_DOMAIN is required}
+      GPS_DOMAIN: ${GPS_DOMAIN:?GPS_DOMAIN is required}
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - georutex_net
+
+volumes:
+  caddy_data:
+  caddy_config:

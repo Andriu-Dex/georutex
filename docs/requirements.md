@@ -35,10 +35,12 @@ El agente debe:
 
 ### 0.2. Clasificación de las decisiones
 
-- **[OFICIAL]**: requisito obligatorio del documento de proyecto `proyectoFinal_GC.pdf`. No puede eliminarse por conveniencia técnica.
+- **[OFICIAL]**: requisito obligatorio del documento original del proyecto, versionado como `docs/original_requirements.pdf` (citado también como `proyectoFinal_GC.pdf`). No puede eliminarse por conveniencia técnica.
 - **[REUNIÓN]**: precisión, posibilidad o recomendación expresada el 30/10/2026 en `Texto pegado.txt`. Cuando no contradiga un mínimo explícito, ayuda a definir el alcance.
 - **[DISEÑO]**: especificación técnica y regla concreta que se adopta en este documento para eliminar ambigüedades y permitir la programación. Es una **propuesta implementable**, no una cita del docente; debe quedar configurable cuando corresponda.
 - **[OPCIONAL]**: mejora que no condiciona la aprobación del alcance mínimo.
+
+**Jerarquía de fuentes:** este archivo se **deriva** de `docs/original_requirements.pdf`. Si ambos discrepan, **prevalece el PDF** y este archivo debe corregirse.
 
 **Orden de prioridad cuando exista conflicto:** mínimos y rúbrica oficiales → aclaraciones compatibles de la reunión → reglas de diseño aquí establecidas → funcionalidades opcionales. Ante una indicación oral ambigua, no rebajar un requisito escrito: implementar la variante que satisfaga ambos siempre que sea razonable.
 
@@ -71,7 +73,7 @@ El agente debe:
 - Adoptar una arquitectura modular por capas compatible con el framework Odoo 16, separando servicios y reglas de negocio del acceso API Traccar y de las vistas, sin forzar Onion estricta.
 - Extender `fleet.vehicle` y utilizar modelos propios de rutas, paradas, asignaciones, puntos GPS, visitas, incidencias, evaluaciones y métricas.
 - Crear un **mapa nativo integrado en Odoo** con una biblioteca compatible con el frontend de Odoo 16 y cartografía abierta, antes que depender de un iframe de toda la interfaz Traccar. Si ya existe un iframe funcional, conservarlo como acceso auxiliar, sin sustituir la integración de datos por API.
-- Priorizar un dashboard **nativo de Odoo** con filtros y gráficos; Power BI/Metabase queda como alternativa, no dependencia obligatoria.
+- Priorizar un dashboard **nativo de Odoo** con filtros y gráficos (Alternativa A del PDF). Como complemento se publican **vistas SQL de solo lectura para Power BI** (Alternativa B), consumidas con un usuario de base de datos exclusivo y sin permisos de escritura; toda vista conserva la columna de origen de datos (real/simulado).
 - Implementar sincronización **programada e idempotente** mediante `ir.cron` más actualización manual; la actualización en vivo con WebSocket puede añadirse después. “Tiempo real” aquí significa datos actualizados con periodicidad conocida y estado de frescura visible, no prometer latencia cero.
 - Mantener en `domain/` las funciones puras de geodesia, evaluación y métricas; en `services/` la orquestación; y en `integrations/` el adaptador HTTP Traccar. Ejecutar Pytest de dominio en entorno con **Odoo 16 instalado**, sin exigir conexión externa a Traccar; las pruebas nativas del ORM se ejecutan mediante el runner de Odoo.
 - Localizar cadenas de interfaz mediante `i18n/es.po` (fuentes técnicas en inglés y textos visibles en español). El addon debe cargarse con idioma español en las demostraciones.
@@ -1379,7 +1381,7 @@ georutex/
 │   ├── performance/                      # mediciones reproducibles
 │   └── fixtures/                         # dataset MCS-04 etiquetado y fixtures sintéticos, sin GPS privado
 ├── scripts/                              # arranque, diagnóstico, respaldo/restauración,
-│                                        # generador opcional de GPS simulado
+│                                        # simulador de recorridos (GPS sintético rotulado)
 └── evidence/                             # datos PRIVADOS por defecto
     ├── INDEX.md                          # metadatos saneados, único archivo público por excepción
     ├── gps_external/
@@ -1397,7 +1399,12 @@ georutex/
 3. `sonar-project.properties` limita el análisis al código **propio** y excluye `static/lib/` y otras dependencias vendorizadas, fixtures no productivas y artefactos; `coverage.xml` se genera a partir de ejecuciones instrumentadas, sin atribuirle cobertura Odoo no medida.
 4. `requirements-dev.txt`, `pytest.ini` e `infra/odoo/Dockerfile` más servicio/perfil `test` de `compose.yaml` configuran un entorno de **Odoo 16 con addon en `addons_path` y dependencias de prueba**, ejecutado con base PostgreSQL descartable separada de la operativa. El dominio usa preferentemente biblioteca estándar (`math` para Haversine/proyecciones locales), salvo justificación técnica de dependencias nuevas.
 5. Los archivos `demo/` facilitan instalaciones demostrativas, **no certifican** que los diez escenarios REC-01 a REC-10 se hayan ejecutado; las ejecuciones se registran con entradas, resultados obtenidos y evidencias.
-6. `scripts/` contiene operaciones reproducibles y opcionalmente un generador sintético con identificadores de dispositivos distintos a los reales. Sus salidas se rotulan `simulated` y **nunca** cuentan como demostración de datos móviles.
+6. `scripts/` contiene operaciones reproducibles y el **simulador de recorridos** [DISEÑO], destinado a producir el volumen necesario para las métricas y Power BI cuando no es viable ejecutar físicamente muchos recorridos (permitido por el PDF, Actividad 5):
+   - opera sobre vehículos, rutas aprobadas y paradas **reales** ya registrados; no los inventa;
+   - genera posiciones GPS a lo largo del trazado de referencia de cada ruta con velocidad variable, ruido de precisión y horarios coherentes, mezclando escenarios configurables (puntual, atrasado, parada omitida, desvío, incompleto, pérdida de señal);
+   - inserta las posiciones con `source = simulated` y los recorridos con `source_type = simulated`, y los procesa con el **mismo motor** de asociación, evaluación e incidencias que los datos reales; nunca escribe resultados ni KPI precalculados;
+   - es reproducible (semilla), parametrizable (cantidad, periodo) y solo puede eliminar lo que él mismo generó;
+   - sus salidas **nunca** cuentan como demostración de datos móviles ni se presentan como reales.
 7. La CI automatizada nunca reemplaza pruebas físicas externas, escaneo Sonar inaccesible ni resultados de mejora no medidos. El procedimiento ejecutable se describe en `docs/architecture.md`, sección 5. El pipeline incluye test de humo de importación Odoo, suite Pytest y pruebas Odoo sobre BD descartable cuando el entorno las soporte.
 8. `docs/fuentes/` puede alojar el PDF y la transcripción solo si existe autorización para versionarlos; sus títulos y referencias permanecen documentados en sección 17, aun si no se publican los archivos originales.
 
@@ -1683,7 +1690,7 @@ Esta sección impide que un agente confunda ejemplos, recomendaciones o declarac
 | ¿Crear app móvil? | No; usar Traccar Client existente | [REUNIÓN] |
 | ¿Usar Fleet o módulo externo poco claro? | Fleet está exigido; desarrollar extensión Odoo propia si no existe conector mantenible/compatible | [OFICIAL]/[DISEÑO] |
 | ¿Usar iframe en vez de mapa propio? | Iframe puede ser complemento, pero construir acceso a datos, gestión y evaluación nativos en Odoo; mapa propio recomendado | [REUNIÓN]/[DISEÑO] |
-| ¿Power BI obligatorio? | No; dashboard nativo Odoo satisface el alcance | [OFICIAL]/[REUNIÓN] |
+| ¿Power BI obligatorio? | No; el dashboard nativo de Odoo satisface el alcance. Se añaden vistas de solo lectura para Power BI como complemento | [OFICIAL]/[REUNIÓN]/[DISEÑO] |
 | ¿Docker obligatorio o prohibido? | No se pudo confirmar respuesta oral; usar despliegue reproducible que cumpla infraestructura real | [REUNIÓN]/[DISEÑO] |
 | ¿Misma base Traccar/Odoo? | Bases lógicas separadas y comunicación API; Odoo en PostgreSQL | [REUNIÓN]/[DISEÑO] |
 | ¿Tolerancia 1, 5 o más minutos? | Configurable; empezar con 5 min documentados, sin afirmar que es valor obligatorio | [OFICIAL]/[REUNIÓN]/[DISEÑO] |
@@ -1703,7 +1710,7 @@ Esta sección impide que un agente confunda ejemplos, recomendaciones o declarac
 
 ### 17.1. Documentos fuente del encargo
 
-1. **`proyectoFinal_GC.pdf`**, *Proyecto Final Integrador — Sistema de Monitoreo y Evaluación de Rutas de Transporte Universitario mediante Odoo 16 y Traccar*, 15 páginas: contexto y objetivo (pp. 1–2), requisitos e infraestructura (pp. 2–3), integración y gestión (pp. 3–5), recorridos, reglas y métricas (pp. 5–7), dashboard y pruebas (pp. 7–9), mejora y defensa (pp. 9–11), diagramas de arquitectura (pp. 12–13), rúbrica oficial (pp. 14–15).
+1. **`docs/original_requirements.pdf`** (`proyectoFinal_GC.pdf`), fuente de máxima prioridad, *Proyecto Final Integrador — Sistema de Monitoreo y Evaluación de Rutas de Transporte Universitario mediante Odoo 16 y Traccar*, 15 páginas: contexto y objetivo (pp. 1–2), requisitos e infraestructura (pp. 2–3), integración y gestión (pp. 3–5), recorridos, reglas y métricas (pp. 5–7), dashboard y pruebas (pp. 7–9), mejora y defensa (pp. 9–11), diagramas de arquitectura (pp. 12–13), rúbrica oficial (pp. 14–15).
 2. **`Texto pegado.txt`**, *Clase del 30 de octubre de 2026*, secciones 1–21: detalles de recorridos, personalización por herencia, rutas y paradas, incidencias, tolerancias, desvíos justificados, reportes dinámicos, alternativas de conectividad, roles, Traccar Client, bases independientes, huso horario y mapas integrados.
 
 Las transcripciones reconocen expresamente puntos de audio inciertos (nombre de un módulo, autorización de Docker, parte de la explicación de OSRM). Esta especificación **no convierte esas partes ininteligibles en requisitos confirmados**.

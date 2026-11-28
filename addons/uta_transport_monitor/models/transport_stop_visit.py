@@ -19,7 +19,7 @@ class TransportStopVisit(models.Model):
     )
     route_stop_id = fields.Many2one(
         comodel_name="transport.route.stop",
-        string="Parada de Referencia",
+        string="Parada de referencia",
         ondelete="set null",
     )
     sequence = fields.Integer(
@@ -27,14 +27,14 @@ class TransportStopVisit(models.Model):
         required=True,
     )
     stop_name = fields.Char(
-        string="Nombre del Control / Parada",
+        string="Nombre del control / parada",
         required=True,
     )
     stop_type = fields.Selection(
         selection=[
-            ("origin", "Punto de Origen / Salida"),
-            ("checkpoint", "Control Intermedio"),
-            ("destination", "Punto de Destino / Llegada"),
+            ("origin", "Punto de origen / salida"),
+            ("checkpoint", "Control intermedio"),
+            ("destination", "Punto de destino / llegada"),
         ],
         string="Tipo",
         default="checkpoint",
@@ -45,51 +45,51 @@ class TransportStopVisit(models.Model):
         default=True,
     )
     latitude = fields.Float(
-        string="Latitud Prevista",
+        string="Latitud prevista",
         digits=(10, 6),
     )
     longitude = fields.Float(
-        string="Longitud Prevista",
+        string="Longitud prevista",
         digits=(10, 6),
     )
     radius_m = fields.Float(
-        string="Radio de Geocerca (m)",
+        string="Radio de geocerca (m)",
         default=30.0,
     )
     scheduled_at_utc = fields.Datetime(
-        string="Hora Prevista de Paso",
+        string="Hora prevista de paso",
         help="Hora programada de paso por este punto (almacenada en UTC, mostrada en hora local).",
     )
     first_arrival_utc = fields.Datetime(
-        string="Primer Arribo Validado",
+        string="Primer arribo validado",
         help="Primer instante verificado de llegada dentro del radio de geocerca.",
     )
     departure_utc = fields.Datetime(
-        string="Salida Validada",
+        string="Salida validada",
         help="Instante verificado de salida del radio de geocerca.",
     )
     status = fields.Selection(
         selection=[
-            ("pending", "Pendiente de Ejecución"),
-            ("on_time", "Visitada Puntual"),
-            ("late", "Visitada con Retraso"),
+            ("pending", "Pendiente de ejecución"),
+            ("on_time", "Visitada puntual"),
+            ("late", "Visitada con retraso"),
             ("missed", "Omitida"),
-            ("not_determinable", "No Determinable / Sin Evidencia"),
-            ("indeterminate", "Indeterminada / Evidencia Insuficiente"),
+            ("not_determinable", "No determinable / sin evidencia"),
+            ("indeterminate", "Indeterminada / evidencia insuficiente"),
         ],
-        string="Estado de Cumplimiento",
+        string="Estado de cumplimiento",
         default="pending",
         required=True,
         index=True,
     )
     delay_s = fields.Integer(
-        string="Retraso Observado (s)",
+        string="Retraso observado (s)",
         help="Segundos de retraso respecto a la hora programada (0 si llegó a tiempo).",
     )
     min_distance_m = fields.Float(
-        string="Distancia Mínima al Punto (m)",
+        string="Distancia mínima al punto (m)",
         digits=(8, 2),
     )
     notes = fields.Text(
-        string="Observaciones / Evidencia",
+        string="Observaciones / evidencia",
     )

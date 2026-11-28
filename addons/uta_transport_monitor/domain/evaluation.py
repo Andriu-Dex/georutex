@@ -543,28 +543,28 @@ def evaluate_trip_compliance(
     if req_missed > 0:
         is_compliant_gross = False
         non_compliance_reasons.append(
-            f"{req_missed} paradas obligatorias omitidas."
+            f"{req_missed} parada(s) obligatoria(s) omitida(s)."
         )
     if dev_count > 0:
         is_compliant_gross = False
         non_compliance_reasons.append(
-            f"{dev_count} desvíos de ruta confirmados."
+            f"{dev_count} desvío(s) de ruta confirmado(s)."
         )
     if start_punctuality == "late":
         is_compliant_gross = False
         non_compliance_reasons.append(
-            f"Salida tardía con {start_delay_s}s de retraso."
+            f"Salida tardía ({round(start_delay_s / 60)} min de retraso)."
         )
     if arrival_punctuality == "late":
         is_compliant_gross = False
         non_compliance_reasons.append(
-            f"Llegada tardía con {end_delay_s}s de retraso."
+            f"Llegada tardía ({round(end_delay_s / 60)} min de retraso)."
         )
 
     summary = (
-        "Recorrido Conforme"
+        "Recorrido conforme"
         if is_compliant_gross
-        else f"No Conforme: {'; '.join(non_compliance_reasons)}"
+        else f"No conforme: {'; '.join(non_compliance_reasons)}"
     )
 
     return {

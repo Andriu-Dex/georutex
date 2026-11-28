@@ -3,5 +3,6 @@
 from . import geo
 from . import evaluation
 from . import metrics
+from . import simulation
 
-__all__ = ["geo", "evaluation", "metrics"]
+__all__ = ["geo", "evaluation", "metrics", "simulation"]

@@ -76,8 +76,8 @@ class TestTelemetryFreshness(TransactionCase):
         """Action generates uniqueId with at least 128-bit entropy."""
         self.vehicle.action_generate_secure_unique_id()
         unique_id = self.vehicle.traccar_unique_id
-        self.assertTrue(unique_id.startswith("UTA-BUS-"))
-        hex_token = unique_id.replace("UTA-BUS-", "")
+        self.assertTrue(unique_id.startswith("GRX-"))
+        hex_token = unique_id.replace("GRX-", "")
         # 32 hexadecimal characters = 16 bytes = 128 bits
         self.assertEqual(len(hex_token), 32)
         int(hex_token, 16)  # Verify valid hex string

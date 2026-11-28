@@ -46,9 +46,6 @@ Módulo Odoo 16 Community para:
         "views/login_templates.xml",
         "data/ir_cron_data.xml",
     ],
-    "demo": [
-        "demo/transport_demo_data.xml",
-    ],
     "assets": {
         "web._assets_primary_variables": [
             "uta_transport_monitor/static/src/scss/georutex_primary_variables.scss",

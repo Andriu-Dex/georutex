@@ -55,7 +55,7 @@
             return "";
         }
         if (!EMAIL_RE.test(cleaned)) {
-            return "Ingrese un correo válido (ej. usuario@gmail.com, @hotmail.com o @uta.edu.ec).";
+            return "Ingrese un correo válido (ej. usuario@gmail.com o nombre@empresa.com).";
         }
         const domain = cleaned.split("@")[1] || "";
         if (COMMON_DOMAIN_TYPOS[domain]) {

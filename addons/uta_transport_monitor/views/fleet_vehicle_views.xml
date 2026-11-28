@@ -186,12 +186,12 @@
                 <field name="driver_id" string="Conductor"/>
                 <field name="gps_connection_status" string="Conexión GPS" widget="badge"
                        decoration-success="gps_connection_status == 'online'"
-                       decoration-info="gps_connection_status == 'recent'"
+                       decoration-info="gps_connection_status in ('recent', 'waiting')"
                        decoration-warning="gps_connection_status == 'offline'"
                        decoration-muted="gps_connection_status == 'unlinked'"/>
                 <field name="last_gps_time_local" string="Último reporte"/>
-                <field name="last_gps_speed" string="Velocidad (km/h)"/>
-                <field name="is_simulated" string="Simulado"/>
+                <field name="last_gps_speed" string="Velocidad (km/h)" optional="hide"/>
+                <field name="is_simulated" string="Simulado" optional="hide"/>
                 <field name="trip_count" string="Recorridos"/>
             </tree>
         </field>
@@ -235,6 +235,15 @@
                         guarde el vehículo, pulse «Generar identificador seguro» e ingrese ese identificador
                         en la app Traccar Client del teléfono que irá en el vehículo.
                     </div>
+                    <field name="gps_connection_status" invisible="1"/>
+                    <div class="alert alert-info mb-3" role="status"
+                         groups="uta_transport_monitor.group_transport_manager"
+                         attrs="{'invisible': [('gps_connection_status', '!=', 'waiting')]}">
+                        <strong>Siguiente paso: recibir la primera posición.</strong>
+                        En el teléfono del vehículo abra Traccar Client, escriba el
+                        <em>identificador de dispositivo</em> de esta unidad, configure la dirección del servidor GPS
+                        y active el servicio. Luego pulse «Sincronizar GPS».
+                    </div>
                     <group>
                         <group string="Datos del vehículo">
                             <field name="model_id" string="Modelo"/>
@@ -244,7 +253,7 @@
                         <group string="Configuración de rastreo GPS">
                             <field name="gps_tracking_enabled" string="Rastreo GPS activo" widget="boolean_toggle"/>
                             <field name="traccar_unique_id" string="Identificador de dispositivo"/>
-                            <field name="traccar_device_id" string="ID interno de servidor GPS" groups="uta_transport_monitor.group_transport_manager"/>
+                            <field name="traccar_device_id" string="ID interno de servidor GPS" groups="uta_transport_monitor.group_transport_manager" attrs="{'invisible': [('traccar_device_id', '=', 0)]}"/>
                             <field name="is_physical_accredited" string="Dispositivo físico acreditado" widget="boolean_toggle"/>
                             <field name="is_simulated" string="Unidad de simulación" widget="boolean_toggle"/>
                         </group>
@@ -265,7 +274,7 @@
                                            attrs="{'invisible': [('last_gps_latitude', '=', 0), ('last_gps_longitude', '=', 0)]}"/>
                                     <div class="text-muted small py-1" colspan="2"
                                          attrs="{'invisible': ['|', ('last_gps_latitude', '!=', 0), ('last_gps_longitude', '!=', 0)]}">
-                                        Sin posición GPS válida registrada todavía.
+                                        Aún no se ha recibido ninguna posición de este vehículo.
                                     </div>
                                 </group>
                             </group>

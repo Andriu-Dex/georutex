@@ -36,17 +36,17 @@ class TransportEmailVerification(models.Model):
     _order = "create_date desc, id desc"
 
     email = fields.Char(
-        string="Correo Electrónico",
+        string="Correo electrónico",
         required=True,
         index=True,
     )
     full_name = fields.Char(
-        string="Nombre Completo",
+        string="Nombre completo",
         required=True,
     )
     user_id = fields.Many2one(
         comodel_name="res.users",
-        string="Usuario Asociado",
+        string="Usuario asociado",
         ondelete="cascade",
         index=True,
     )
@@ -56,16 +56,16 @@ class TransportEmailVerification(models.Model):
         readonly=True,
     )
     code_hash = fields.Char(
-        string="Hash del Código",
+        string="Hash del código",
         required=True,
         readonly=True,
     )
     expires_at = fields.Datetime(
-        string="Fecha de Expiración (UTC)",
+        string="Fecha de expiración (UTC)",
         required=True,
     )
     attempts = fields.Integer(
-        string="Intentos Fallidos",
+        string="Intentos fallidos",
         default=0,
     )
     verified = fields.Boolean(
@@ -73,22 +73,22 @@ class TransportEmailVerification(models.Model):
         default=False,
     )
     verified_at = fields.Datetime(
-        string="Fecha de Verificación (UTC)",
+        string="Fecha de verificación (UTC)",
         readonly=True,
     )
     delivery_status = fields.Selection(
         selection=[
             ("pending", "Pendiente"),
             ("sent", "Enviado por SMTP"),
-            ("smtp_not_configured", "SMTP No Configurado"),
-            ("failed", "Error de Envío SMTP"),
+            ("smtp_not_configured", "SMTP No configurado"),
+            ("failed", "Error de envío SMTP"),
         ],
-        string="Estado de Envío",
+        string="Estado de envío",
         default="pending",
         required=True,
     )
     delivery_error = fields.Char(
-        string="Detalle de Envío",
+        string="Detalle de envío",
         readonly=True,
     )
 
