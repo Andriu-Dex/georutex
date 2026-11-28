@@ -1,0 +1,12 @@
+# Public HTTPS entry point. Certificates are issued automatically by Let's Encrypt.
+# Only ports 80/443 are exposed; Odoo, Traccar and PostgreSQL stay on the Docker network.
+
+{$GRX_DOMAIN} {
+	encode gzip
+	reverse_proxy odoo:8069
+}
+
+# Traccar Client (OsmAnd protocol) ingress. The Traccar web/API port 8082 is never proxied.
+{$GPS_DOMAIN} {
+	reverse_proxy traccar:5055
+}
